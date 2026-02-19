@@ -1,0 +1,25 @@
+{
+  "name": "@sigil/tui",
+  "version": "0.1.0",
+  "description": "Sigil terminal UI — Ink (React for CLI)",
+  "main": "dist/app.js",
+  "scripts": {
+    "dev": "tsx watch src/app.tsx",
+    "build": "tsc",
+    "start": "node dist/app.js"
+  },
+  "dependencies": {
+    "ink": "^4.4.1",
+    "ink-spinner": "^5.0.0",
+    "ink-table": "^3.1.0",
+    "ink-text-input": "^6.0.0",
+    "react": "^18.3.1",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/node": "^22.13.4",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
