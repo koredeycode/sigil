@@ -7,7 +7,7 @@ import { getAgent, getAgentDirectives, insertLog } from '../../lib/Database.js';
 import { getConnection, lamportsToSol } from '../../wallet/TransactionBuilder.js';
 import { getKeypair } from '../../wallet/Wallet.js';
 
-export const chatRouter = Router();
+export const chatRouter: Router = Router();
 
 // POST /api/chat — send a message to an agent's LLM
 chatRouter.post('/', async (req, res) => {
@@ -43,7 +43,7 @@ chatRouter.post('/', async (req, res) => {
 
     const model = getPrimaryModel();
     const tools = createTools(agent.id, agent.name);
-    const modelWithTools = model.bindTools(tools);
+    const modelWithTools = model.bindTools!(tools);
 
     // Emit chat message event
     agentManager.emit('chat:message', {

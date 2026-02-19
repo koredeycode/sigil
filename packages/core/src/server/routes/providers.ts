@@ -7,7 +7,7 @@ import {
     setPrimaryProvider,
 } from '../../lib/Database.js';
 
-export const providersRouter = Router();
+export const providersRouter: Router = Router();
 
 // GET /api/providers — list all providers
 providersRouter.get('/', (_req, res) => {

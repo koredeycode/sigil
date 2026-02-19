@@ -1,12 +1,12 @@
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import {
-    AgentRow,
-    createAgent as dbCreateAgent,
-    deleteAgent as dbDeleteAgent,
-    getAgent,
-    getAllAgents,
-    updateAgentStatus,
+  AgentRow,
+  createAgent as dbCreateAgent,
+  deleteAgent as dbDeleteAgent,
+  getAgent,
+  getAllAgents,
+  updateAgentStatus,
 } from '../lib/Database.js';
 import { createWallet, deleteWallet, getKeypair, wipeFromMemory } from '../wallet/Wallet.js';
 

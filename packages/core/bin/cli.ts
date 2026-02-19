@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+
+import { Command } from 'commander';
+
+
+import { registerAgentCommand } from './commands/agent.js';
+import { registerAuthCommand } from './commands/auth.js';
+import { registerChatCommand } from './commands/chat.js';
+import { registerDirectiveCommand } from './commands/directive.js';
+import { registerInitCommand } from './commands/init.js';
+import { registerKillCommand } from './commands/kill.js';
+import { registerLogsCommand } from './commands/logs.js';
+import { registerProviderCommand } from './commands/provider.js';
+import { registerStartCommand } from './commands/start.js';
+import { registerTxCommand } from './commands/tx.js';
+
+const program = new Command();
+
+program
+  .name('sigil')
+  .description('The Local-First Autonomous Agent for Solana')
+  .version('0.1.0');
+
+const BANNER = `
+  ███████╗  ██╗   ██████╗   ██╗  ██╗
+  ██╔════╝  ██║  ██╔════╝   ██║  ██║
+  ███████╗  ██║  ██║  ███╗  ██║  ██║
+  ╚════██║  ██║  ██║   ██║  ██║  ██║
+  ███████║  ██║  ╚██████╔╝  ██║  ███████╗
+  ╚══════╝  ╚═╝   ╚═════╝   ╚═╝  ╚══════╝
+`;
+
+console.log(BANNER);
+console.log('  The Local-First Autonomous Agent for Solana\n');
+
+// Register all command groups
+try {
+  registerInitCommand(program);
+  registerStartCommand(program);
+  registerKillCommand(program);
+  registerAgentCommand(program);
+  registerDirectiveCommand(program);
+  registerProviderCommand(program);
+  registerChatCommand(program);
+  registerLogsCommand(program);
+  registerTxCommand(program);
+  registerAuthCommand(program);
+} catch (e) {
+  console.error('Failed to register commands', e);
+}
+
+program.parse();

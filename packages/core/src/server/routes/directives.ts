@@ -6,7 +6,7 @@ import {
     toggleDirective,
 } from '../../lib/Database.js';
 
-export const directivesRouter = Router();
+export const directivesRouter: Router = Router();
 
 // GET /api/directives?agentId=... — list directives for an agent
 directivesRouter.get('/', (req, res) => {

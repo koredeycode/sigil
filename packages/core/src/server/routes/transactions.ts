@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getAgentTransactions } from '../../lib/Database.js';
 
-export const transactionsRouter = Router();
+export const transactionsRouter: Router = Router();
 
 // GET /api/transactions?agentId=...&limit=50 — list transactions for an agent
 transactionsRouter.get('/', (req, res) => {

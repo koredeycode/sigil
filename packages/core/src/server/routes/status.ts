@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getAllAgents } from '../../lib/Database.js';
 
-export const statusRouter = Router();
+export const statusRouter: Router = Router();
 
 statusRouter.get('/', (_req, res) => {
   const agents = getAllAgents();

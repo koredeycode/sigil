@@ -1,4 +1,5 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
+import os from 'node:os';
 import { getAuthToken, setAuthToken } from './Config.js';
 
 const TOKEN_PREFIX = 'sig_';
@@ -86,8 +87,8 @@ export function decryptApiKey(encrypted: string): string {
  * Not cryptographically rigorous for production — reasonable for a local dev tool.
  */
 function deriveKey(): { key: Buffer } {
-  const hostname = require('os').hostname();
-  const username = require('os').userInfo().username;
+  const hostname = os.hostname();
+  const username = os.userInfo().username;
   const salt = 'sigil-salt';
 
   const key = crypto

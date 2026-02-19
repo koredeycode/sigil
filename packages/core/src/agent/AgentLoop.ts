@@ -1,11 +1,11 @@
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { PublicKey } from '@solana/web3.js';
 import {
-    buildEvalPrompt,
-    EvalContext,
-    getEvaluableDirectives,
-    markDirectiveFired,
-    parseEvalResponse,
+  buildEvalPrompt,
+  EvalContext,
+  getEvaluableDirectives,
+  markDirectiveFired,
+  parseEvalResponse,
 } from '../directives/DirectiveEngine.js';
 import { isKillSwitchActive } from '../lib/Config.js';
 import { getAgent, getAgentDirectives, insertLog } from '../lib/Database.js';
@@ -156,7 +156,7 @@ export async function runCycle(agentId: string, agentName: string): Promise<void
   try {
     const model = getPrimaryModel();
     const tools = createTools(agentId, agentName);
-    const modelWithTools = model.bindTools(tools);
+    const modelWithTools = model.bindTools!(tools);
 
     const allDirectiveTexts = getAgentDirectives(agentId).map(
       (d) => `${d.condition} → ${d.action}`

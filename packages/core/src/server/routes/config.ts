@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { rotateToken } from '../../lib/Auth.js';
 import { getConfig, setConfig } from '../../lib/Database.js';
 
-export const configRouter = Router();
+export const configRouter: Router = Router();
 
 // GET /api/config — read global config
 configRouter.get('/', (_req, res) => {

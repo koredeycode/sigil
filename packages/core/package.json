@@ -1,11 +1,12 @@
 {
   "name": "@sigil/core",
   "version": "0.1.0",
+  "type": "module",
   "description": "Sigil core — agents, API, wallet, directives",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "sigil": "dist/bin/sigil.js"
+    "sigil": "dist/bin/cli.js"
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -25,18 +26,16 @@
     "@langchain/openai": "^0.4.4",
     "@solana/spl-token": "^0.4.12",
     "@solana/web3.js": "^1.98.0",
-    "better-sqlite3": "^11.8.1",
     "commander": "^13.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "keytar": "^7.9.0",
     "socket.io": "^4.8.1",
     "solana-agent-kit": "^1.4.5",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.12",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.4",

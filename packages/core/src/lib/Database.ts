@@ -1,18 +1,18 @@
-import Database from 'better-sqlite3';
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 
 const SIGIL_DIR = path.join(os.homedir(), '.sigil');
 const DB_PATH = path.join(SIGIL_DIR, 'sigil.db');
 
-let db: Database.Database | null = null;
+let db: DatabaseSync | null = null;
 
 /**
  * Ensures ~/.sigil/ directory exists and opens the SQLite database.
  * Creates all tables on first run.
  */
-export function getDatabase(): Database.Database {
+export function getDatabase(): DatabaseSync {
   if (db) return db;
 
   // Ensure ~/.sigil/ exists
@@ -20,11 +20,11 @@ export function getDatabase(): Database.Database {
     fs.mkdirSync(SIGIL_DIR, { recursive: true });
   }
 
-  db = new Database(DB_PATH);
+  db = new DatabaseSync(DB_PATH);
 
   // Enable WAL mode for better concurrent read performance
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
+  db.exec('PRAGMA journal_mode = WAL');
+  db.exec('PRAGMA foreign_keys = ON');
 
   initializeTables(db);
   seedDefaults(db);
@@ -35,7 +35,7 @@ export function getDatabase(): Database.Database {
 /**
  * Create all tables if they don't already exist.
  */
-function initializeTables(db: Database.Database): void {
+function initializeTables(db: DatabaseSync): void {
   db.exec(`
     -- Agents: one row per agent
     CREATE TABLE IF NOT EXISTS agents (
@@ -108,7 +108,7 @@ function initializeTables(db: Database.Database): void {
 /**
  * Seed default config values if they don't already exist.
  */
-function seedDefaults(db: Database.Database): void {
+function seedDefaults(db: DatabaseSync): void {
   const insert = db.prepare(
     'INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)'
   );
@@ -122,13 +122,9 @@ function seedDefaults(db: Database.Database): void {
     confirmation_threshold: '50', // SOL value requiring confirmation
   };
 
-  const seedMany = db.transaction(() => {
-    for (const [key, value] of Object.entries(defaults)) {
-      insert.run(key, value);
-    }
-  });
-
-  seedMany();
+  for (const [key, value] of Object.entries(defaults)) {
+    insert.run(key, value);
+  }
 }
 
 /**
@@ -155,12 +151,12 @@ export function getAgent(nameOrId: string) {
   const db = getDatabase();
   return db.prepare(
     'SELECT * FROM agents WHERE id = ? OR name = ?'
-  ).get(nameOrId, nameOrId) as AgentRow | undefined;
+  ).get(nameOrId, nameOrId) as unknown as AgentRow | undefined;
 }
 
 export function getAllAgents() {
   const db = getDatabase();
-  return db.prepare('SELECT * FROM agents').all() as AgentRow[];
+  return db.prepare('SELECT * FROM agents').all() as unknown as AgentRow[];
 }
 
 export function updateAgentStatus(id: string, status: 'running' | 'paused' | 'killed') {
@@ -170,13 +166,10 @@ export function updateAgentStatus(id: string, status: 'running' | 'paused' | 'ki
 
 export function deleteAgent(id: string) {
   const db = getDatabase();
-  const tx = db.transaction(() => {
-    db.prepare('DELETE FROM directives WHERE agent_id = ?').run(id);
-    db.prepare('DELETE FROM logs WHERE agent_id = ?').run(id);
-    db.prepare('DELETE FROM transactions WHERE agent_id = ?').run(id);
-    db.prepare('DELETE FROM agents WHERE id = ?').run(id);
-  });
-  tx();
+  db.prepare('DELETE FROM directives WHERE agent_id = ?').run(id);
+  db.prepare('DELETE FROM logs WHERE agent_id = ?').run(id);
+  db.prepare('DELETE FROM transactions WHERE agent_id = ?').run(id);
+  db.prepare('DELETE FROM agents WHERE id = ?').run(id);
 }
 
 // Logs
@@ -191,13 +184,13 @@ export function getAgentLogs(agentId: string, limit = 50) {
   const db = getDatabase();
   return db.prepare(
     'SELECT * FROM logs WHERE agent_id = ? ORDER BY timestamp DESC LIMIT ?'
-  ).all(agentId, limit) as LogRow[];
+  ).all(agentId, limit) as unknown as LogRow[];
 }
 
 // Config
 export function getConfig(key: string): string | undefined {
   const db = getDatabase();
-  const row = db.prepare('SELECT value FROM config WHERE key = ?').get(key) as { value: string } | undefined;
+  const row = db.prepare('SELECT value FROM config WHERE key = ?').get(key) as unknown as { value: string } | undefined;
   return row?.value;
 }
 
@@ -222,21 +215,18 @@ export function addProvider(name: string, apiKey: string | null, model: string, 
 
 export function getAllProviders() {
   const db = getDatabase();
-  return db.prepare('SELECT * FROM providers').all() as ProviderRow[];
+  return db.prepare('SELECT * FROM providers').all() as unknown as ProviderRow[];
 }
 
 export function getPrimaryProvider() {
   const db = getDatabase();
-  return db.prepare('SELECT * FROM providers WHERE is_primary = 1').get() as ProviderRow | undefined;
+  return db.prepare('SELECT * FROM providers WHERE is_primary = 1').get() as unknown as ProviderRow | undefined;
 }
 
 export function setPrimaryProvider(id: number) {
   const db = getDatabase();
-  const tx = db.transaction(() => {
-    db.prepare('UPDATE providers SET is_primary = 0').run();
-    db.prepare('UPDATE providers SET is_primary = 1 WHERE id = ?').run(id);
-  });
-  tx();
+  db.prepare('UPDATE providers SET is_primary = 0').run();
+  db.prepare('UPDATE providers SET is_primary = 1 WHERE id = ?').run(id);
 }
 
 export function removeProvider(id: number) {
@@ -262,14 +252,14 @@ export function getAgentDirectives(agentId: string) {
   const db = getDatabase();
   return db.prepare(
     'SELECT * FROM directives WHERE agent_id = ? AND is_active = 1'
-  ).all(agentId) as DirectiveRow[];
+  ).all(agentId) as unknown as DirectiveRow[];
 }
 
 export function getAllDirectivesForAgent(agentId: string) {
   const db = getDatabase();
   return db.prepare(
     'SELECT * FROM directives WHERE agent_id = ?'
-  ).all(agentId) as DirectiveRow[];
+  ).all(agentId) as unknown as DirectiveRow[];
 }
 
 export function toggleDirective(id: number, active: boolean) {
@@ -317,7 +307,7 @@ export function getAgentTransactions(agentId: string, limit = 50) {
   const db = getDatabase();
   return db.prepare(
     'SELECT * FROM transactions WHERE agent_id = ? ORDER BY timestamp DESC LIMIT ?'
-  ).all(agentId, limit) as TransactionRow[];
+  ).all(agentId, limit) as unknown as TransactionRow[];
 }
 
 export function getDailyVolume(agentId: string): number {
@@ -328,7 +318,7 @@ export function getDailyVolume(agentId: string): number {
      WHERE agent_id = ?
        AND status = 'confirmed'
        AND timestamp > datetime('now', '-1 day')`
-  ).get(agentId) as { total: number };
+  ).get(agentId) as unknown as { total: number };
   return row.total;
 }
 

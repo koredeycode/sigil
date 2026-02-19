@@ -12,12 +12,12 @@ import { statusRouter } from './routes/status.js';
 import { transactionsRouter } from './routes/transactions.js';
 import { setupSocket } from './socket.js';
 
-const API_PORT = 74445;
+const API_PORT = 7445;
 
 /**
  * Create and configure the Express app + Socket.IO server.
  */
-export function createServer() {
+export function createServer(): { app: express.Express; httpServer: http.Server; io: SocketIOServer } {
   const app = express();
   const httpServer = http.createServer(app);
 

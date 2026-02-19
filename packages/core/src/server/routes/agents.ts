@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { agentManager } from '../../agent/AgentManager.js';
 
-export const agentsRouter = Router();
+export const agentsRouter: Router = Router();
 
 // GET /api/agents — list all agents
 agentsRouter.get('/', (_req, res) => {
