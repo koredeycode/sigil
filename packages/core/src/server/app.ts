@@ -1,6 +1,8 @@
 import cors from 'cors';
 import express from 'express';
 import http from 'http';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Server as SocketIOServer } from 'socket.io';
 import { authMiddleware } from './middleware/auth.js';
 import { agentsRouter } from './routes/agents.js';
@@ -11,7 +13,10 @@ import { providersRouter } from './routes/providers.js';
 import { statusRouter } from './routes/status.js';
 import { transactionsRouter } from './routes/transactions.js';
 import { setupSocket } from './socket.js';
+import { attachWebDashboard } from './web.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const API_PORT = 7445;
 
 /**
@@ -57,6 +62,28 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
     res.status(500).json({ message: err.message, data: null });
   });
 
+  // Serve Web Dashboard (Static Site)
+  const isDev = __dirname.includes(`src${path.sep}server`) && !__dirname.includes('dist');
+  const isCompiled = __dirname.includes(`dist${path.sep}src${path.sep}server`);
+  
+  let monoRepoRoot = '';
+  if (isCompiled) {
+      // packages/core/dist/src/server -> ../../../../../.. to root
+      // dist/src/server (1) -> dist/src (2) -> dist (3) -> core (4) -> packages (5) -> root
+      monoRepoRoot = path.resolve(__dirname, '../../../../..');
+  } else if (isDev) {
+      // packages/core/src/server -> ../../../..
+      // src/server (1) -> src (2) -> core (3) -> packages (4) -> root
+      monoRepoRoot = path.resolve(__dirname, '../../../..');
+  } else {
+      // packages/core -> ../..
+      monoRepoRoot = path.resolve(__dirname, '../..');
+  }
+  
+  const webDistPath = path.join(monoRepoRoot, 'packages', 'web', 'dist');
+  
+  attachWebDashboard(app, webDistPath);
+
   // Setup WebSocket event forwarding
   setupSocket(io);
 
@@ -71,8 +98,7 @@ export function startServer(): Promise<{ io: SocketIOServer }> {
     const { httpServer, io } = createServer();
 
     httpServer.listen(API_PORT, () => {
-      console.log(`\n  ⎔ Sigil API server running on http://localhost:${API_PORT}`);
-      console.log(`  ⎔ Web Dashboard: http://localhost:${API_PORT + 1}\n`);
+      console.log(`\n  ⎔ Sigil Server (API + Web) running on http://localhost:${API_PORT}`);
       resolve({ io });
     });
   });

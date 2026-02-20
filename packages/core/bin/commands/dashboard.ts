@@ -17,7 +17,7 @@ export function registerDashboardCommand(program: Command) {
       }
 
       console.log('Opening Sigil Dashboard...');
-      const url = `http://localhost:7446/#token=${token}`;
+      const url = `http://localhost:7445/#token=${token}`;
       await open(url);
     });
 }
