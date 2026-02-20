@@ -8,12 +8,13 @@ import { validateToken } from '../lib/Auth.js';
  * System events are emitted on the /system namespace.
  */
 export function setupSocket(io: SocketIOServer): void {
-  // Auth middleware for socket connections
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
     if (token && validateToken(token)) {
+      console.log(`[Socket.IO] Authenticated connection from ${socket.id}`);
       next();
     } else {
+      console.warn(`[Socket.IO] Authentication failed for ${socket.id}`);
       next(new Error('Unauthorized'));
     }
   });
@@ -47,6 +48,12 @@ export function setupSocket(io: SocketIOServer): void {
 
   // Handle chat messages from clients
   io.on('connection', (socket) => {
+    console.log(`[Socket.IO] Client connected: ${socket.id}`);
+
+    socket.on('disconnect', (reason) => {
+        console.log(`[Socket.IO] Client disconnected: ${socket.id} (Relay: ${reason})`);
+    });
+
     socket.on('chat:message', (data: { agent: string; content: string }) => {
       // Broadcast to all other clients
       socket.broadcast.emit('chat:message', {

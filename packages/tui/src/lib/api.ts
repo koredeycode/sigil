@@ -21,6 +21,12 @@ export interface ChatResponse {
   tools: any[];
 }
 
+export interface WalletResponse {
+  agent_id: string;
+  balance: number;
+  transactions: any[];
+}
+
 export class ApiClient {
   private baseUrl: string;
   private token: string;
@@ -84,5 +90,9 @@ export class ApiClient {
         method: 'PATCH',
         body: JSON.stringify({ action }),
     });
+  }
+
+  async getWallet(agentId: string): Promise<WalletResponse> {
+    return this.fetch<WalletResponse>(`/wallet/${agentId}`);
   }
 }

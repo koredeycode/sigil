@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useConfig } from '../context/ConfigContext.js';
 import { Agent } from '../hooks/useAgents.js';
 import { ApiClient } from '../lib/api.js';
+// @ts-ignore
+import md from 'cli-md';
 
 interface ChatMessage {
     id: number | string;
@@ -11,11 +13,13 @@ interface ChatMessage {
     content: string;
 }
 
-interface ChatInputProps {
+export interface ChatInputProps {
   activeAgent: Agent | null;
+  isFocused: boolean;
+  onFocusChange?: (focused: boolean) => void;
 }
 
-export function ChatInput({ activeAgent }: ChatInputProps) {
+export function ChatInput({ activeAgent, isFocused, onFocusChange }: ChatInputProps) {
   const { apiPort, authToken } = useConfig();
   const [query, setQuery] = useState('');
   const [sending, setSending] = useState(false);
@@ -44,19 +48,26 @@ export function ChatInput({ activeAgent }: ChatInputProps) {
 
   if (!activeAgent) return null;
 
-  // Render only last 2 messages for space
-  const displayMsgs = messages.slice(-2);
+  // Render only last 3 messages for space
+  const displayMsgs = messages.slice(-3);
 
   return (
     <Box flexDirection="column">
       {displayMsgs.length > 0 && (
           <Box flexDirection="column" marginBottom={1} borderStyle="round" borderColor="gray" paddingX={1}>
-              {displayMsgs.map((msg, idx) => (
-                  <Text key={msg.id ?? idx}>
-                      {msg.role === 'user' ? <Text color="cyan">You: </Text> : <Text color="magenta">{activeAgent.name}: </Text>}
-                      {msg.content}
-                  </Text>
-              ))}
+              {displayMsgs.map((msg, idx) => {
+                  return (
+                    <Box key={msg.id ?? idx} flexDirection="column" marginBottom={msg.role === 'assistant' ? 1 : 0}>
+                        <Text>
+                           {msg.role === 'user' ? <Text color="cyan">You: </Text> : <Text color="magenta">{activeAgent.name}: </Text>}
+                           {msg.role === 'user' ? msg.content : ''}
+                        </Text>
+                        {msg.role !== 'user' && (
+                           <Text>{md(msg.content).trimEnd()}</Text>
+                        )}
+                    </Box>
+                  )
+              })}
           </Box>
       )}
 
@@ -70,6 +81,7 @@ export function ChatInput({ activeAgent }: ChatInputProps) {
             <TextInput
               value={query}
               onChange={setQuery}
+              focus={isFocused}
               onSubmit={async (val) => {
                 setQuery('');
                 if (!val.trim()) return;
