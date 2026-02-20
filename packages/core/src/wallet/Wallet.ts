@@ -188,3 +188,21 @@ export async function listStoredWallets(): Promise<string[]> {
     .filter((f) => f.endsWith('.enc'))
     .map((f) => f.replace('.enc', ''));
 }
+
+/**
+ * Rename an agent's encrypted key file and update the in-memory cache.
+ */
+export async function renameWallet(oldName: string, newName: string): Promise<void> {
+  const oldPath = path.join(KEYS_DIR, `${oldName}.enc`);
+  const newPath = path.join(KEYS_DIR, `${newName}.enc`);
+
+  if (fs.existsSync(oldPath)) {
+    fs.renameSync(oldPath, newPath);
+  }
+
+  const cached = loadedKeys.get(oldName);
+  if (cached) {
+    loadedKeys.set(newName, cached);
+    loadedKeys.delete(oldName);
+  }
+}

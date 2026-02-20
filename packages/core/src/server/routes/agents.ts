@@ -14,8 +14,8 @@ agentsRouter.get('/', (_req, res) => {
 agentsRouter.post('/', async (req, res) => {
   try {
     const { name, loopInterval, privateKey } = req.body;
-    if (!name) {
-      res.status(400).json({ message: 'Agent name is required', data: null });
+    if (!name || typeof name !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(name)) {
+      res.status(400).json({ message: 'Invalid agent name. Use only alphanumeric characters, dashes, or underscores.', data: null });
       return;
     }
     const agent = await agentManager.create(name, loopInterval, privateKey);
@@ -59,8 +59,8 @@ agentsRouter.put('/:id', async (req, res) => {
     const { id } = req.params;
     const { name, loopInterval } = req.body;
     
-    if (!name || !loopInterval) {
-      res.status(400).json({ message: 'name and loopInterval are required', data: null });
+    if (!name || typeof name !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(name) || !loopInterval) {
+      res.status(400).json({ message: 'Invalid name or missing loopInterval. Name must use only alphanumeric characters, dashes, or underscores.', data: null });
       return;
     }
 

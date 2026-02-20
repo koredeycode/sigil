@@ -19,14 +19,21 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
     const [creating, setCreating] = useState(false);
 
     const handleCreate = async () => {
-        if (!name.trim()) return;
+        const trimmedName = name.trim();
+        if (!trimmedName) return;
+
+        if (!/^[a-zA-Z0-9_-]+$/.test(trimmedName)) {
+            alert('Invalid agent name. Use only alphanumeric characters, dashes, or underscores.');
+            return;
+        }
+
         const token = localStorage.getItem('sigil_token');
         if (!token) return;
 
         setCreating(true);
         try {
             const client = new ApiClient(token);
-            const response = await client.createAgent(name, loopInterval * 1000, privateKey ? privateKey.trim() : undefined);
+            const response = await client.createAgent(trimmedName, loopInterval * 1000, privateKey ? privateKey.trim() : undefined);
             const agent = response.data;
             
             if (agent && agent.id && condition.trim() && action.trim()) {
@@ -55,68 +62,6 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
             </header>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Create Agent Card */}
-                <div className="col-span-1 bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
-                    <div className="flex items-center gap-2 border-b border-border pb-4">
-                        <Plus className="w-5 h-5 text-primary" />
-                        <h2 className="font-semibold text-lg">Create New Agent</h2>
-                    </div>
-                    
-                    <div className="space-y-3">
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-muted-foreground">Name</label>
-                            <input 
-                                value={name} 
-                                onChange={e => setName(e.target.value)}
-                                placeholder="e.g. treasury-agent" 
-                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2 font-mono"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-muted-foreground">Loop Interval (Seconds)</label>
-                            <input 
-                                type="number"
-                                min="1"
-                                value={loopInterval} 
-                                onChange={e => setLoopInterval(parseInt(e.target.value) || 1)}
-                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-muted-foreground">Private Key (Optional)</label>
-                            <input 
-                                type="password"
-                                value={privateKey} 
-                                onChange={e => setPrivateKey(e.target.value)}
-                                placeholder="Base58 Private Key" 
-                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2 font-mono"
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-medium text-muted-foreground">Initial Directive (Optional)</label>
-                            <input 
-                                value={condition} 
-                                onChange={e => setCondition(e.target.value)} 
-                                placeholder="Condition (e.g. 'SOL > $1000')" 
-                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2"
-                            />
-                            <input 
-                                value={action} 
-                                onChange={e => setAction(e.target.value)} 
-                                placeholder="Action (e.g. 'Sell 1 SOL')" 
-                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                            />
-                        </div>
-                        <button 
-                            onClick={handleCreate} 
-                            disabled={creating || !name}
-                            className="w-full py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                        >
-                            {creating ? 'Creating...' : 'Create Agent'}
-                        </button>
-                    </div>
-                </div>
-
                 {/* Agent List */}
                 <div className="col-span-1 md:col-span-2 bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
                     <div className="px-6 py-4 border-b border-border flex items-center justify-between">
@@ -185,6 +130,68 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                                 )}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+                {/* Create Agent Card */}
+                <div className="col-span-1 bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
+                    <div className="flex items-center gap-2 border-b border-border pb-4">
+                        <Plus className="w-5 h-5 text-primary" />
+                        <h2 className="font-semibold text-lg">Create New Agent</h2>
+                    </div>
+                    
+                    <div className="space-y-3">
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-muted-foreground">Name</label>
+                            <input 
+                                value={name} 
+                                onChange={e => setName(e.target.value)}
+                                placeholder="e.g. treasury-agent" 
+                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2 font-mono"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-muted-foreground">Loop Interval (Seconds)</label>
+                            <input 
+                                type="number"
+                                min="1"
+                                value={loopInterval} 
+                                onChange={e => setLoopInterval(parseInt(e.target.value) || 1)}
+                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-muted-foreground">Private Key (Optional)</label>
+                            <input 
+                                type="password"
+                                value={privateKey} 
+                                onChange={e => setPrivateKey(e.target.value)}
+                                placeholder="Base58 Private Key" 
+                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2 font-mono"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-muted-foreground">Initial Directive (Optional)</label>
+                            <input 
+                                value={condition} 
+                                onChange={e => setCondition(e.target.value)} 
+                                placeholder="Condition (e.g. 'SOL > $1000')" 
+                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2"
+                            />
+                            <input 
+                                value={action} 
+                                onChange={e => setAction(e.target.value)} 
+                                placeholder="Action (e.g. 'Sell 1 SOL')" 
+                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                            />
+                        </div>
+                        <button 
+                            onClick={handleCreate} 
+                            disabled={creating || !name}
+                            className="w-full py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                        >
+                            {creating ? 'Creating...' : 'Create Agent'}
+                        </button>
                     </div>
                 </div>
             </div>

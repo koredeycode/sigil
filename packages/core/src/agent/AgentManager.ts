@@ -9,7 +9,7 @@ import {
     updateAgentProfile,
     updateAgentStatus,
 } from '../lib/Database.js';
-import { createWallet, deleteWallet, getKeypair, importWallet, wipeFromMemory } from '../wallet/Wallet.js';
+import { createWallet, deleteWallet, getKeypair, importWallet, renameWallet, wipeFromMemory } from '../wallet/Wallet.js';
 
 /**
  * AgentManager — manages the lifecycle of all agents.
@@ -128,6 +128,10 @@ export class AgentManager extends EventEmitter {
       this.pause(agent.id); // Stops loop temporarily
     }
 
+    if (newName !== agent.name) {
+      await renameWallet(agent.name, newName);
+    }
+
     updateAgentProfile(agent.id, newName, newInterval);
 
     if (wasRunning) {
@@ -201,8 +205,9 @@ export class AgentManager extends EventEmitter {
    */
   async startAll(): Promise<void> {
     const agents = getAllAgents();
-    for (const agent of agents) {
-      if (agent.status === 'running' || agent.status === 'paused') {
+    const startPromises = agents
+      .filter((agent) => agent.status === 'running' || agent.status === 'paused')
+      .map(async (agent) => {
         try {
           await this.start(agent.id);
         } catch (error) {
@@ -212,8 +217,9 @@ export class AgentManager extends EventEmitter {
             timestamp: new Date().toISOString(),
           });
         }
-      }
-    }
+      });
+
+    await Promise.allSettled(startPromises);
   }
 
   /**
