@@ -1,15 +1,14 @@
 import { clsx } from 'clsx';
-import { Activity, LayoutDashboard, ListTodo, LogOut, MessageSquare, Settings, Terminal, Users, Wallet } from 'lucide-react';
-import { useState } from 'react';
+import { Activity, LayoutDashboard, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { twMerge } from 'tailwind-merge';
+import { AgentDetails } from './components/AgentDetails';
 import { AgentManager } from './components/AgentManager';
 import { AgentSidebar } from './components/AgentSidebar';
 import { ChatBox } from './components/ChatBox';
-import { DirectiveManager } from './components/DirectiveManager';
 import { LogTerminal } from './components/LogTerminal';
-import { PortfolioChart } from './components/PortfolioChart';
 import { SettingsPage } from './components/SettingsPage';
-import { TransactionLedger } from './components/TransactionLedger';
+import { WalletView } from './components/WalletView';
 import { useAgents } from './hooks/useAgents';
 import { SocketProvider } from './hooks/useSocket';
 
@@ -53,6 +52,8 @@ const Login = ({ onLogin }: { onLogin: (token: string) => void }) => {
 };
 
 const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
+    const [isLogsOpen, setIsLogsOpen] = useState(false);
+
     if (!activeAgent) {
          return (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-4">
@@ -64,8 +65,8 @@ const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
     }
 
     return (
-        <div className="flex flex-col h-full space-y-4 overflow-hidden">
-            <header className="flex items-center justify-between px-1">
+        <div className="relative flex flex-col h-full space-y-4 overflow-hidden">
+            <header className="flex items-center justify-between px-1 shrink-0">
                 <div className="flex items-center space-x-4">
                     <h1 className="text-2xl font-bold tracking-tight">{activeAgent.name}</h1>
                     <div className={cn(
@@ -76,56 +77,67 @@ const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
                     )}>
                         {activeAgent.status}
                     </div>
-                    <span className="px-2.5 py-0.5 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
-                        {activeAgent.role}
-                    </span>
                 </div>
+                
+                <button
+                    onClick={() => setIsLogsOpen(!isLogsOpen)}
+                    className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border",
+                        isLogsOpen 
+                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" 
+                            : "bg-background text-foreground border-border hover:bg-secondary"
+                    )}
+                >
+                    <Terminal className="w-4 h-4" />
+                    {isLogsOpen ? 'Close Logs' : 'View Logs'}
+                </button>
             </header>
 
-            <div className="grid grid-cols-12 gap-4 flex-1 min-h-0">
-                {/* Left Column: Logs & Chat */}
-                <div className="col-span-7 flex flex-col gap-4 min-h-0">
+            <div className="flex flex-1 gap-4 min-h-0 overflow-hidden relative">
+                {/* Left Column: Full-Height Chat */}
+                <div className="flex flex-col min-h-0 w-1/2">
                     <div className="flex-1 flex flex-col min-h-0 bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-                        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-                            <Terminal className="w-4 h-4 text-muted-foreground" />
-                            <h3 className="font-medium text-sm">Live Logs</h3>
-                        </div>
-                        <LogTerminal activeAgent={activeAgent} />
-                    </div>
-                    <div className="h-1/3 flex flex-col min-h-0 bg-card border border-border rounded-lg shadow-sm overflow-hidden">
-                        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+                        <div className="px-4 py-3 border-b border-border flex items-center gap-2 bg-secondary/30 shrink-0">
                             <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                            <h3 className="font-medium text-sm">Chat</h3>
+                            <h3 className="font-medium text-sm">Agent Chat</h3>
                         </div>
                         <ChatBox activeAgent={activeAgent} />
                     </div>
                 </div>
 
-                {/* Right Column: Portfolio, Directives, Transactions */}
-                <div className="col-span-5 flex flex-col gap-4 min-h-0 overflow-y-auto pr-1">
-                     <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden shrink-0">
-                         {/* Portfolio Chart Header could go here if needed, but component has it */}
-                         <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-                            <Wallet className="w-4 h-4 text-muted-foreground" />
-                            <h3 className="font-medium text-sm">Portfolio</h3>
-                        </div>
-                         <PortfolioChart activeAgent={activeAgent} />
-                    </div>
-                    <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden shrink-0">
-                        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-                            <ListTodo className="w-4 h-4 text-muted-foreground" />
-                            <h3 className="font-medium text-sm">Directives</h3>
-                        </div>
-                        <DirectiveManager activeAgent={activeAgent} />
-                    </div>
-                    <div className="bg-card border border-border rounded-lg shadow-sm overflow-hidden flex-1 min-h-[200px]">
-                        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-                            <Activity className="w-4 h-4 text-muted-foreground" />
-                            <h3 className="font-medium text-sm">Transactions</h3>
-                        </div>
-                        <TransactionLedger activeAgent={activeAgent} />
-                    </div>
+                {/* Right Column: Wallet View */}
+                <div className="flex flex-col min-h-0 w-1/2">
+                    <WalletView activeAgent={activeAgent} />
                 </div>
+
+                {/* Log Drawer Overlay */}
+                <div className={cn(
+                    "fixed top-0 right-0 bottom-0 w-[500px] xl:w-[600px] max-w-full bg-card text-foreground border-l border-border shadow-2xl flex flex-col z-50 transition-transform duration-300 ease-in-out",
+                    isLogsOpen ? "translate-x-0" : "translate-x-full"
+                )}>
+                    <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0 bg-secondary/30">
+                        <div className="flex items-center gap-2">
+                            <Terminal className="w-4 h-4 text-muted-foreground" />
+                            <h3 className="font-medium text-sm">Live Logs</h3>
+                        </div>
+                        <button
+                            onClick={() => setIsLogsOpen(false)}
+                            className="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            <span className="sr-only">Close Logs</span>
+                            ×
+                        </button>
+                    </div>
+                    <LogTerminal activeAgent={activeAgent} />
+                </div>
+                
+                {/* Overlay backdrop when logs are open (optional, helps focus) */}
+                {isLogsOpen && (
+                    <div 
+                        className="fixed inset-0 bg-black/50 z-40 transition-opacity" 
+                        onClick={() => setIsLogsOpen(false)}
+                    />
+                )}
             </div>
         </div>
     );
@@ -133,7 +145,21 @@ const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
 
 const Dashboard = () => {
     const { agents, activeAgent, activeAgentId, setActiveAgentId } = useAgents();
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'agents' | 'settings'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'agents' | 'settings' | 'agent_details'>('dashboard');
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        const saved = localStorage.getItem('theme');
+        return saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    });
+
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    }, [isDarkMode]);
 
     const refreshAgents = () => {
         // Mock refresh
@@ -200,6 +226,21 @@ const Dashboard = () => {
                             <Settings className="w-4 h-4" />
                             Settings
                         </button>
+
+                        <div className="pt-2 px-3 pb-2 hidden">
+                            <button
+                                onClick={() => setIsDarkMode(!isDarkMode)}
+                                className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-secondary text-sm font-medium hover:bg-secondary/80 transition-colors"
+                            >
+                                <span className="flex items-center gap-2 text-muted-foreground">
+                                    {isDarkMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                                    Theme
+                                </span>
+                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-background text-foreground shadow-sm">
+                                    {isDarkMode ? 'Dark' : 'Light'}
+                                </span>
+                            </button>
+                        </div>
                     </div>
 
                     <div className="pt-4 border-t border-border">
@@ -209,12 +250,24 @@ const Dashboard = () => {
                         <AgentSidebar 
                             agents={agents} 
                             activeAgentId={activeAgentId} 
-                            onSelectAgent={(id) => { setActiveAgentId(id); setActiveTab('dashboard'); }} 
+                            onSelectAgent={(id) => { setActiveAgentId(id); setActiveTab('agent_details'); }} 
                         />
                     </div>
                 </div>
                 
-                <div className="p-4 border-t border-border">
+                <div className="p-4 border-t border-border flex flex-col gap-2">
+                     <button
+                        onClick={() => setIsDarkMode(!isDarkMode)}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-secondary text-sm font-medium hover:bg-secondary/80 transition-colors mb-2"
+                    >
+                        <span className="flex items-center gap-2 text-muted-foreground">
+                            {isDarkMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                            Theme
+                        </span>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-background text-foreground shadow-sm">
+                            {isDarkMode ? 'Dark' : 'Light'}
+                        </span>
+                    </button>
                     <button 
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -228,7 +281,8 @@ const Dashboard = () => {
             {/* Main Content */}
             <main className="flex-1 overflow-hidden p-6 bg-background">
                 {activeTab === 'dashboard' && <DashboardContent activeAgent={activeAgent} />}
-                {activeTab === 'agents' && <AgentManager agents={agents} refreshAgents={refreshAgents} />}
+                {activeTab === 'agent_details' && <AgentDetails activeAgent={activeAgent} />}
+                {activeTab === 'agents' && <AgentManager agents={agents} refreshAgents={refreshAgents} onSelectAgent={(id) => { setActiveAgentId(id); setActiveTab('agent_details'); }} />}
                 {activeTab === 'settings' && <SettingsPage />}
             </main>
         </div>

@@ -14,6 +14,20 @@ const data = [
 
 const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899']; // Tailwind colors: green, blue, amber, pink
 
+const renderCustomizedLabel = ({
+  cx, cy, midAngle, innerRadius, outerRadius, percent
+}: any) => {
+  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+  const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+
+  return (
+    <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-[10px] font-bold">
+      {`${(percent * 100).toFixed(0)}%`}
+    </text>
+  );
+};
+
 export function PortfolioChart({ activeAgent }: PortfolioChartProps) {
     if (!activeAgent) return <div className="p-4 text-muted-foreground text-sm">Select an agent</div>;
 
@@ -31,6 +45,8 @@ export function PortfolioChart({ activeAgent }: PortfolioChartProps) {
                         paddingAngle={5}
                         dataKey="value"
                         stroke="none"
+                        labelLine={false}
+                        label={renderCustomizedLabel}
                     >
                         {data.map((_entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

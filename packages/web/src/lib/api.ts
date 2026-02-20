@@ -47,6 +47,22 @@ export class ApiClient {
   }
 
   async getTransactions(agentId: string) {
-    return this.request<any[]>('GET', `/agents/${agentId}/transactions`);
+    return this.request<any[]>('GET', `/transactions?agentId=${agentId}&limit=50`);
+  }
+
+  async getProviders() {
+    return this.request<any[]>('GET', '/providers');
+  }
+
+  async setPrimaryProvider(id: number) {
+    return this.request<any>('PATCH', `/providers/${id}`);
+  }
+
+  async getDirectives(agentId: string) {
+    return this.request<any[]>('GET', `/directives?agentId=${agentId}`);
+  }
+
+  async addDirective(agentId: string, condition: string, action: string) {
+    return this.request<any>('POST', '/directives', { agentId, condition, action });
   }
 }

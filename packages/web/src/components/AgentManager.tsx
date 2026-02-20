@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { Bot, Plus, Power, Trash2 } from 'lucide-react';
+import { Bot, Plus } from 'lucide-react';
 import { useState } from 'react';
 import type { Agent } from '../hooks/useAgents';
 import { ApiClient } from '../lib/api';
@@ -7,11 +7,13 @@ import { ApiClient } from '../lib/api';
 interface AgentManagerProps {
     agents: Agent[];
     refreshAgents: () => void;
+    onSelectAgent?: (id: string) => void;
 }
 
-export function AgentManager({ agents, refreshAgents }: AgentManagerProps) {
+export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentManagerProps) {
     const [name, setName] = useState('');
-    const [role, setRole] = useState('Assistant');
+    const [condition, setCondition] = useState('');
+    const [action, setAction] = useState('');
     const [creating, setCreating] = useState(false);
 
     const handleCreate = async () => {
@@ -22,8 +24,16 @@ export function AgentManager({ agents, refreshAgents }: AgentManagerProps) {
         setCreating(true);
         try {
             const client = new ApiClient(token);
-            await client.createAgent(name, role);
+            // Default role added here for backwards compatibility with backend
+            const agent = await client.createAgent(name, 'Assistant');
+            
+            if (condition.trim() && action.trim()) {
+                await client.addDirective(agent.id, condition, action);
+            }
+
             setName('');
+            setCondition('');
+            setAction('');
             refreshAgents();
         } catch (e) {
             console.error(e);
@@ -34,7 +44,7 @@ export function AgentManager({ agents, refreshAgents }: AgentManagerProps) {
     };
 
     return (
-        <div className="flex flex-col h-full space-y-6">
+        <div className="flex flex-col h-full overflow-y-auto pr-2 pb-6 space-y-6">
             <header>
                 <h1 className="text-2xl font-bold tracking-tight">Manage Agents</h1>
                 <p className="text-muted-foreground">Create, configure, and monitor your autonomous agents.</p>
@@ -58,7 +68,7 @@ export function AgentManager({ agents, refreshAgents }: AgentManagerProps) {
                                 className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
                             />
                         </div>
-                        <div className="space-y-1">
+                        {/* <div className="space-y-1">
                             <label className="text-sm font-medium text-muted-foreground">Role</label>
                             <select 
                                 value={role} 
@@ -69,6 +79,21 @@ export function AgentManager({ agents, refreshAgents }: AgentManagerProps) {
                                 <option value="Trader">Trader</option>
                                 <option value="Researcher">Researcher</option>
                             </select>
+                        </div> */}
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-muted-foreground">Initial Directive (Optional)</label>
+                            <input 
+                                value={condition} 
+                                onChange={e => setCondition(e.target.value)} 
+                                placeholder="Condition (e.g. 'SOL > $1000')" 
+                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2"
+                            />
+                            <input 
+                                value={action} 
+                                onChange={e => setAction(e.target.value)} 
+                                placeholder="Action (e.g. 'Sell 1 SOL')" 
+                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                            />
                         </div>
                         <button 
                             onClick={handleCreate} 
@@ -97,7 +122,6 @@ export function AgentManager({ agents, refreshAgents }: AgentManagerProps) {
                             <thead className="text-xs text-muted-foreground uppercase bg-secondary/50">
                                 <tr>
                                     <th className="px-6 py-3 font-medium">Name</th>
-                                    <th className="px-6 py-3 font-medium">Role</th>
                                     <th className="px-6 py-3 font-medium">Status</th>
                                     <th className="px-6 py-3 font-medium">ID</th>
                                     <th className="px-6 py-3 font-medium text-right">Actions</th>
@@ -105,13 +129,12 @@ export function AgentManager({ agents, refreshAgents }: AgentManagerProps) {
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {agents.map(agent => (
-                                    <tr key={agent.id} className="hover:bg-secondary/20 transition-colors">
+                                    <tr 
+                                        key={agent.id} 
+                                        className="hover:bg-secondary/20 transition-colors cursor-pointer"
+                                        onClick={() => onSelectAgent?.(agent.id)}
+                                    >
                                         <td className="px-6 py-4 font-medium">{agent.name}</td>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary text-secondary-foreground">
-                                                {agent.role}
-                                            </span>
-                                        </td>
                                         <td className="px-6 py-4">
                                             <span className={clsx(
                                                 "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium",
@@ -132,19 +155,18 @@ export function AgentManager({ agents, refreshAgents }: AgentManagerProps) {
                                             {agent.id.slice(0, 8)}...
                                         </td>
                                         <td className="px-6 py-4 text-right space-x-2">
-                                            {/* Action buttons would go here. For now just mock icons. */}
-                                            <button className="text-muted-foreground hover:text-foreground transition-colors p-1 hover:bg-secondary rounded">
-                                                <Power className="w-4 h-4" />
-                                            </button>
-                                            <button className="text-muted-foreground hover:text-red-500 transition-colors p-1 hover:bg-secondary rounded">
-                                                 <Trash2 className="w-4 h-4" />
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); onSelectAgent?.(agent.id); }}
+                                                className="text-xs px-2 py-1 bg-primary/10 text-primary hover:bg-primary/20 rounded font-medium transition-colors"
+                                            >
+                                                Details
                                             </button>
                                         </td>
                                     </tr>
                                 ))}
                                 {agents.length === 0 && (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                                        <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">
                                             No agents created yet. Use the form to create one.
                                         </td>
                                     </tr>

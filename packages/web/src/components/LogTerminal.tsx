@@ -56,7 +56,7 @@ export function LogTerminal({ activeAgent }: LogTerminalProps) {
     if (!activeAgent) return null;
 
     return (
-        <div className="flex-1 overflow-y-auto p-4 font-mono text-sm bg-black/40 space-y-2">
+        <div className="flex-1 overflow-y-auto p-4 font-mono text-sm bg-secondary/20 space-y-2">
             {logs.map((log, i) => (
                 <div key={i} className="flex items-start gap-3 animate-in fade-in duration-300">
                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground min-w-[70px] mt-0.5 select-none opacity-60">
@@ -74,10 +74,10 @@ export function LogTerminal({ activeAgent }: LogTerminalProps) {
                         </span>
                         <span className={clsx(
                              "leading-relaxed",
-                             log.type === 'info' && "text-blue-100",
-                             log.type === 'thought' && "text-yellow-100",
-                             log.type === 'action' && "text-pink-100",
-                             log.type === 'error' && "text-red-200",
+                             log.type === 'info' && "text-blue-500 dark:text-blue-100",
+                             log.type === 'thought' && "text-yellow-600 dark:text-yellow-100",
+                             log.type === 'action' && "text-pink-600 dark:text-pink-100",
+                             log.type === 'error' && "text-red-600 dark:text-red-200",
                         )}>
                             {log.content}
                         </span>
