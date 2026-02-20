@@ -174,6 +174,11 @@ export function updateAgentStatus(id: string, status: 'running' | 'paused' | 'ki
   return db.prepare('UPDATE agents SET status = ? WHERE id = ?').run(status, id);
 }
 
+export function updateAgentProfile(id: string, name: string, loopInterval: number) {
+  const db = getDatabase();
+  return db.prepare('UPDATE agents SET name = ?, loop_interval = ? WHERE id = ?').run(name, loopInterval, id);
+}
+
 export function deleteAgent(id: string) {
   const db = getDatabase();
   db.prepare('DELETE FROM directives WHERE agent_id = ?').run(id);
@@ -275,6 +280,19 @@ export function addDirective(
   return db.prepare(
     'INSERT INTO directives (agent_id, condition, action, max_amount, cooldown) VALUES (?, ?, ?, ?, ?)'
   ).run(agentId, condition, action, maxAmount ?? null, cooldown);
+}
+
+export function updateDirective(
+  id: number,
+  condition: string,
+  action: string,
+  maxAmount?: string,
+  cooldown = 0
+) {
+  const db = getDatabase();
+  return db.prepare(
+    'UPDATE directives SET condition = ?, action = ?, max_amount = ?, cooldown = ? WHERE id = ?'
+  ).run(condition, action, maxAmount ?? null, cooldown, id);
 }
 
 export function getAgentDirectives(agentId: string) {

@@ -1,12 +1,13 @@
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  AgentRow,
-  createAgent as dbCreateAgent,
-  deleteAgent as dbDeleteAgent,
-  getAgent,
-  getAllAgents,
-  updateAgentStatus,
+    AgentRow,
+    createAgent as dbCreateAgent,
+    deleteAgent as dbDeleteAgent,
+    getAgent,
+    getAllAgents,
+    updateAgentProfile,
+    updateAgentStatus,
 } from '../lib/Database.js';
 import { createWallet, deleteWallet, getKeypair, wipeFromMemory } from '../wallet/Wallet.js';
 
@@ -101,6 +102,33 @@ export class AgentManager extends EventEmitter {
 
     updateAgentStatus(agent.id, 'paused');
     this.emit('agent:status', { agent: agent.name, status: 'paused' });
+  }
+
+  /**
+   * Update an agent's profile (name and interval).
+   * If running, applies the new interval immediately by restarting the loop.
+   */
+  async update(nameOrId: string, newName: string, newInterval: number): Promise<AgentRow> {
+    const agent = getAgent(nameOrId);
+    if (!agent) throw new Error(`Agent "${nameOrId}" not found`);
+
+    if (newName !== agent.name && getAgent(newName)) {
+      throw new Error(`Agent name "${newName}" is already taken`);
+    }
+
+    const wasRunning = this.loops.has(agent.id);
+
+    if (wasRunning) {
+      this.pause(agent.id); // Stops loop temporarily
+    }
+
+    updateAgentProfile(agent.id, newName, newInterval);
+
+    if (wasRunning) {
+      await this.start(agent.id); // Restarts loop with new interval
+    }
+
+    return getAgent(agent.id)!;
   }
 
   /**

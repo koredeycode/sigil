@@ -4,6 +4,7 @@ import {
     deleteDirective,
     getAllDirectivesForAgent,
     toggleDirective,
+    updateDirective,
 } from '../../lib/Database.js';
 
 export const directivesRouter: Router = Router();
@@ -41,6 +42,22 @@ directivesRouter.patch('/:id', (req, res) => {
     const { isActive } = req.body;
     toggleDirective(Number(id), Boolean(isActive));
     res.json({ message: 'Directive toggled successfully', data: { id: Number(id), isActive } });
+  } catch (error) {
+    res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
+  }
+});
+
+// PUT /api/directives/:id — update directive contents
+directivesRouter.put('/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const { condition, action, maxAmount, cooldown } = req.body;
+    if (!condition || !action) {
+      res.status(400).json({ message: 'condition and action are required', data: null });
+      return;
+    }
+    updateDirective(Number(id), condition, action, maxAmount, cooldown);
+    res.json({ message: 'Directive updated successfully', data: { id: Number(id), condition, action } });
   } catch (error) {
     res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }

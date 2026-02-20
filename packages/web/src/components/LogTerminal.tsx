@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import type { Agent } from '../hooks/useAgents';
 import { useSocket } from '../hooks/useSocket';
+import { ApiClient } from '../lib/api';
 
 interface LogTerminalProps {
     activeAgent: Agent | null;
@@ -20,6 +21,35 @@ export function LogTerminal({ activeAgent }: LogTerminalProps) {
 
     useEffect(() => {
         setLogs([]); // Clear on agent switch
+        if (!activeAgent) return;
+
+        const fetchPastLogs = async () => {
+            const token = localStorage.getItem('sigil_token');
+            if (!token) return;
+            try {
+                const client = new ApiClient(token);
+                const res = await client.getLogs(activeAgent.id, 50);
+                if (res.data) {
+                    const historical: LogEntry[] = res.data.reverse().map(log => {
+                        let mappedType: 'info' | 'thought' | 'action' | 'error' = 'info';
+                        if (log.action === 'llm_decision') mappedType = 'thought';
+                        else if (log.action.startsWith('tool:')) mappedType = 'action';
+                        else if (log.action.toLowerCase().includes('error')) mappedType = 'error';
+
+                        return {
+                            type: mappedType,
+                            content: log.result || log.thought || log.action,
+                            timestamp: new Date(log.timestamp).toLocaleTimeString()
+                        };
+                    });
+                    setLogs(historical);
+                }
+            } catch (e) {
+                console.error("Failed to fetch logs", e);
+            }
+        };
+
+        fetchPastLogs();
     }, [activeAgent?.id]);
 
     useEffect(() => {
@@ -38,9 +68,6 @@ export function LogTerminal({ activeAgent }: LogTerminalProps) {
         socket.on('agent:thought', (data) => handleLog({ ...data, type: 'thought' }));
         socket.on('agent:action', (data) => handleLog({ ...data, type: 'action' }));
         socket.on('agent:error', (data) => handleLog({ ...data, type: 'error' }));
-        
-        // Mock init log
-        setLogs([{ type: 'info', content: `Connected to log stream for ${activeAgent.name}`, timestamp: new Date().toLocaleTimeString() }]);
 
         return () => {
             socket.off('agent:thought');

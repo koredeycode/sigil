@@ -12,6 +12,7 @@ interface AgentManagerProps {
 
 export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentManagerProps) {
     const [name, setName] = useState('');
+    const [loopInterval, setLoopInterval] = useState(60);
     const [condition, setCondition] = useState('');
     const [action, setAction] = useState('');
     const [creating, setCreating] = useState(false);
@@ -24,15 +25,15 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
         setCreating(true);
         try {
             const client = new ApiClient(token);
-            // Default role added here for backwards compatibility with backend
-            const response = await client.createAgent(name, 'Assistant');
+            const response = await client.createAgent(name, loopInterval * 1000);
             const agent = response.data;
             
-            if (condition.trim() && action.trim()) {
+            if (agent && agent.id && condition.trim() && action.trim()) {
                 await client.addDirective(agent.id, condition, action);
             }
 
             setName('');
+            setLoopInterval(60);
             setCondition('');
             setAction('');
             refreshAgents();
@@ -61,26 +62,15 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                     
                     <div className="space-y-3">
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-muted-foreground">Agent Name</label>
+                            <label className="text-sm font-medium text-muted-foreground">Loop Interval (Seconds)</label>
                             <input 
-                                value={name} 
-                                onChange={e => setName(e.target.value)} 
-                                placeholder="e.g. TreasuryOps" 
-                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                                type="number"
+                                min="1"
+                                value={loopInterval} 
+                                onChange={e => setLoopInterval(parseInt(e.target.value) || 1)}
+                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2"
                             />
                         </div>
-                        {/* <div className="space-y-1">
-                            <label className="text-sm font-medium text-muted-foreground">Role</label>
-                            <select 
-                                value={role} 
-                                onChange={e => setRole(e.target.value)}
-                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                            >
-                                <option value="Assistant">Assistant</option>
-                                <option value="Trader">Trader</option>
-                                <option value="Researcher">Researcher</option>
-                            </select>
-                        </div> */}
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-muted-foreground">Initial Directive (Optional)</label>
                             <input 

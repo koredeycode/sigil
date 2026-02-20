@@ -1,4 +1,4 @@
-import { Bot, Check, Loader2, Monitor, Palette, Shield, Wallet } from 'lucide-react';
+import { Bot, Check, Loader2, Monitor, Palette, Plus, Shield, Wallet, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { ApiClient } from '../lib/api';
@@ -7,6 +7,14 @@ export function SettingsPage() {
     const [providers, setProviders] = useState<any[]>([]);
     const [loadingProviders, setLoadingProviders] = useState(true);
     const [settingPrimary, setSettingPrimary] = useState<number | null>(null);
+
+    // Add Provider State
+    const [isAddingProvider, setIsAddingProvider] = useState(false);
+    const [newProvider, setNewProvider] = useState('openai');
+    const [newApiKey, setNewApiKey] = useState('');
+    const [availableModels, setAvailableModels] = useState<{ id: string; label: string }[]>([]);
+    const [loadingModels, setLoadingModels] = useState(false);
+    const [selectedModel, setSelectedModel] = useState('');
 
     const { theme, setTheme } = useTheme();
     const isDarkMode = theme === 'dark';
@@ -42,6 +50,51 @@ export function SettingsPage() {
             console.error('Failed to set primary provider', e);
         } finally {
             setSettingPrimary(null);
+        }
+    };
+
+    const handleFetchModels = async () => {
+        if (!newApiKey.trim()) return;
+        const token = localStorage.getItem('sigil_token');
+        if (!token) return;
+
+        setLoadingModels(true);
+        try {
+            const client = new ApiClient(token);
+            const response = await client.fetchModels(newProvider, newApiKey);
+
+            if (response.data && response.data.error) {
+                alert(response.data.error);
+                setAvailableModels([]);
+            } else if (response.data && response.data.models) {
+                setAvailableModels(response.data.models);
+                if (response.data.models.length > 0) {
+                    setSelectedModel(response.data.models[0].id);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to fetch models', e);
+            alert('Failed to fetch models. Check API key and provider.');
+        } finally {
+            setLoadingModels(false);
+        }
+    };
+
+    const handleAddProvider = async () => {
+        if (!newApiKey.trim() || !selectedModel) return;
+        const token = localStorage.getItem('sigil_token');
+        if (!token) return;
+
+        try {
+            const client = new ApiClient(token);
+            await client.addProvider(newProvider, newApiKey, selectedModel);
+            setIsAddingProvider(false);
+            setNewApiKey('');
+            setAvailableModels([]);
+            fetchProviders();
+        } catch (e) {
+            console.error('Failed to add provider', e);
+            alert('Failed to add provider');
         }
     };
 
@@ -196,7 +249,15 @@ export function SettingsPage() {
                         <div className="bg-card border border-border rounded-xl divide-y divide-border shadow-sm">
                             <div className="p-4 flex flex-col gap-3">
                                 <div className="space-y-1">
-                                    <h3 className="font-medium text-sm">Configured Providers</h3>
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="font-medium text-sm">Configured Providers</h3>
+                                        <button 
+                                            onClick={() => setIsAddingProvider(true)}
+                                            className="text-xs flex items-center gap-1 text-primary hover:text-primary/80 font-medium"
+                                        >
+                                            <Plus className="w-3.5 h-3.5" /> Add New
+                                        </button>
+                                    </div>
                                     <p className="text-xs text-muted-foreground">Select the primary model for general reasoning</p>
                                 </div>
                                 <div className="space-y-2 mt-2">
@@ -244,6 +305,87 @@ export function SettingsPage() {
 
                  </div>
             </div>
+
+             {/* Add Provider Modal */}
+             {isAddingProvider && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                    <div className="w-full max-w-md bg-card border border-border rounded-xl shadow-lg overflow-hidden flex flex-col">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                            <h3 className="text-lg font-semibold">Add AI Provider</h3>
+                            <button onClick={() => setIsAddingProvider(false)} className="text-muted-foreground hover:text-foreground">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Provider</label>
+                                <select 
+                                    value={newProvider}
+                                    onChange={(e) => {
+                                        setNewProvider(e.target.value);
+                                        setAvailableModels([]);
+                                    }}
+                                    className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                >
+                                    <option value="openai">OpenAI</option>
+                                    <option value="anthropic">Anthropic</option>
+                                    <option value="groq">Groq</option>
+                                    <option value="google">Google Gemini</option>
+                                </select>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">API Key</label>
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="password"
+                                        value={newApiKey}
+                                        onChange={(e) => setNewApiKey(e.target.value)}
+                                        placeholder="sk-..."
+                                        className="flex-1 px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                    />
+                                    <button 
+                                        onClick={handleFetchModels}
+                                        disabled={loadingModels || !newApiKey.trim()}
+                                        className="px-3 py-2 bg-secondary text-foreground hover:bg-secondary/80 rounded-md text-sm font-medium transition-colors disabled:opacity-50"
+                                    >
+                                        {loadingModels ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Fetch Models'}
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {availableModels.length > 0 && (
+                                <div className="space-y-2 pt-2 border-t border-border">
+                                    <label className="text-sm font-medium">Select Model</label>
+                                    <select 
+                                        value={selectedModel}
+                                        onChange={(e) => setSelectedModel(e.target.value)}
+                                        className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                    >
+                                        {availableModels.map(m => (
+                                            <option key={m.id} value={m.id}>{m.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+                        </div>
+                        <div className="px-6 py-4 border-t border-border flex justify-end gap-3 bg-secondary/20">
+                            <button 
+                                onClick={() => setIsAddingProvider(false)}
+                                className="px-4 py-2 rounded-md hover:bg-secondary text-sm font-medium transition-colors border border-border"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={handleAddProvider}
+                                disabled={!selectedModel}
+                                className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium transition-colors disabled:opacity-50"
+                            >
+                                Save Provider
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

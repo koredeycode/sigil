@@ -42,10 +42,33 @@ providersRouter.post('/', (req, res) => {
 });
 
 // PATCH /api/providers/:id — set as primary
-providersRouter.patch('/:id', (req, res) => {
+providersRouter.post('/primary', (req, res) => {
   try {
-    setPrimaryProvider(Number(req.params.id));
-    res.json({ message: 'Primary provider set', data: { id: Number(req.params.id), isPrimary: true } });
+    const { id } = req.body;
+    if (!id) {
+      res.status(400).json({ message: 'Provider ID is required', data: null });
+      return;
+    }
+
+    setPrimaryProvider(Number(id));
+    res.json({ message: 'Primary provider set successfully', data: { id } });
+  } catch (error) {
+    res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
+  }
+});
+
+providersRouter.post('/models', async (req, res) => {
+  try {
+    const { provider, apiKey, baseUrl } = req.body;
+    if (!provider || !apiKey) {
+      res.status(400).json({ message: 'Provider and API Key are required', data: null });
+      return;
+    }
+
+    const { fetchModelsForProvider } = await import('../../lib/ModelFetcher.js');
+    const models = await fetchModelsForProvider(provider, apiKey, baseUrl);
+    
+    res.json({ message: 'Models fetched successfully', data: models });
   } catch (error) {
     res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }

@@ -66,9 +66,10 @@ function formatBytes(bytes: number): string {
  * Fetch available models from a provider.
  * @returns Object containing the models array and/or an error message.
  */
-export async function fetchModels(
+export async function fetchModelsForProvider(
   providerName: string,
   apiKey?: string | null,
+  baseUrl?: string | null
 ): Promise<{ models: ModelInfo[] | null; error: string | null }> {
   const config = PROVIDER_ENDPOINTS[providerName];
   if (!config) return { models: null, error: `Unknown provider: ${providerName}` };

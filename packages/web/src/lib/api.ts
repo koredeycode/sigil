@@ -1,5 +1,71 @@
 import axios from 'axios';
 
+export interface Agent {
+  id: string;
+  name: string;
+  pubkey: string;
+  status: 'running' | 'paused' | 'killed';
+  loop_interval: number;
+  created_at: string;
+}
+
+export interface ChatMessage {
+  id: number | string;
+  agent_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+}
+
+export interface ChatResponse {
+  agent: string;
+  response: string;
+  tools: any[];
+}
+
+export interface AgentLog {
+  id: number;
+  agent_id: string;
+  timestamp: string;
+  action: string;
+  result: string | null;
+  thought: string | null;
+}
+
+export interface Transaction {
+  id: number;
+  agent_id: string;
+  timestamp: string;
+  type: string;
+  token: string | null;
+  amount: number | null;
+  recipient: string | null;
+  signature: string | null;
+  status: 'pending' | 'confirmed' | 'failed';
+  fee: number | null;
+}
+
+export interface Provider {
+  id: number;
+  name: string;
+  api_key: string | null;
+  model: string;
+  is_primary: number;
+  added_at: string;
+}
+
+export interface Directive {
+  id: number;
+  agentId: string;
+  condition: string;
+  action: string;
+  isActive: number | boolean;
+  maxAmount: string | null;
+  cooldown: number;
+  lastExec: string | null;
+  createdAt: string;
+}
+
 export interface ApiResponse<T = any> {
   message: string;
   data?: T;
@@ -40,47 +106,73 @@ export class ApiClient {
     }
   }
 
-  async getAgents() {
-    return this.request<any[]>('GET', '/agents');
+  async getAgents(): Promise<ApiResponse<Agent[]>> {
+    return this.request<Agent[]>('GET', '/agents');
   }
 
-  async getAgent(id: string) {
-    return this.request<any>('GET', `/agents/${id}`);
+  async getAgent(id: string): Promise<ApiResponse<Agent>> {
+    return this.request<Agent>('GET', `/agents/${id}`);
   }
 
-  async createAgent(name: string, role: string) {
-    return this.request<any>('POST', '/agents', { name, role });
+  async createAgent(name: string, loopInterval: number): Promise<ApiResponse<Agent>> {
+    return this.request<Agent>('POST', '/agents', { name, loopInterval });
   }
 
-  async sendChat(agentId: string, message: string) {
-    return this.request<any>('POST', '/chat', { agentId, message });
+  async updateAgent(id: string, name: string, loopInterval: number): Promise<ApiResponse<Agent>> {
+    return this.request<Agent>('PUT', `/agents/${id}`, { name, loopInterval });
   }
 
-  async getChats(agentId: string, limit = 100) {
-    return this.request<any[]>('GET', `/chat/${agentId}?limit=${limit}`);
+  async sendChat(agentId: string, message: string): Promise<ApiResponse<ChatResponse>> {
+    return this.request<ChatResponse>('POST', '/chat', { agentId, message });
   }
 
-  async controlAgent(agentId: string, action: 'start' | 'pause' | 'kill') {
-    return this.request<any>('PATCH', `/agents/${agentId}`, { action });
+  async getChats(agentId: string, limit = 100): Promise<ApiResponse<ChatMessage[]>> {
+    return this.request<ChatMessage[]>('GET', `/chat/${agentId}?limit=${limit}`);
   }
 
-  async getTransactions(agentId: string) {
-    return this.request<any[]>('GET', `/transactions?agentId=${agentId}&limit=50`);
+  async controlAgent(agentId: string, action: 'start' | 'pause' | 'kill'): Promise<ApiResponse<Agent>> {
+    return this.request<Agent>('PATCH', `/agents/${agentId}`, { action });
   }
 
-  async getProviders() {
-    return this.request<any[]>('GET', '/providers');
+  async getTransactions(agentId: string): Promise<ApiResponse<Transaction[]>> {
+    return this.request<Transaction[]>('GET', `/transactions?agentId=${agentId}&limit=50`);
   }
 
-  async setPrimaryProvider(id: number) {
-    return this.request<any>('PATCH', `/providers/${id}`);
+  // --- Providers ---
+  async getProviders(): Promise<ApiResponse<Provider[]>> {
+    return this.request<Provider[]>('GET', '/providers');
   }
 
-  async getDirectives(agentId: string) {
-    return this.request<any[]>('GET', `/directives?agentId=${agentId}`);
+  async setPrimaryProvider(id: number): Promise<ApiResponse<any>> {
+    return this.request('POST', `/providers/primary`, { id });
   }
 
-  async addDirective(agentId: string, condition: string, action: string) {
-    return this.request<any>('POST', '/directives', { agentId, condition, action });
+  async fetchModels(provider: string, apiKey: string): Promise<ApiResponse<{ models?: { id: string; label: string }[]; error?: string }>> {
+    return this.request<{ models?: { id: string; label: string }[]; error?: string }>('POST', '/providers/models', { provider, apiKey });
+  }
+
+  async addProvider(provider: string, apiKey: string, model: string): Promise<ApiResponse<any>> {
+    return this.request('POST', '/providers', { name: provider, apiKey, model });
+  }
+
+  // --- Directives ---
+  async getDirectives(agentId: string): Promise<ApiResponse<Directive[]>> {
+    return this.request<Directive[]>('GET', `/directives?agentId=${agentId}`);
+  }
+
+  async addDirective(agentId: string, condition: string, action: string): Promise<ApiResponse<Directive>> {
+    return this.request<Directive>('POST', '/directives', { agentId, condition, action });
+  }
+
+  async updateDirective(id: number, condition: string, action: string): Promise<ApiResponse<Directive>> {
+    return this.request<Directive>('PUT', `/directives/${id}`, { condition, action });
+  }
+
+  async deleteDirective(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>('DELETE', `/directives/${id}`);
+  }
+
+  async getLogs(agentId: string, limit = 50): Promise<ApiResponse<AgentLog[]>> {
+    return this.request<AgentLog[]>('GET', `/agents/${agentId}/logs?limit=${limit}`);
   }
 }

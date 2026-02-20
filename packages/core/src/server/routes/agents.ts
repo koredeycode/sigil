@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { agentManager } from '../../agent/AgentManager.js';
+import { getAgentLogs } from '../../lib/Database.js';
 
 export const agentsRouter: Router = Router();
 
@@ -52,6 +53,27 @@ agentsRouter.patch('/:id', async (req, res) => {
   }
 });
 
+// PUT /api/agents/:id — update agent profile (name, interval)
+agentsRouter.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, loopInterval } = req.body;
+    
+    if (!name || !loopInterval) {
+      res.status(400).json({ message: 'name and loopInterval are required', data: null });
+      return;
+    }
+
+    const agent = await agentManager.update(id, name, loopInterval);
+    // Broadcast update
+    agentManager.emit('agent:updated', agent);
+    
+    res.json({ message: 'Agent profile updated', data: agent });
+  } catch (error) {
+    res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
+  }
+});
+
 // DELETE /api/agents/:id — destroy an agent
 agentsRouter.delete('/:id', async (req, res) => {
   try {
@@ -59,5 +81,16 @@ agentsRouter.delete('/:id', async (req, res) => {
     res.status(204).json({ message: 'Agent destroyed', data: null });
   } catch (error) {
     res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
+  }
+});
+
+// GET /api/agents/:id/logs — fetch historical logs
+agentsRouter.get('/:id/logs', (req, res) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+    const logs = getAgentLogs(req.params.id, limit);
+    res.json({ message: 'Success', data: logs });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }
 });

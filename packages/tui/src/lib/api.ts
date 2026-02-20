@@ -1,3 +1,26 @@
+export interface Agent {
+  id: string;
+  name: string;
+  pubkey: string;
+  status: 'running' | 'paused' | 'killed';
+  loop_interval: number;
+  created_at: string;
+}
+
+export interface ChatMessage {
+  id: number | string;
+  agent_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
+}
+
+export interface ChatResponse {
+  agent: string;
+  response: string;
+  tools: any[];
+}
+
 export class ApiClient {
   private baseUrl: string;
   private token: string;
@@ -30,34 +53,34 @@ export class ApiClient {
     return json as T;
   }
 
-  async getAgents() {
-    return this.fetch<any[]>('/agents');
+  async getAgents(): Promise<Agent[]> {
+    return this.fetch<Agent[]>('/agents');
   }
 
-  async getAgent(id: string) {
-    return this.fetch<any>(`/agents/${id}`);
+  async getAgent(id: string): Promise<Agent> {
+    return this.fetch<Agent>(`/agents/${id}`);
   }
 
-  async createAgent(name: string, intervalSeconds: number) {
-    return this.fetch('/agents', {
+  async createAgent(name: string, intervalSeconds: number): Promise<Agent> {
+    return this.fetch<Agent>('/agents', {
       method: 'POST',
       body: JSON.stringify({ name, interval: intervalSeconds }),
     });
   }
 
-  async sendChat(agentId: string, message: string) {
-    return this.fetch('/chat', {
+  async sendChat(agentId: string, message: string): Promise<ChatResponse> {
+    return this.fetch<ChatResponse>('/chat', {
         method: 'POST',
         body: JSON.stringify({ agentId, message }),
     });
   }
 
-  async getChats(agentId: string, limit = 10) {
-    return this.fetch<any[]>(`/chat/${agentId}?limit=${limit}`);
+  async getChats(agentId: string, limit = 10): Promise<ChatMessage[]> {
+    return this.fetch<ChatMessage[]>(`/chat/${agentId}?limit=${limit}`);
   }
 
-  async controlAgent(agentId: string, action: 'start' | 'pause' | 'kill') {
-    return this.fetch(`/agents/${agentId}`, {
+  async controlAgent(agentId: string, action: 'start' | 'pause' | 'kill'): Promise<Agent> {
+    return this.fetch<Agent>(`/agents/${agentId}`, {
         method: 'PATCH',
         body: JSON.stringify({ action }),
     });

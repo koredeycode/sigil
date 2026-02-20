@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { Activity, ExternalLink, LayoutDashboard, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
+import { Activity, Bot, ExternalLink, LayoutDashboard, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
@@ -9,6 +9,7 @@ import { LogTerminal } from './components/LogTerminal';
 import { WalletView } from './components/WalletView';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { useAgents } from './hooks/useAgents';
+import { useProviders } from './hooks/useProviders';
 import { SocketProvider } from './hooks/useSocket';
 import { AgentDetails } from './pages/AgentDetails';
 import { AgentManager } from './pages/AgentManager';
@@ -42,8 +43,9 @@ const Login = ({ onLogin }: { onLogin: (token: string) => void }) => {
                         />
                     </div>
                     <button 
-                        onClick={() => onLogin(input)} 
-                        className="w-full py-2 px-4 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+                        onClick={() => onLogin(input)}
+                        disabled={!input}
+                        className="w-full py-2 px-4 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Connect to Sigil
                     </button>
@@ -55,6 +57,7 @@ const Login = ({ onLogin }: { onLogin: (token: string) => void }) => {
 
 const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
     const [isLogsOpen, setIsLogsOpen] = useState(false);
+    const { primaryProvider } = useProviders();
 
     if (!activeAgent) {
          return (
@@ -88,6 +91,14 @@ const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
                     )}>
                         {activeAgent.status}
                     </div>
+                    {primaryProvider && (
+                        <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary text-xs font-medium text-muted-foreground border border-border">
+                            <Bot className="w-3.5 h-3.5" />
+                            <span>{primaryProvider.name}</span>
+                            <span className="opacity-50">·</span>
+                            <span className="font-mono">{primaryProvider.model}</span>
+                        </div>
+                    )}
                 </div>
                 
                 <button
@@ -168,7 +179,6 @@ const Dashboard = () => {
     // Logout function
     const handleLogout = () => {
         localStorage.removeItem('sigil_token');
-        window.location.reload();
     }
 
     if (!agents) return (

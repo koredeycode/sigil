@@ -47,7 +47,7 @@ export function Layout() {
         
         <Box height={1} />
         <Text dimColor>------- Status -------</Text>
-        <Text color="white">Active Agents: <Text color="green">{agents.filter(a => a.status === 'active').length}</Text></Text>
+        <Text color="white">Active Agents: <Text color="green">{agents.filter(a => a.status === 'running').length}</Text></Text>
         <Text color="white">Total Agents: <Text color="blue">{agents.length}</Text></Text>
         
         <Box height={1} />

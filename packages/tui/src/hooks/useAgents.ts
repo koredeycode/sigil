@@ -7,7 +7,7 @@ import { useSocket } from './useSocket.js';
 export interface Agent {
   id: string;
   name: string;
-  status: 'active' | 'paused' | 'stopped';
+  status: 'running' | 'paused' | 'killed';
 }
 
 export function useAgents() {

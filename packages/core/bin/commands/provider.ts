@@ -2,7 +2,7 @@ import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
 import { encryptApiKey } from '../../src/lib/Auth.js';
 import { addProvider, getAllProviders, getDatabase, removeProvider, setPrimaryProvider } from '../../src/lib/Database.js';
-import { fetchModels } from '../../src/lib/ModelFetcher.js';
+import { fetchModelsForProvider } from '../../src/lib/ModelFetcher.js';
 
 export function registerProviderCommand(program: Command) {
   const provider = program.command('provider').description('Manage LLM providers');
@@ -43,7 +43,7 @@ export function registerProviderCommand(program: Command) {
           // Try to fetch models dynamically
           const s = clack.spinner();
           s.start(`Fetching available models from ${name}...`);
-          const { models, error } = await fetchModels(name, opts?.key ?? null);
+          const { models, error } = await fetchModelsForProvider(name, opts?.key ?? null);
           s.stop(models ? `Found ${models.length} models` : 'Could not fetch models — enter manually');
 
           if (error) {

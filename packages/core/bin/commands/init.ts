@@ -3,7 +3,7 @@ import type { Command } from 'commander';
 import { agentManager } from '../../src/agent/AgentManager.js';
 import { encryptApiKey } from '../../src/lib/Auth.js';
 import { addProvider, getDatabase } from '../../src/lib/Database.js';
-import { fetchModels } from '../../src/lib/ModelFetcher.js';
+import { fetchModelsForProvider } from '../../src/lib/ModelFetcher.js';
 
 export function registerInitCommand(program: Command) {
   program
@@ -39,7 +39,7 @@ export function registerInitCommand(program: Command) {
       // Fetch models dynamically
       const s = clack.spinner();
       s.start(`Fetching available models from ${String(providerName)}...`);
-      const { models, error } = await fetchModels(String(providerName), apiKey ? String(apiKey) : null);
+      const { models, error } = await fetchModelsForProvider(String(providerName), apiKey ? String(apiKey) : null);
       s.stop(models ? `Found ${models.length} models` : 'Could not fetch models — enter manually');
 
       if (error) {

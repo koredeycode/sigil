@@ -1,9 +1,12 @@
-import { Copy, Pause, Play, Square, Terminal } from 'lucide-react';
+import { Copy, Pause, Play, Settings, Square, Terminal, X } from 'lucide-react';
+import { useState } from 'react';
 import { DirectiveManager } from '../components/DirectiveManager';
 import { ApiClient } from '../lib/api';
 
 export function AgentDetails({ activeAgent }: { activeAgent: any }) {
-    // const { apiPort, token } = useConfig();
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [editInterval, setEditInterval] = useState(60);
 
     if (!activeAgent) return null;
 
@@ -28,6 +31,27 @@ export function AgentDetails({ activeAgent }: { activeAgent: any }) {
     const isPaused = activeAgent.status === 'paused';
     const isKilled = activeAgent.status === 'killed';
 
+    const openEditProfile = () => {
+        setEditName(activeAgent.name);
+        setEditInterval(activeAgent.loop_interval / 1000);
+        setIsEditingProfile(true);
+    };
+
+    const handleUpdateProfile = async () => {
+        if (!editName.trim() || editInterval < 1) return;
+        const token = localStorage.getItem('sigil_token');
+        if (!token) return;
+
+        try {
+            const client = new ApiClient(token);
+            await client.updateAgent(activeAgent.id, editName.trim(), editInterval * 1000);
+            setIsEditingProfile(false);
+        } catch (error) {
+            console.error('Failed to update agent profile:', error);
+            alert('Failed to update agent profile');
+        }
+    };
+
     return (
         <div className="flex flex-col h-full space-y-6 overflow-y-auto pr-2">
             <header className="flex flex-col space-y-2">
@@ -43,10 +67,19 @@ export function AgentDetails({ activeAgent }: { activeAgent: any }) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Info Card */}
                 <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
-                    <h2 className="text-lg font-semibold flex items-center gap-2 border-b border-border pb-3">
-                        <Terminal className="w-5 h-5 text-muted-foreground" />
-                        Agent Profile
-                    </h2>
+                    <div className="flex items-center justify-between border-b border-border pb-3">
+                        <h2 className="text-lg font-semibold flex items-center gap-2">
+                            <Terminal className="w-5 h-5 text-muted-foreground" />
+                            Agent Profile
+                        </h2>
+                        <button 
+                            onClick={openEditProfile}
+                            className="p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground rounded transition-colors"
+                            title="Edit Profile"
+                        >
+                            <Settings className="w-4 h-4" />
+                        </button>
+                    </div>
                     
                     <div className="space-y-4">
                         <div className="space-y-1">
@@ -137,6 +170,56 @@ export function AgentDetails({ activeAgent }: { activeAgent: any }) {
                     </div>
                 </div>
             </div>
+
+            {/* Edit Profile Modal */}
+            {isEditingProfile && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                    <div className="w-full max-w-md bg-card border border-border rounded-xl shadow-lg overflow-hidden flex flex-col">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+                            <h3 className="text-lg font-semibold">Edit Agent Profile</h3>
+                            <button onClick={() => setIsEditingProfile(false)} className="text-muted-foreground hover:text-foreground">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Agent Name</label>
+                                <input 
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                    placeholder="e.g. TradingBot_v2"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Loop Interval (Seconds)</label>
+                                <input 
+                                    type="number"
+                                    value={editInterval}
+                                    onChange={(e) => setEditInterval(parseInt(e.target.value) || 1)}
+                                    min="1"
+                                    className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                />
+                            </div>
+                        </div>
+                        <div className="px-6 py-4 border-t border-border flex justify-end gap-3 bg-secondary/20">
+                            <button 
+                                onClick={() => setIsEditingProfile(false)}
+                                className="px-4 py-2 rounded-md hover:bg-secondary text-sm font-medium transition-colors border border-border"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={handleUpdateProfile}
+                                disabled={!editName.trim() || editInterval < 1}
+                                className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium transition-colors disabled:opacity-50"
+                            >
+                                Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

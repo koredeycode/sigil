@@ -100,7 +100,7 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
                                     ? 'bg-red-500/10 text-red-500 rounded-bl-sm italic'
                                     : 'bg-secondary text-secondary-foreground rounded-bl-sm border border-border'
                             }`}>
-                                {msg.content}
+                                {msg.content || "No message content"}
                             </div>
                         </div>
                     ))
