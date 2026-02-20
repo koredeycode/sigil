@@ -2,6 +2,7 @@ import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
 import { encryptApiKey } from '../../src/lib/Auth.js';
 import { addProvider, getAllProviders, getDatabase, removeProvider, setPrimaryProvider } from '../../src/lib/Database.js';
+import { fetchModels } from '../../src/lib/ModelFetcher.js';
 
 export function registerProviderCommand(program: Command) {
   const provider = program.command('provider').description('Manage LLM providers');
@@ -39,13 +40,47 @@ export function registerProviderCommand(program: Command) {
         }
 
         if (!opts?.model) {
-          const model = await clack.text({
-            message: 'Model name:',
-            placeholder: 'e.g. gpt-4o, llama-3.1-70b-versatile',
-            validate: (val) => val.length < 1 ? 'Model name cannot be empty' : undefined,
-          });
-          if (clack.isCancel(model)) { clack.cancel('Cancelled.'); process.exit(0); }
-          opts = { ...opts, model: String(model) };
+          // Try to fetch models dynamically
+          const s = clack.spinner();
+          s.start(`Fetching available models from ${name}...`);
+          const { models, error } = await fetchModels(name, opts?.key ?? null);
+          s.stop(models ? `Found ${models.length} models` : 'Could not fetch models — enter manually');
+
+          if (error) {
+            clack.log.error(error);
+          }
+
+          if (models && models.length > 0) {
+            const modelOptions = [
+              ...models.map(m => ({ value: m.id, label: m.label })),
+              { value: '__manual__', label: '✏️  Enter manually...' },
+            ];
+
+            const chosen = await clack.select({
+              message: 'Select a model:',
+              options: modelOptions,
+            });
+            if (clack.isCancel(chosen)) { clack.cancel('Cancelled.'); process.exit(0); }
+
+            if (String(chosen) === '__manual__') {
+              const manual = await clack.text({
+                message: 'Model name:',
+                validate: (val) => val.length < 1 ? 'Model name cannot be empty' : undefined,
+              });
+              if (clack.isCancel(manual)) { clack.cancel('Cancelled.'); process.exit(0); }
+              opts = { ...opts, model: String(manual) };
+            } else {
+              opts = { ...opts, model: String(chosen) };
+            }
+          } else {
+            const manual = await clack.text({
+              message: 'Model name:',
+              placeholder: 'e.g. gpt-4o, llama-3.1-70b-versatile',
+              validate: (val) => val.length < 1 ? 'Model name cannot be empty' : undefined,
+            });
+            if (clack.isCancel(manual)) { clack.cancel('Cancelled.'); process.exit(0); }
+            opts = { ...opts, model: String(manual) };
+          }
         }
       }
 

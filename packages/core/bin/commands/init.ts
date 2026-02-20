@@ -3,6 +3,7 @@ import type { Command } from 'commander';
 import { agentManager } from '../../src/agent/AgentManager.js';
 import { encryptApiKey } from '../../src/lib/Auth.js';
 import { addProvider, getDatabase } from '../../src/lib/Database.js';
+import { fetchModels } from '../../src/lib/ModelFetcher.js';
 
 export function registerInitCommand(program: Command) {
   program
@@ -35,62 +36,41 @@ export function registerInitCommand(program: Command) {
       }
 
       // Model selection options per provider
-      const modelOptions: Record<string, { value: string; label: string }[]> = {
-        groq: [
-          { value: 'llama-3.1-70b-versatile', label: 'Llama 3.1 70B (Versatile)' },
-          { value: 'llama-3.1-8b-instant', label: 'Llama 3.1 8B (Instant)' },
-          { value: 'llama3-70b-8192', label: 'Llama 3 70B' },
-          { value: 'mixtral-8x7b-32768', label: 'Mixtral 8x7B' },
-          { value: 'gemma-7b-it', label: 'Gemma 7B' },
-        ],
-        openai: [
-          { value: 'gpt-4o', label: 'GPT-4o' },
-          { value: 'gpt-4o-mini', label: 'GPT-4o Mini' },
-          { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
-          { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo' },
-        ],
-        anthropic: [
-          { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
-          { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus' },
-          { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
-        ],
-        google: [
-          { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
-          { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
-        ],
-        ollama: [
-          { value: 'llama3', label: 'Llama 3' },
-          { value: 'mistral', label: 'Mistral' },
-          { value: 'gemma', label: 'Gemma' },
-          { value: 'codellama', label: 'CodeLlama' },
-          { value: 'manual', label: 'Enter manually...' },
-        ],
-        lmstudio: [
-          { value: 'default', label: 'Default (Loaded Model)' },
-          { value: 'manual', label: 'Enter manually...' },
-        ],
-      };
+      // Fetch models dynamically
+      const s = clack.spinner();
+      s.start(`Fetching available models from ${String(providerName)}...`);
+      const { models, error } = await fetchModels(String(providerName), apiKey ? String(apiKey) : null);
+      s.stop(models ? `Found ${models.length} models` : 'Could not fetch models — enter manually');
 
-      const options = modelOptions[String(providerName)] || [];
+      if (error) {
+        clack.log.error(error);
+      }
+
       let model: string | symbol = '';
 
-      if (options.length > 0) {
+      if (models && models.length > 0) {
+        const modelOptions = [
+          ...models.map(m => ({ value: m.id, label: m.label })),
+          { value: '__manual__', label: '✏️  Enter manually...' },
+        ];
+
         model = await clack.select({
           message: 'Which model?',
-          options: options,
+          options: modelOptions,
         });
-        
-        if (model === 'manual') {
-            model = await clack.text({
-                message: 'Enter model name manually:',
-                validate: (val) => val.length < 1 ? 'Model name cannot be empty' : undefined,
-            });
+
+        if (String(model) === '__manual__') {
+          model = await clack.text({
+            message: 'Enter model name manually:',
+            validate: (val) => val.length < 1 ? 'Model name cannot be empty' : undefined,
+          });
         }
       } else {
         model = await clack.text({
           message: 'Which model?',
           initialValue: '',
-           validate: (val) => val.length < 1 ? 'Model name cannot be empty' : undefined,
+          placeholder: 'e.g. gpt-4o',
+          validate: (val) => val.length < 1 ? 'Model name cannot be empty' : undefined,
         });
       }
 
