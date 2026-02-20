@@ -8,8 +8,14 @@ interface TransactionLedgerProps {
     activeAgent: Agent | null;
 }
 
+interface Transaction {
+    signature: string | null;
+    amount?: number | string | null;
+    status: 'confirmed' | 'pending' | 'failed';
+}
+
 export function TransactionLedger({ activeAgent }: TransactionLedgerProps) {
-    const [transactions, setTransactions] = useState<any[]>([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -43,7 +49,7 @@ export function TransactionLedger({ activeAgent }: TransactionLedgerProps) {
                     {transactions.length === 0 ? (
                         <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground text-xs">No transactions recorded</td></tr>
                     ) : (
-                        transactions.map((tx: any) => (
+                        transactions.map((tx: Transaction) => (
                             <tr key={tx.signature} className="hover:bg-secondary/10 transition-colors">
                                 <td className="px-4 py-2">
                                      {/* Mock Type Icon */}
@@ -53,10 +59,12 @@ export function TransactionLedger({ activeAgent }: TransactionLedgerProps) {
                                 </td>
                                 <td className="px-4 py-2">
                                     <div className="flex items-center gap-1">
-                                        <span className="font-mono text-xs text-muted-foreground">{tx.signature.slice(0, 8)}...</span>
-                                        <a href={`https://explorer.solana.com/tx/${tx.signature}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                                           <ExternalLink className="w-3 h-3 cursor-pointer" />
-                                        </a>
+                                        <span className="font-mono text-xs text-muted-foreground">{tx.signature ? tx.signature.slice(0, 8) : 'Pending'}...</span>
+                                        {tx.signature && (
+                                            <a href={`https://explorer.solana.com/tx/${tx.signature}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                                               <ExternalLink className="w-3 h-3 cursor-pointer" />
+                                            </a>
+                                        )}
                                     </div>
                                 </td>
                                 <td className="px-4 py-2 font-mono text-xs">

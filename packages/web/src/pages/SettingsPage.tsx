@@ -3,8 +3,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { ApiClient } from '../lib/api';
 
+export interface AIProvider {
+    id: number;
+    name: string;
+    model: string;
+    is_primary: number;
+}
+
 export function SettingsPage() {
-    const [providers, setProviders] = useState<any[]>([]);
+    const [providers, setProviders] = useState<AIProvider[]>([]);
     const [loadingProviders, setLoadingProviders] = useState(true);
     const [settingPrimary, setSettingPrimary] = useState<number | null>(null);
 

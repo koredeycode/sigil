@@ -6,8 +6,11 @@ import { useSocket } from './useSocket'; // Adjusted import path
 export interface Agent {
   id: string;
   name: string;
+  role?: string;
   status: 'running' | 'paused' | 'killed';
   loop_interval: number;
+  pubkey?: string;
+  created_at?: string;
 }
 
 export function useAgents() {

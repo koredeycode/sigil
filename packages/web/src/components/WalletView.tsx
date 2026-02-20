@@ -12,7 +12,9 @@ const MOCK_ASSETS = [
     { name: 'USD Coin', symbol: 'USDC', balance: '374.41', fiat: '$374.41', icon: 'bg-blue-600' },
 ];
 
-export function WalletView({ activeAgent }: { activeAgent: any }) {
+import type { Agent } from '../hooks/useAgents';
+
+export function WalletView({ activeAgent }: { activeAgent: Agent | null }) {
     const [activeTab, setActiveTab] = useState<'portfolio' | 'transactions'>('portfolio');
     const [showChart, setShowChart] = useState(false);
 

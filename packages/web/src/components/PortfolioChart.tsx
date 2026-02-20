@@ -14,9 +14,18 @@ const data = [
 
 const COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899']; // Tailwind colors: green, blue, amber, pink
 
+interface LabelProps {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  percent: number;
+}
+
 const renderCustomizedLabel = ({
   cx, cy, midAngle, innerRadius, outerRadius, percent
-}: any) => {
+}: LabelProps) => {
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
   const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
   const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);

@@ -8,6 +8,7 @@ import { ChatBox } from './components/ChatBox';
 import { LogTerminal } from './components/LogTerminal';
 import { WalletView } from './components/WalletView';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import type { Agent } from './hooks/useAgents';
 import { useAgents } from './hooks/useAgents';
 import { useProviders } from './hooks/useProviders';
 import { SocketProvider } from './hooks/useSocket';
@@ -70,7 +71,8 @@ const Login = ({ onLogin }: { onLogin: (token: string) => void }) => {
     );
 };
 
-const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
+
+const DashboardContent = ({ activeAgent }: { activeAgent: Agent | null }) => {
     const [isLogsOpen, setIsLogsOpen] = useState(false);
     const { primaryProvider } = useProviders();
 
@@ -139,7 +141,7 @@ const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
                         "px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide",
                         activeAgent.status === 'running' && "bg-green-500/15 text-green-500",
                         activeAgent.status === 'paused' && "bg-orange-500/15 text-orange-500",
-                        activeAgent.status === 'stopped' && "bg-red-500/15 text-red-500",
+                        activeAgent.status === 'killed' && "bg-red-500/15 text-red-500",
                     )}>
                         {activeAgent.status}
                     </div>

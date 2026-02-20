@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { DirectiveManager } from '../components/DirectiveManager';
 import { ApiClient } from '../lib/api';
 
-export function AgentDetails({ activeAgent }: { activeAgent: any }) {
+import type { Agent } from '../hooks/useAgents';
+
+export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [editName, setEditName] = useState('');
     const [editInterval, setEditInterval] = useState(60);
@@ -85,9 +87,9 @@ export function AgentDetails({ activeAgent }: { activeAgent: any }) {
                         <div className="space-y-1">
                             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Public Key</label>
                             <div className="flex items-center gap-2 bg-secondary/50 p-2.5 rounded-md border border-border">
-                                <code className="text-sm flex-1 truncate">{activeAgent.pubkey}</code>
+                                <code className="text-sm flex-1 truncate">{activeAgent.pubkey || 'No Pubkey'}</code>
                                 <button 
-                                    onClick={() => copyToClipboard(activeAgent.pubkey)}
+                                    onClick={() => activeAgent.pubkey && copyToClipboard(activeAgent.pubkey)}
                                     className="p-1.5 hover:bg-secondary rounded text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     <Copy className="w-4 h-4" />
@@ -116,7 +118,7 @@ export function AgentDetails({ activeAgent }: { activeAgent: any }) {
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Created</label>
-                                <div className="font-medium text-sm text-foreground/80">{new Date(activeAgent.created_at).toLocaleDateString()}</div>
+                                <div className="font-medium text-sm text-foreground/80">{activeAgent.created_at ? new Date(activeAgent.created_at).toLocaleDateString() : 'Unknown'}</div>
                             </div>
                         </div>
 

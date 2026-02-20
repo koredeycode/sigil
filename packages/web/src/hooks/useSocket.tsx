@@ -56,8 +56,12 @@ export function SocketProvider({ children }: SocketProviderProps) {
     });
 
     socketInstance.on('connect', () => {
-      console.log('Socket connected');
+      console.log('[Socket] Successfully connected to:', API_URL);
       setConnected(true);
+    });
+
+    socketInstance.on('connect_error', (error) => {
+        console.error('[Socket] Connection failed:', error);
     });
 
     socketInstance.on('disconnect', () => {

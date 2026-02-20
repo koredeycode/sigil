@@ -29,8 +29,13 @@ export function setupSocket(io: SocketIOServer): void {
     'agent:destroyed',
   ];
 
+  interface AgentEventData {
+    agent?: string;
+    [key: string]: unknown;
+  }
+
   for (const event of events) {
-    agentManager.on(event, (data: any) => {
+    agentManager.on(event, (data: AgentEventData) => {
       // Emit to the agent-specific namespace
       if (data.agent) {
         io.of(`/agent/${data.agent}`).emit(event, data);

@@ -55,10 +55,10 @@ export function LogTerminal({ activeAgent }: LogTerminalProps) {
     useEffect(() => {
         if (!socket || !activeAgent) return;
 
-        const handleLog = (data: any) => {
+        const handleLog = (data: Record<string, string>) => {
             if (data.agentId === activeAgent.id) {
                 setLogs(prev => [...prev, {
-                    type: data.type,
+                    type: data.type as 'info' | 'thought' | 'action' | 'error',
                     content: data.content,
                     timestamp: new Date().toLocaleTimeString()
                 }]);
