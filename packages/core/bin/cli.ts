@@ -5,12 +5,16 @@ import { Command } from 'commander';
 import { registerAgentCommand } from './commands/agent.js';
 import { registerAuthCommand } from './commands/auth.js';
 import { registerChatCommand } from './commands/chat.js';
+import { registerDashboardCommand } from './commands/dashboard.js';
 import { registerDirectiveCommand } from './commands/directive.js';
-import { registerInitCommand } from './commands/init.js';
+import { registerHealthCommand } from './commands/health.js';
 import { registerKillCommand } from './commands/kill.js';
 import { registerLogsCommand } from './commands/logs.js';
+import { registerOnboardCommand } from './commands/onboard.js';
 import { registerProviderCommand } from './commands/provider.js';
 import { registerStartCommand } from './commands/start.js';
+import { registerStatusCommand } from './commands/status.js';
+import { registerStopCommand } from './commands/stop.js';
 import { register as registerTuiCommand } from './commands/tui.js';
 import { registerTxCommand } from './commands/tx.js';
 
@@ -35,8 +39,12 @@ console.log('  The Local-First Autonomous Agent for Solana\n');
 
 // Register all command groups
 try {
-  registerInitCommand(program);
+  registerOnboardCommand(program);
   registerStartCommand(program);
+  registerStopCommand(program);
+  registerStatusCommand(program);
+  registerHealthCommand(program);
+  registerDashboardCommand(program);
   registerKillCommand(program);
   registerAgentCommand(program);
   registerDirectiveCommand(program);

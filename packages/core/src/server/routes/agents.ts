@@ -13,12 +13,12 @@ agentsRouter.get('/', (_req, res) => {
 // POST /api/agents — create a new agent
 agentsRouter.post('/', async (req, res) => {
   try {
-    const { name, loopInterval } = req.body;
+    const { name, loopInterval, privateKey } = req.body;
     if (!name) {
       res.status(400).json({ message: 'Agent name is required', data: null });
       return;
     }
-    const agent = await agentManager.create(name, loopInterval);
+    const agent = await agentManager.create(name, loopInterval, privateKey);
     res.status(201).json({ message: 'Agent created successfully', data: agent });
   } catch (error) {
     res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });

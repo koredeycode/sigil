@@ -33,8 +33,9 @@ export function registerAgentCommand(program: Command) {
   agent
     .command('create [name]')
     .option('-i, --interval <seconds>', 'Loop interval in seconds', '60')
-    .description('Create a new agent with its own wallet')
-    .action(async (name?: string, opts?: { interval: string }) => {
+    .option('-k, --key <privateKey>', 'Optional base58 private key to import')
+    .description('Create a new agent with its own wallet or import one')
+    .action(async (name?: string, opts?: { interval: string, key?: string }) => {
       getDatabase();
 
       if (!name) {
@@ -54,10 +55,27 @@ export function registerAgentCommand(program: Command) {
           validate: (val) => isNaN(Number(val)) ? 'Must be a number' : undefined,
         });
         if (clack.isCancel(inputInterval)) { clack.cancel('Cancelled.'); process.exit(0); }
-        opts = { interval: String(inputInterval) };
+        
+        const wantImport = await clack.confirm({
+          message: 'Do you want to import an existing Solana wallet using a private key? (Default: No, generate new)',
+          initialValue: false,
+        });
+        if (clack.isCancel(wantImport)) { clack.cancel('Cancelled.'); process.exit(0); }
+
+        let privateKey: string | undefined = undefined;
+        if (wantImport) {
+          const inputKey = await clack.password({
+            message: 'Enter base58 Private Key (hidden):',
+            validate: (val) => val.length < 32 ? 'Key seems too short' : undefined,
+          });
+          if (clack.isCancel(inputKey)) { clack.cancel('Cancelled.'); process.exit(0); }
+          privateKey = String(inputKey);
+        }
+
+        opts = { interval: String(inputInterval), key: privateKey };
       }
 
-      const a = await agentManager.create(name, Number(opts!.interval) * 1000);
+      const a = await agentManager.create(name, Number(opts!.interval) * 1000, opts!.key);
       clack.log.success(`Agent "${name}" created. Wallet: ${a.pubkey}`);
     });
 

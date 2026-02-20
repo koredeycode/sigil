@@ -9,7 +9,7 @@ import {
     updateAgentProfile,
     updateAgentStatus,
 } from '../lib/Database.js';
-import { createWallet, deleteWallet, getKeypair, wipeFromMemory } from '../wallet/Wallet.js';
+import { createWallet, deleteWallet, getKeypair, importWallet, wipeFromMemory } from '../wallet/Wallet.js';
 
 /**
  * AgentManager — manages the lifecycle of all agents.
@@ -28,9 +28,9 @@ export class AgentManager extends EventEmitter {
   }
 
   /**
-   * Create a new agent with its own wallet.
+   * Create a new agent with its own wallet or import an existing one.
    */
-  async create(name: string, loopInterval = 60000): Promise<AgentRow> {
+  async create(name: string, loopInterval = 60000, privateKey?: string): Promise<AgentRow> {
     // Check for duplicate name
     const existing = getAgent(name);
     if (existing) {
@@ -38,7 +38,13 @@ export class AgentManager extends EventEmitter {
     }
 
     const id = uuidv4();
-    const pubkey = await createWallet(name);
+    let pubkey: string;
+
+    if (privateKey) {
+      pubkey = await importWallet(name, privateKey);
+    } else {
+      pubkey = await createWallet(name);
+    }
 
     dbCreateAgent(id, name, pubkey, loopInterval);
 

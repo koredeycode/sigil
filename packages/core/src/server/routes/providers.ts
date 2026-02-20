@@ -6,6 +6,7 @@ import {
     removeProvider,
     setPrimaryProvider,
 } from '../../lib/Database.js';
+import { fetchModelsForProvider } from '../../lib/ModelFetcher.js';
 
 export const providersRouter: Router = Router();
 
@@ -65,7 +66,7 @@ providersRouter.post('/models', async (req, res) => {
       return;
     }
 
-    const { fetchModelsForProvider } = await import('../../lib/ModelFetcher.js');
+    
     const models = await fetchModelsForProvider(provider, apiKey, baseUrl);
     
     res.json({ message: 'Models fetched successfully', data: models });

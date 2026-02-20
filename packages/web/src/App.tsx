@@ -26,12 +26,27 @@ const Login = ({ onLogin }: { onLogin: (token: string) => void }) => {
         <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
             <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-xl border border-border shadow-lg">
                 <div className="flex flex-col items-center space-y-2">
-                    <div className="p-3 bg-primary/10 rounded-full">
+                    <div className="p-3 bg-primary/10 rounded-full mb-2">
                         <Activity className="w-8 h-8 text-primary" />
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-                    <p className="text-sm text-muted-foreground">Enter your authentication token to continue</p>
+                    <h1 className="text-2xl font-bold tracking-tight">Connection Required</h1>
+                    <p className="text-sm text-muted-foreground">Local session token not found</p>
                 </div>
+
+                <div className="p-4 bg-secondary/30 border border-border rounded-lg text-sm space-y-3">
+                    <p className="font-medium">How to connect:</p>
+                    <ol className="list-decimal list-outside ml-4 space-y-2 text-muted-foreground">
+                        <li>Open your terminal</li>
+                        <li>Run <code className="px-1.5 py-0.5 bg-background border border-border rounded font-mono text-xs text-foreground">sigil start</code> to start the daemon</li>
+                        <li>Run <code className="px-1.5 py-0.5 bg-background border border-border rounded font-mono text-xs text-foreground">sigil dashboard</code> to open this page automatically</li>
+                    </ol>
+                    <div className="pt-3 mt-3 border-t border-border">
+                        <p className="text-xs text-muted-foreground">
+                            Alternatively, paste the session token printed by the CLI below:
+                        </p>
+                    </div>
+                </div>
+
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <input 
@@ -314,7 +329,23 @@ const Dashboard = () => {
 };
 
 function App() {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('sigil_token'));
+  const [token, setToken] = useState<string | null>(() => {
+      // First check hash for direct dashboard injection
+      const hash = window.location.hash;
+      let initialToken = null;
+      if (hash.startsWith('#token=')) {
+          initialToken = hash.replace('#token=', '');
+          // Clear hash for cleaner URL
+          window.location.hash = '';
+      }
+      
+      // Fallback to local storage
+      const finalToken = initialToken || localStorage.getItem('sigil_token');
+      if (finalToken) {
+          localStorage.setItem('sigil_token', finalToken);
+      }
+      return finalToken;
+  });
 
   const handleLogin = (t: string) => {
       localStorage.setItem('sigil_token', t);

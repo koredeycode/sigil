@@ -7,7 +7,7 @@ export interface Agent {
   id: string;
   name: string;
   status: 'running' | 'paused' | 'killed';
-  role: string;
+  loop_interval: number;
 }
 
 export function useAgents() {

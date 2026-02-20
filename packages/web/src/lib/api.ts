@@ -114,8 +114,8 @@ export class ApiClient {
     return this.request<Agent>('GET', `/agents/${id}`);
   }
 
-  async createAgent(name: string, loopInterval: number): Promise<ApiResponse<Agent>> {
-    return this.request<Agent>('POST', '/agents', { name, loopInterval });
+  async createAgent(name: string, loopInterval: number, privateKey?: string): Promise<ApiResponse<Agent>> {
+    return this.request<Agent>('POST', '/agents', { name, loopInterval, privateKey });
   }
 
   async updateAgent(id: string, name: string, loopInterval: number): Promise<ApiResponse<Agent>> {

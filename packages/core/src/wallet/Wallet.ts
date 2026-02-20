@@ -1,4 +1,5 @@
 import { Keypair } from '@solana/web3.js';
+import bs58 from 'bs58';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -111,7 +112,7 @@ export async function createWallet(agentName: string): Promise<string> {
  * Returns the public key (base58).
  */
 export async function importWallet(agentName: string, privateKeyBase58: string): Promise<string> {
-  const secretKey = Buffer.from(privateKeyBase58, 'base64');
+  const secretKey = bs58.decode(privateKeyBase58);
   const keypair = Keypair.fromSecretKey(secretKey);
 
   saveKeyToFile(agentName, keypair.secretKey);

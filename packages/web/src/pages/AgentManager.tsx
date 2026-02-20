@@ -13,6 +13,7 @@ interface AgentManagerProps {
 export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentManagerProps) {
     const [name, setName] = useState('');
     const [loopInterval, setLoopInterval] = useState(60);
+    const [privateKey, setPrivateKey] = useState('');
     const [condition, setCondition] = useState('');
     const [action, setAction] = useState('');
     const [creating, setCreating] = useState(false);
@@ -25,7 +26,7 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
         setCreating(true);
         try {
             const client = new ApiClient(token);
-            const response = await client.createAgent(name, loopInterval * 1000);
+            const response = await client.createAgent(name, loopInterval * 1000, privateKey ? privateKey.trim() : undefined);
             const agent = response.data;
             
             if (agent && agent.id && condition.trim() && action.trim()) {
@@ -34,6 +35,7 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
 
             setName('');
             setLoopInterval(60);
+            setPrivateKey('');
             setCondition('');
             setAction('');
             refreshAgents();
@@ -62,6 +64,15 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                     
                     <div className="space-y-3">
                         <div className="space-y-1">
+                            <label className="text-sm font-medium text-muted-foreground">Name</label>
+                            <input 
+                                value={name} 
+                                onChange={e => setName(e.target.value)}
+                                placeholder="e.g. treasury-agent" 
+                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2 font-mono"
+                            />
+                        </div>
+                        <div className="space-y-1">
                             <label className="text-sm font-medium text-muted-foreground">Loop Interval (Seconds)</label>
                             <input 
                                 type="number"
@@ -69,6 +80,16 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                                 value={loopInterval} 
                                 onChange={e => setLoopInterval(parseInt(e.target.value) || 1)}
                                 className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-sm font-medium text-muted-foreground">Private Key (Optional)</label>
+                            <input 
+                                type="password"
+                                value={privateKey} 
+                                onChange={e => setPrivateKey(e.target.value)}
+                                placeholder="Base58 Private Key" 
+                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2 font-mono"
                             />
                         </div>
                         <div className="space-y-1">
