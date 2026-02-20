@@ -74,6 +74,43 @@ const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
     const [isLogsOpen, setIsLogsOpen] = useState(false);
     const { primaryProvider } = useProviders();
 
+    const [leftWidth, setLeftWidth] = useState(70); // percentage
+    const [isDragging, setIsDragging] = useState(false);
+
+    const handleDrag = (e: React.MouseEvent) => {
+        e.preventDefault();
+        const container = e.currentTarget.parentElement;
+        if (!container) return;
+        
+        setIsDragging(true);
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        
+        const startX = e.clientX;
+        const startWidth = leftWidth;
+        const containerWidth = container.getBoundingClientRect().width;
+        
+        const onMouseMove = (moveEvent: MouseEvent) => {
+            requestAnimationFrame(() => {
+                const delta = moveEvent.clientX - startX;
+                const deltaPercentage = (delta / containerWidth) * 100;
+                const newWidth = Math.min(Math.max(startWidth + deltaPercentage, 50), 75);
+                setLeftWidth(newWidth);
+            });
+        };
+        
+        const onMouseUp = () => {
+            setIsDragging(false);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
+        
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    };
+
     if (!activeAgent) {
          return (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-4">
@@ -130,9 +167,15 @@ const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
                 </button>
             </header>
 
-            <div className="flex flex-1 gap-4 min-h-0 overflow-hidden relative">
+            <div className="flex flex-1 min-h-0 overflow-hidden relative">
                 {/* Left Column: Full-Height Chat */}
-                <div className="flex flex-col min-h-0 w-1/2">
+                <div 
+                    className={cn(
+                        "flex flex-col min-h-0 shrink-0",
+                        isDragging && "pointer-events-none select-none"
+                    )} 
+                    style={{ width: `calc(${leftWidth}% - 8px)` }}
+                >
                     <div className="flex-1 flex flex-col min-h-0 bg-card border border-border rounded-lg shadow-sm overflow-hidden">
                         <div className="px-4 py-3 border-b border-border flex items-center gap-2 bg-secondary/30 shrink-0">
                             <MessageSquare className="w-4 h-4 text-muted-foreground" />
@@ -142,8 +185,22 @@ const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
                     </div>
                 </div>
 
+                {/* Resizer */}
+                <div 
+                    className="w-4 shrink-0 flex items-center justify-center cursor-col-resize group z-10"
+                    onMouseDown={handleDrag}
+                >
+                    <div className="w-1 h-8 rounded-full bg-border group-hover:bg-primary/50 transition-colors" />
+                </div>
+
                 {/* Right Column: Wallet View */}
-                <div className="flex flex-col min-h-0 w-1/2">
+                <div 
+                    className={cn(
+                        "flex flex-col min-h-0 shrink-0",
+                        isDragging && "pointer-events-none select-none"
+                    )} 
+                    style={{ width: `calc(${100 - leftWidth}% - 8px)` }}
+                >
                     <WalletView activeAgent={activeAgent} />
                 </div>
 
@@ -155,7 +212,7 @@ const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
                     <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0 bg-secondary/30">
                         <div className="flex items-center gap-2">
                             <Terminal className="w-4 h-4 text-muted-foreground" />
-                            <h3 className="font-medium text-sm">Live Logs</h3>
+                            <h3 className="font-medium text-sm">Live Logs for <span className="text-primary font-bold">{activeAgent.name}</span></h3>
                         </div>
                         <button
                             onClick={() => setIsLogsOpen(false)}
