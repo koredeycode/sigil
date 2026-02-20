@@ -12,11 +12,11 @@ export const directivesRouter: Router = Router();
 directivesRouter.get('/', (req, res) => {
   const { agentId } = req.query;
   if (!agentId) {
-    res.status(400).json({ error: 'agentId query param required' });
+    res.status(400).json({ message: 'agentId query param required', data: null });
     return;
   }
   const directives = getAllDirectivesForAgent(String(agentId));
-  res.json(directives);
+  res.json({ message: 'Directives retrieved successfully', data: directives });
 });
 
 // POST /api/directives — add a directive to an agent
@@ -24,13 +24,13 @@ directivesRouter.post('/', (req, res) => {
   try {
     const { agentId, condition, action, maxAmount, cooldown } = req.body;
     if (!agentId || !condition || !action) {
-      res.status(400).json({ error: 'agentId, condition, and action are required' });
+      res.status(400).json({ message: 'agentId, condition, and action are required', data: null });
       return;
     }
     const result = addDirective(agentId, condition, action, maxAmount, cooldown ?? 0);
-    res.status(201).json({ id: Number(result.lastInsertRowid), agentId, condition, action });
+    res.status(201).json({ message: 'Directive created successfully', data: { id: Number(result.lastInsertRowid), agentId, condition, action } });
   } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+    res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }
 });
 
@@ -40,9 +40,9 @@ directivesRouter.patch('/:id', (req, res) => {
     const { id } = req.params;
     const { isActive } = req.body;
     toggleDirective(Number(id), Boolean(isActive));
-    res.json({ id: Number(id), isActive });
+    res.json({ message: 'Directive toggled successfully', data: { id: Number(id), isActive } });
   } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+    res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }
 });
 
@@ -50,8 +50,8 @@ directivesRouter.patch('/:id', (req, res) => {
 directivesRouter.delete('/:id', (req, res) => {
   try {
     deleteDirective(Number(req.params.id));
-    res.status(204).send();
+    res.status(204).json({ message: 'Directive deleted', data: null });
   } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+    res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }
 });

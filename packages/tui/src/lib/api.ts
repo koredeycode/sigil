@@ -23,7 +23,11 @@ export class ApiClient {
       throw new Error(`API Error: ${response.statusText}`);
     }
 
-    return response.json() as unknown as T;
+    const json = await response.json() as any;
+    if (json.data !== undefined) {
+      return json.data as T;
+    }
+    return json as T;
   }
 
   async getAgents() {
@@ -45,6 +49,17 @@ export class ApiClient {
     return this.fetch('/chat', {
         method: 'POST',
         body: JSON.stringify({ agentId, message }),
+    });
+  }
+
+  async getChats(agentId: string, limit = 10) {
+    return this.fetch<any[]>(`/chat/${agentId}?limit=${limit}`);
+  }
+
+  async controlAgent(agentId: string, action: 'start' | 'pause' | 'kill') {
+    return this.fetch(`/agents/${agentId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ action }),
     });
   }
 }

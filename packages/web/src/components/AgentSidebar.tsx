@@ -1,5 +1,6 @@
 import { clsx } from 'clsx';
-import { Bot } from 'lucide-react';
+import { Bot, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { Agent } from '../hooks/useAgents';
 
 interface AgentSidebarProps {
@@ -30,12 +31,21 @@ export function AgentSidebar({ agents, activeAgentId, onSelectAgent }: AgentSide
                         <Bot className="w-4 h-4" />
                         <span className="truncate max-w-[120px]">{agent.name}</span>
                     </div>
-                    <span className={clsx(
-                        "w-2 h-2 rounded-full",
-                        agent.status === 'active' && "bg-green-500",
-                        agent.status === 'paused' && "bg-orange-500",
-                        agent.status === 'stopped' && "bg-red-500",
-                    )} />
+                    <div className="flex items-center gap-2">
+                        <span className={clsx(
+                            "w-2 h-2 rounded-full",
+                            agent.status === 'running' && "bg-green-500",
+                            agent.status === 'paused' && "bg-orange-500",
+                            agent.status === 'killed' && "bg-red-500",
+                        )} />
+                        <Link 
+                            to={`/agents/${agent.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-1 rounded-sm hover:bg-background/20 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            <ExternalLink className="w-3 h-3" />
+                        </Link>
+                    </div>
                 </li>
             ))}
         </ul>

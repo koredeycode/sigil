@@ -1,11 +1,11 @@
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { PublicKey } from '@solana/web3.js';
 import {
-  buildEvalPrompt,
-  EvalContext,
-  getEvaluableDirectives,
-  markDirectiveFired,
-  parseEvalResponse,
+    buildEvalPrompt,
+    EvalContext,
+    getEvaluableDirectives,
+    markDirectiveFired,
+    parseEvalResponse,
 } from '../directives/DirectiveEngine.js';
 import { isKillSwitchActive } from '../lib/Config.js';
 import { getAgent, getAgentDirectives, insertLog } from '../lib/Database.js';
@@ -29,7 +29,9 @@ import { createTools } from './ToolRegistry.js';
  */
 export async function runCycle(agentId: string, agentName: string): Promise<void> {
   // 1. CHECK KILL SWITCH
+  console.info(`[AgentLoop:${agentName}] Start Cycle`);
   if (isKillSwitchActive()) {
+    console.info(`[AgentLoop:${agentName}] Kill switch active - aborting`);
     agentManager.emit('agent:status', { agent: agentName, status: 'killed' });
     insertLog(agentId, 'check_kill_switch', 'Kill switch active — skipping cycle');
     return;
@@ -72,6 +74,7 @@ export async function runCycle(agentId: string, agentName: string): Promise<void
       ...t,
       percentage: totalValue > 0 ? 0 : 0, // devnet tokens have no SOL price
     }));
+    console.info(`[AgentLoop:${agentName}] Gathered State - SOL: ${solBalance}, Tokens: ${tokenAccounts.length}`);
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
     insertLog(agentId, 'gather_state', `Error: ${errMsg}`);
@@ -139,6 +142,7 @@ export async function runCycle(agentId: string, agentName: string): Promise<void
       }
     }
   } else {
+    console.info(`[AgentLoop:${agentName}] No directives configured`);
     insertLog(agentId, 'evaluate_directive', 'No directives to evaluate');
   }
 
@@ -180,6 +184,8 @@ export async function runCycle(agentId: string, agentName: string): Promise<void
       ? response.content
       : JSON.stringify(response.content);
 
+    console.info(`[AgentLoop:${agentName}] LLM Decision Output:`, content);
+
     // Handle tool calls if present
     if (response.tool_calls && response.tool_calls.length > 0) {
       for (const toolCall of response.tool_calls) {
@@ -194,7 +200,9 @@ export async function runCycle(agentId: string, agentName: string): Promise<void
         const tool = tools.find((t) => t.name === toolCall.name);
         if (tool) {
           try {
+            console.info(`[AgentLoop:${agentName}] Executing tool ${toolCall.name} with args:`, toolCall.args);
             const result = await tool.invoke(toolCall.args);
+            console.info(`[AgentLoop:${agentName}] Tool ${toolCall.name} returned:`, result);
             insertLog(agentId, `tool:${toolCall.name}`, String(result), content);
 
             agentManager.emit('agent:transaction', {

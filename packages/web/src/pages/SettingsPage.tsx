@@ -1,5 +1,6 @@
 import { Bot, Check, Loader2, Monitor, Palette, Shield, Wallet } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import { ApiClient } from '../lib/api';
 
 export function SettingsPage() {
@@ -7,20 +8,8 @@ export function SettingsPage() {
     const [loadingProviders, setLoadingProviders] = useState(true);
     const [settingPrimary, setSettingPrimary] = useState<number | null>(null);
 
-    const [isDarkMode, setIsDarkMode] = useState(() => {
-        const saved = localStorage.getItem('theme');
-        return saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
-    });
-
-    useEffect(() => {
-        if (isDarkMode) {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
-    }, [isDarkMode]);
+    const { theme, setTheme } = useTheme();
+    const isDarkMode = theme === 'dark';
 
     const fetchProviders = useCallback(async () => {
         const token = localStorage.getItem('sigil_token');
@@ -28,8 +17,8 @@ export function SettingsPage() {
         try {
             setLoadingProviders(true);
             const client = new ApiClient(token);
-            const data = await client.getProviders();
-            setProviders(data);
+            const response = await client.getProviders();
+            setProviders(response.data || []);
         } catch (e) {
             console.error('Failed to fetch providers', e);
         } finally {
@@ -114,7 +103,7 @@ export function SettingsPage() {
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <button 
-                                        onClick={() => setIsDarkMode(false)}
+                                        onClick={() => setTheme('light')}
                                         className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${!isDarkMode ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-secondary/20 hover:border-muted-foreground/50'}`}
                                     >
                                         <div className="w-8 h-8 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
@@ -123,7 +112,7 @@ export function SettingsPage() {
                                         <span className="text-xs font-semibold">Light Mode</span>
                                     </button>
                                     <button 
-                                        onClick={() => setIsDarkMode(true)}
+                                        onClick={() => setTheme('dark')}
                                         className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${isDarkMode ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-secondary/20 hover:border-muted-foreground/50'}`}
                                     >
                                         <div className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 shadow-sm flex items-center justify-center">

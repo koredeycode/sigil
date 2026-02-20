@@ -20,7 +20,7 @@ configRouter.get('/', (_req, res) => {
     config[key] = getConfig(key);
   }
 
-  res.json(config);
+  res.json({ message: 'Config retrieved successfully', data: config });
 });
 
 // POST /api/config — update config values
@@ -30,14 +30,14 @@ configRouter.post('/', (req, res) => {
     for (const [key, value] of Object.entries(updates)) {
       setConfig(key, String(value));
     }
-    res.json({ updated: Object.keys(updates) });
+    res.json({ message: 'Config updated successfully', data: { updated: Object.keys(updates) } });
   } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+    res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }
 });
 
 // POST /api/auth/rotate — rotate session token
 configRouter.post('/auth/rotate', (_req, res) => {
   const newToken = rotateToken();
-  res.json({ token: newToken });
+  res.json({ message: 'Token rotated successfully', data: { token: newToken } });
 });

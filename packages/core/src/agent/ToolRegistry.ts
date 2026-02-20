@@ -20,6 +20,7 @@ export function createTools(agentId: string, agentName: string): DynamicStructur
       schema: z.object({}),
       func: async () => {
         try {
+          console.info(`[Tool:get_balance] Starting for ${agentName}`);
           const keypair = await getKeypair(agentName);
           const balance = await connection.getBalance(keypair.publicKey);
           const solBalance = lamportsToSol(balance);
@@ -54,6 +55,7 @@ export function createTools(agentId: string, agentName: string): DynamicStructur
       }),
       func: async ({ amount }) => {
         try {
+          console.info(`[Tool:request_airdrop] Requesting ${amount} SOL for ${agentName}`);
           const lamports = solToLamports(amount);
           const result = await requestAirdrop(agentName, agentId, lamports);
           if (result.status === 'confirmed') {
@@ -75,6 +77,7 @@ export function createTools(agentId: string, agentName: string): DynamicStructur
       }),
       func: async ({ to, amount }) => {
         try {
+          console.info(`[Tool:transfer_sol] Transferring ${amount} SOL to ${to} for ${agentName}`);
           const keypair = await getKeypair(agentName);
           const recipient = new PublicKey(to);
           const lamports = solToLamports(amount);
@@ -129,6 +132,7 @@ export function createTools(agentId: string, agentName: string): DynamicStructur
       schema: z.object({}),
       func: async () => {
         try {
+          console.info(`[Tool:get_token_accounts] Fetching for ${agentName}`);
           const keypair = await getKeypair(agentName);
           const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
             keypair.publicKey,
@@ -158,6 +162,7 @@ export function createTools(agentId: string, agentName: string): DynamicStructur
       schema: z.object({}),
       func: async () => {
         try {
+          console.info(`[Tool:get_portfolio_snapshot] Fetching for ${agentName}`);
           const keypair = await getKeypair(agentName);
           const balance = await connection.getBalance(keypair.publicKey);
           const solBalance = lamportsToSol(balance);
@@ -206,6 +211,7 @@ export function createTools(agentId: string, agentName: string): DynamicStructur
       }),
       func: async ({ address }) => {
         try {
+          console.info(`[Tool:get_account_info] Fetching info for ${address}`);
           const pubkey = new PublicKey(address);
           const info = await connection.getAccountInfo(pubkey);
           if (!info) return `Account ${address} not found on-chain.`;

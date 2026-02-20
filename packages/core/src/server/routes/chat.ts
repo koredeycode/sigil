@@ -3,24 +3,36 @@ import { Router } from 'express';
 import { agentManager } from '../../agent/AgentManager.js';
 import { buildSystemPrompt, getPrimaryModel } from '../../agent/LLMChain.js';
 import { createTools } from '../../agent/ToolRegistry.js';
-import { getAgent, getAgentDirectives, insertLog } from '../../lib/Database.js';
+import { getAgent, getAgentChats, getAgentDirectives, insertChat, insertLog } from '../../lib/Database.js';
 import { getConnection, lamportsToSol } from '../../wallet/TransactionBuilder.js';
 import { getKeypair } from '../../wallet/Wallet.js';
 
 export const chatRouter: Router = Router();
+
+// GET /api/chat/:agentId — get chat history
+chatRouter.get('/:agentId', (req, res) => {
+  try {
+    const { agentId } = req.params;
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 100;
+    const chats = getAgentChats(agentId, limit);
+    res.json({ message: 'Success', data: chats });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : String(error), data: null });
+  }
+});
 
 // POST /api/chat — send a message to an agent's LLM
 chatRouter.post('/', async (req, res) => {
   try {
     const { agentId, message } = req.body;
     if (!agentId || !message) {
-      res.status(400).json({ error: 'agentId and message are required' });
+      res.status(400).json({ message: 'agentId and message are required', data: null });
       return;
     }
 
     const agent = getAgent(agentId);
     if (!agent) {
-      res.status(404).json({ error: `Agent "${agentId}" not found` });
+      res.status(404).json({ message: `Agent "${agentId}" not found`, data: null });
       return;
     }
 
@@ -58,6 +70,9 @@ chatRouter.post('/', async (req, res) => {
       new HumanMessage(message),
     ]);
 
+    // Save user message to DB
+    insertChat(agent.id, 'user', message);
+
     const content = typeof response.content === 'string'
       ? response.content
       : JSON.stringify(response.content);
@@ -83,6 +98,9 @@ chatRouter.post('/', async (req, res) => {
     }
 
     insertLog(agent.id, 'chat', content, message);
+    
+    // Save assistant message to DB
+    insertChat(agent.id, 'assistant', content);
 
     // Emit agent response
     agentManager.emit('chat:message', {
@@ -94,11 +112,14 @@ chatRouter.post('/', async (req, res) => {
     });
 
     res.json({
-      agent: agent.name,
-      response: content,
-      tools: toolResults,
+      message: 'Chat sent successfully',
+      data: {
+        agent: agent.name,
+        response: content,
+        tools: toolResults,
+      }
     });
   } catch (error) {
-    res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    res.status(500).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }
 });

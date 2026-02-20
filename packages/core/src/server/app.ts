@@ -33,6 +33,12 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
   app.use(cors());
   app.use(express.json());
 
+  // Request Logging Middleware
+  app.use((req, res, next) => {
+    console.info(`[API Request] ${req.method} ${req.originalUrl}`);
+    next();
+  });
+
   // Public routes (no auth)
   app.use('/api/status', statusRouter);
 
@@ -48,7 +54,7 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
   // Global error handler
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error('[Server Error]', err.message);
-    res.status(500).json({ error: 'Internal server error', message: err.message });
+    res.status(500).json({ message: err.message, data: null });
   });
 
   // Setup WebSocket event forwarding

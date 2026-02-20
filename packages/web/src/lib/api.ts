@@ -1,5 +1,11 @@
 import axios from 'axios';
 
+export interface ApiResponse<T = any> {
+  message: string;
+  data?: T;
+  error?: string;
+}
+
 export class ApiClient {
   private baseUrl: string;
   private token: string;
@@ -9,7 +15,7 @@ export class ApiClient {
     this.token = token;
   }
 
-  private async request<T>(method: string, endpoint: string, data?: any): Promise<T> {
+  private async request<T>(method: string, endpoint: string, data?: any): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
     const headers = {
       'Authorization': `Bearer ${this.token}`,
@@ -23,10 +29,14 @@ export class ApiClient {
         headers,
         data,
       });
-      return response.data;
+      return response.data; // response.data is the ApiResponse { message, data }
     } catch (error: any) {
       console.error(`API Error ${method} ${endpoint}:`, error.message);
-      throw error;
+      // Construct standardized error back to client
+      if (error.response?.data) {
+          throw error.response.data;
+      }
+      throw { message: error.message, data: null };
     }
   }
 
@@ -44,6 +54,14 @@ export class ApiClient {
 
   async sendChat(agentId: string, message: string) {
     return this.request<any>('POST', '/chat', { agentId, message });
+  }
+
+  async getChats(agentId: string, limit = 100) {
+    return this.request<any[]>('GET', `/chat/${agentId}?limit=${limit}`);
+  }
+
+  async controlAgent(agentId: string, action: 'start' | 'pause' | 'kill') {
+    return this.request<any>('PATCH', `/agents/${agentId}`, { action });
   }
 
   async getTransactions(agentId: string) {

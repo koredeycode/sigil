@@ -17,7 +17,7 @@ providersRouter.get('/', (_req, res) => {
     ...p,
     api_key: p.api_key ? '••••••••' : null,
   }));
-  res.json(sanitized);
+  res.json({ message: 'Providers retrieved successfully', data: sanitized });
 });
 
 // POST /api/providers — add a provider
@@ -30,14 +30,14 @@ providersRouter.post('/', (req, res) => {
     }
     const encryptedKey = apiKey ? encryptApiKey(apiKey) : null;
     const result = addProvider(name, encryptedKey, model, isPrimary ?? false);
-    res.status(201).json({
+    res.status(201).json({ message: 'Provider created successfully', data: {
       id: Number(result.lastInsertRowid),
       name,
       model,
       isPrimary: isPrimary ?? false,
-    });
+    }});
   } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+    res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }
 });
 
@@ -45,9 +45,9 @@ providersRouter.post('/', (req, res) => {
 providersRouter.patch('/:id', (req, res) => {
   try {
     setPrimaryProvider(Number(req.params.id));
-    res.json({ id: Number(req.params.id), isPrimary: true });
+    res.json({ message: 'Primary provider set', data: { id: Number(req.params.id), isPrimary: true } });
   } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+    res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }
 });
 
@@ -55,8 +55,8 @@ providersRouter.patch('/:id', (req, res) => {
 providersRouter.delete('/:id', (req, res) => {
   try {
     removeProvider(Number(req.params.id));
-    res.status(204).send();
+    res.status(204).json({ message: 'Provider deleted', data: null });
   } catch (error) {
-    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+    res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }
 });

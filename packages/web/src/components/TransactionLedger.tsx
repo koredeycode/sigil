@@ -20,7 +20,7 @@ export function TransactionLedger({ activeAgent }: TransactionLedgerProps) {
         setLoading(true);
         const client = new ApiClient(token);
         client.getTransactions(activeAgent.id)
-            .then(setTransactions)
+            .then(res => setTransactions(res.data || []))
             .catch(console.error)
             .finally(() => setLoading(false));
     }, [activeAgent]);
@@ -54,7 +54,9 @@ export function TransactionLedger({ activeAgent }: TransactionLedgerProps) {
                                 <td className="px-4 py-2">
                                     <div className="flex items-center gap-1">
                                         <span className="font-mono text-xs text-muted-foreground">{tx.signature.slice(0, 8)}...</span>
-                                        <ExternalLink className="w-3 h-3 text-muted-foreground cursor-pointer hover:text-primary" />
+                                        <a href={`https://explorer.solana.com/tx/${tx.signature}?cluster=devnet`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
+                                           <ExternalLink className="w-3 h-3 cursor-pointer" />
+                                        </a>
                                     </div>
                                 </td>
                                 <td className="px-4 py-2 font-mono text-xs">

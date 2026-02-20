@@ -102,6 +102,16 @@ function initializeTables(db: DatabaseSync): void {
       fee         REAL,
       FOREIGN KEY (agent_id) REFERENCES agents(id)
     );
+
+    -- Chats: user and agent message history
+    CREATE TABLE IF NOT EXISTS chats (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_id    TEXT NOT NULL,
+      role        TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'system')),
+      content     TEXT NOT NULL,
+      timestamp   DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (agent_id) REFERENCES agents(id)
+    );
   `);
 }
 
@@ -185,6 +195,25 @@ export function getAgentLogs(agentId: string, limit = 50) {
   return db.prepare(
     'SELECT * FROM logs WHERE agent_id = ? ORDER BY timestamp DESC LIMIT ?'
   ).all(agentId, limit) as unknown as LogRow[];
+}
+
+// Chats
+export function insertChat(agentId: string, role: 'user' | 'assistant' | 'system', content: string) {
+  const db = getDatabase();
+  return db.prepare(
+    'INSERT INTO chats (agent_id, role, content) VALUES (?, ?, ?)'
+  ).run(agentId, role, content);
+}
+
+export function getAgentChats(agentId: string, limit = 100) {
+  const db = getDatabase();
+  // We want the most recent messages, but returned in chronological order
+  const rows = db.prepare(
+    `SELECT * FROM (
+       SELECT * FROM chats WHERE agent_id = ? ORDER BY timestamp DESC LIMIT ?
+     ) ORDER BY timestamp ASC`
+  ).all(agentId, limit) as unknown as ChatRow[];
+  return rows;
 }
 
 // Config
@@ -340,6 +369,14 @@ export interface LogRow {
   action: string;
   result: string | null;
   thought: string | null;
+}
+
+export interface ChatRow {
+  id: number;
+  agent_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: string;
 }
 
 export interface ProviderRow {

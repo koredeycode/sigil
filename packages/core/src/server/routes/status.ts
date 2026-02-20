@@ -8,12 +8,15 @@ statusRouter.get('/', (_req, res) => {
   const running = agents.filter((a) => a.status === 'running').length;
 
   res.json({
-    status: 'ok',
-    version: '0.1.0',
-    agents: {
-      total: agents.length,
-      running,
-    },
-    uptime: process.uptime(),
+    message: 'Status retrieved successfully',
+    data: {
+      status: 'ok',
+      version: '0.1.0',
+      agents: {
+        total: agents.length,
+        running,
+      },
+      uptime: process.uptime(),
+    }
   });
 });

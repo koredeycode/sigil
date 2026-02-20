@@ -25,7 +25,8 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
         try {
             const client = new ApiClient(token);
             // Default role added here for backwards compatibility with backend
-            const agent = await client.createAgent(name, 'Assistant');
+            const response = await client.createAgent(name, 'Assistant');
+            const agent = response.data;
             
             if (condition.trim() && action.trim()) {
                 await client.addDirective(agent.id, condition, action);
@@ -138,15 +139,15 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                                         <td className="px-6 py-4">
                                             <span className={clsx(
                                                 "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium",
-                                                agent.status === 'active' && "bg-green-500/10 text-green-500",
+                                                agent.status === 'running' && "bg-green-500/10 text-green-500",
                                                 agent.status === 'paused' && "bg-orange-500/10 text-orange-500",
-                                                agent.status === 'stopped' && "bg-red-500/10 text-red-500",
+                                                agent.status === 'killed' && "bg-red-500/10 text-red-500",
                                             )}>
                                                 <span className={clsx(
                                                     "w-1.5 h-1.5 rounded-full",
-                                                    agent.status === 'active' && "bg-green-500",
+                                                    agent.status === 'running' && "bg-green-500",
                                                     agent.status === 'paused' && "bg-orange-500",
-                                                    agent.status === 'stopped' && "bg-red-500",
+                                                    agent.status === 'killed' && "bg-red-500",
                                                 )} />
                                                 {agent.status}
                                             </span>

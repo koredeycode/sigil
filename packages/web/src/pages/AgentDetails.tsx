@@ -1,7 +1,10 @@
-import { Copy, Terminal } from 'lucide-react';
-import { DirectiveManager } from './DirectiveManager';
+import { Copy, Pause, Play, Square, Terminal } from 'lucide-react';
+import { DirectiveManager } from '../components/DirectiveManager';
+import { ApiClient } from '../lib/api';
 
 export function AgentDetails({ activeAgent }: { activeAgent: any }) {
+    // const { apiPort, token } = useConfig();
+
     if (!activeAgent) return null;
 
     const copyToClipboard = (text: string) => {
@@ -9,6 +12,21 @@ export function AgentDetails({ activeAgent }: { activeAgent: any }) {
         // Simple mock toast for copy
         alert('Copied to clipboard!');
     };
+
+    const handleControl = async (action: 'start' | 'pause' | 'kill') => {
+        const token = localStorage.getItem('sigil_token');
+        if (!token) return;
+        try {
+            const client = new ApiClient(token);
+            await client.controlAgent(activeAgent.id, action);
+        } catch (error) {
+            console.error(`Failed to ${action} agent:`, error);
+        }
+    };
+
+    const isRunning = activeAgent.status === 'running';
+    const isPaused = activeAgent.status === 'paused';
+    const isKilled = activeAgent.status === 'killed';
 
     return (
         <div className="flex flex-col h-full space-y-6 overflow-y-auto pr-2">
@@ -27,7 +45,7 @@ export function AgentDetails({ activeAgent }: { activeAgent: any }) {
                 <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
                     <h2 className="text-lg font-semibold flex items-center gap-2 border-b border-border pb-3">
                         <Terminal className="w-5 h-5 text-muted-foreground" />
-                        System Profile
+                        Agent Profile
                     </h2>
                     
                     <div className="space-y-4">
@@ -49,7 +67,7 @@ export function AgentDetails({ activeAgent }: { activeAgent: any }) {
                                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</label>
                                 <div className="font-medium flex items-center gap-2">
                                     <span className={`w-2 h-2 rounded-full ${
-                                        activeAgent.status === 'active' ? 'bg-green-500' :
+                                        activeAgent.status === 'running' ? 'bg-green-500' :
                                         activeAgent.status === 'paused' ? 'bg-orange-500' : 'bg-red-500'
                                     }`} />
                                     {activeAgent.status}
@@ -67,6 +85,43 @@ export function AgentDetails({ activeAgent }: { activeAgent: any }) {
                                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Created</label>
                                 <div className="font-medium text-sm text-foreground/80">{new Date(activeAgent.created_at).toLocaleDateString()}</div>
                             </div>
+                        </div>
+
+                        {/* Agent Controls */}
+                        <div className="pt-4 border-t border-border flex items-center gap-3">
+                            <button
+                                onClick={() => handleControl('start')}
+                                disabled={isRunning || isKilled}
+                                className={`flex-1 flex justify-center items-center gap-2 py-2 px-4 rounded-md font-medium transition-colors ${
+                                    isRunning || isKilled 
+                                        ? 'bg-secondary/50 text-muted-foreground cursor-not-allowed' 
+                                        : 'bg-green-500/10 text-green-600 hover:bg-green-500/20'
+                                }`}
+                            >
+                                <Play className="w-4 h-4" /> Start
+                            </button>
+                            <button
+                                onClick={() => handleControl('pause')}
+                                disabled={isPaused || isKilled}
+                                className={`flex-1 flex justify-center items-center gap-2 py-2 px-4 rounded-md font-medium transition-colors ${
+                                    isPaused || isKilled 
+                                        ? 'bg-secondary/50 text-muted-foreground cursor-not-allowed' 
+                                        : 'bg-orange-500/10 text-orange-600 hover:bg-orange-500/20'
+                                }`}
+                            >
+                                <Pause className="w-4 h-4" /> Pause
+                            </button>
+                            <button
+                                onClick={() => handleControl('kill')}
+                                disabled={isKilled}
+                                className={`flex-1 flex justify-center items-center gap-2 py-2 px-4 rounded-md font-medium transition-colors ${
+                                    isKilled 
+                                        ? 'bg-secondary/50 text-muted-foreground cursor-not-allowed' 
+                                        : 'bg-red-500/10 text-red-600 hover:bg-red-500/20'
+                                }`}
+                            >
+                                <Square className="w-4 h-4 fill-current" /> Kill
+                            </button>
                         </div>
                     </div>
                 </div>

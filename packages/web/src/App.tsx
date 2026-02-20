@@ -1,16 +1,18 @@
 import { clsx } from 'clsx';
-import { Activity, LayoutDashboard, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Activity, ExternalLink, LayoutDashboard, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
+import { useState } from 'react';
+import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
-import { AgentDetails } from './components/AgentDetails';
-import { AgentManager } from './components/AgentManager';
 import { AgentSidebar } from './components/AgentSidebar';
 import { ChatBox } from './components/ChatBox';
 import { LogTerminal } from './components/LogTerminal';
-import { SettingsPage } from './components/SettingsPage';
 import { WalletView } from './components/WalletView';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { useAgents } from './hooks/useAgents';
 import { SocketProvider } from './hooks/useSocket';
+import { AgentDetails } from './pages/AgentDetails';
+import { AgentManager } from './pages/AgentManager';
+import { SettingsPage } from './pages/SettingsPage';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -68,10 +70,19 @@ const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
         <div className="relative flex flex-col h-full space-y-4 overflow-hidden">
             <header className="flex items-center justify-between px-1 shrink-0">
                 <div className="flex items-center space-x-4">
-                    <h1 className="text-2xl font-bold tracking-tight">{activeAgent.name}</h1>
+                    <div className="flex items-center space-x-2">
+                        <h1 className="text-2xl font-bold tracking-tight">{activeAgent.name}</h1>
+                        <Link 
+                            to={`/agents/${activeAgent.id}`}
+                            className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                            title="Go to Agent Details"
+                        >
+                            <ExternalLink className="w-4 h-4" />
+                        </Link>
+                    </div>
                     <div className={cn(
                         "px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide",
-                        activeAgent.status === 'active' && "bg-green-500/15 text-green-500",
+                        activeAgent.status === 'running' && "bg-green-500/15 text-green-500",
                         activeAgent.status === 'paused' && "bg-orange-500/15 text-orange-500",
                         activeAgent.status === 'stopped' && "bg-red-500/15 text-red-500",
                     )}>
@@ -145,21 +156,10 @@ const DashboardContent = ({ activeAgent }: { activeAgent: any }) => {
 
 const Dashboard = () => {
     const { agents, activeAgent, activeAgentId, setActiveAgentId } = useAgents();
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'agents' | 'settings' | 'agent_details'>('dashboard');
-    const [isDarkMode, setIsDarkMode] = useState(() => {
-        const saved = localStorage.getItem('theme');
-        return saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
-    });
-
-    useEffect(() => {
-        if (isDarkMode) {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
-    }, [isDarkMode]);
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { theme, toggleTheme } = useTheme();
+    const isDarkMode = theme === 'dark';
 
     const refreshAgents = () => {
         // Mock refresh
@@ -190,46 +190,46 @@ const Dashboard = () => {
                 
                 <div className="px-3 flex-1 overflow-y-auto">
                     <div className="space-y-1 mb-6">
-                        <button 
-                            onClick={() => setActiveTab('dashboard')}
+                        <Link 
+                            to="/"
                             className={cn(
                                 "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                                activeTab === 'dashboard' 
+                                location.pathname === '/' 
                                     ? "bg-primary/10 text-primary" 
                                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                             )}
                         >
                             <LayoutDashboard className="w-4 h-4" />
                             Dashboard
-                        </button>
-                        <button 
-                             onClick={() => setActiveTab('agents')}
+                        </Link>
+                        <Link 
+                             to="/agents"
                              className={cn(
                                 "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                                activeTab === 'agents' 
+                                location.pathname === '/agents' 
                                     ? "bg-primary/10 text-primary" 
                                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                             )}
                         >
                             <Users className="w-4 h-4" />
                             Agents
-                        </button>
-                        <button 
-                             onClick={() => setActiveTab('settings')}
+                        </Link>
+                        <Link 
+                             to="/settings"
                              className={cn(
                                 "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                                activeTab === 'settings' 
+                                location.pathname === '/settings' 
                                     ? "bg-primary/10 text-primary" 
                                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                             )}
                         >
                             <Settings className="w-4 h-4" />
                             Settings
-                        </button>
+                        </Link>
 
                         <div className="pt-2 px-3 pb-2 hidden">
                             <button
-                                onClick={() => setIsDarkMode(!isDarkMode)}
+                                onClick={toggleTheme}
                                 className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-secondary text-sm font-medium hover:bg-secondary/80 transition-colors"
                             >
                                 <span className="flex items-center gap-2 text-muted-foreground">
@@ -250,14 +250,14 @@ const Dashboard = () => {
                         <AgentSidebar 
                             agents={agents} 
                             activeAgentId={activeAgentId} 
-                            onSelectAgent={(id) => { setActiveAgentId(id); setActiveTab('agent_details'); }} 
+                            onSelectAgent={(id) => setActiveAgentId(id)} 
                         />
                     </div>
                 </div>
                 
                 <div className="p-4 border-t border-border flex flex-col gap-2">
                      <button
-                        onClick={() => setIsDarkMode(!isDarkMode)}
+                        onClick={toggleTheme}
                         className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-secondary text-sm font-medium hover:bg-secondary/80 transition-colors mb-2"
                     >
                         <span className="flex items-center gap-2 text-muted-foreground">
@@ -280,10 +280,24 @@ const Dashboard = () => {
 
             {/* Main Content */}
             <main className="flex-1 overflow-hidden p-6 bg-background">
-                {activeTab === 'dashboard' && <DashboardContent activeAgent={activeAgent} />}
-                {activeTab === 'agent_details' && <AgentDetails activeAgent={activeAgent} />}
-                {activeTab === 'agents' && <AgentManager agents={agents} refreshAgents={refreshAgents} onSelectAgent={(id) => { setActiveAgentId(id); setActiveTab('agent_details'); }} />}
-                {activeTab === 'settings' && <SettingsPage />}
+                <Routes>
+                    <Route path="/" element={<DashboardContent activeAgent={activeAgent} />} />
+                    <Route path="/agents/:id" element={<AgentDetails activeAgent={activeAgent} />} />
+                    <Route 
+                        path="/agents" 
+                        element={
+                            <AgentManager 
+                                agents={agents} 
+                                refreshAgents={refreshAgents} 
+                                onSelectAgent={(id) => { 
+                                    setActiveAgentId(id); 
+                                    navigate(`/agents/${id}`); 
+                                }} 
+                            />
+                        } 
+                    />
+                    <Route path="/settings" element={<SettingsPage />} />
+                </Routes>
             </main>
         </div>
     );
@@ -302,9 +316,11 @@ function App() {
   }
 
   return (
-    <SocketProvider>
-       <Dashboard />
-    </SocketProvider>
+    <ThemeProvider>
+        <SocketProvider>
+           <Dashboard />
+        </SocketProvider>
+    </ThemeProvider>
   );
 }
 

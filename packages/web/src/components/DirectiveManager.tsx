@@ -28,8 +28,8 @@ export function DirectiveManager({ activeAgent }: DirectiveManagerProps) {
 
         try {
             const client = new ApiClient(token);
-            const data = await client.getDirectives(activeAgent.id);
-            setDirectives(data);
+            const response = await client.getDirectives(activeAgent.id);
+            setDirectives(response.data || []);
         } catch (e) {
             console.error('Failed to load directives:', e);
         }

@@ -6,7 +6,7 @@ import { useSocket } from './useSocket'; // Adjusted import path
 export interface Agent {
   id: string;
   name: string;
-  status: 'active' | 'paused' | 'stopped';
+  status: 'running' | 'paused' | 'killed';
   role: string;
 }
 
@@ -21,7 +21,8 @@ export function useAgents() {
     if (!token) return;
 
     const client = new ApiClient(token); // Adjusted constructor
-    client.getAgents().then((data) => {
+    client.getAgents().then((response) => {
+      const data = response.data;
       if (Array.isArray(data)) {
         setAgents(data);
         if (data.length > 0 && !activeAgentId) {
