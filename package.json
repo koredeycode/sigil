@@ -4,9 +4,9 @@
   "private": true,
   "description": "The Local-First Autonomous Agent for Solana",
   "scripts": {
-    "dev:core": "pnpm --filter @sigil/core run dev",
-    "dev:tui": "pnpm --filter @sigil/tui run dev",
-    "dev:web": "pnpm --filter @sigil/web run dev",
+    "dev:core": "pnpm --filter sigil-core run dev",
+    "dev:tui": "pnpm --filter sigil-tui run dev",
+    "dev:web": "pnpm --filter sigil-web run dev",
     "dev:site": "pnpm --filter site run dev",
     "build": "pnpm -r run build",
     "lint": "pnpm -r run lint",
