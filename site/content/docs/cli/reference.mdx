@@ -1,0 +1,39 @@
+---
+title: CLI Reference
+---
+
+# CLI Reference
+
+The Sigil CLI is the primary management interface for your agents and workspace.
+
+## Core Commands
+
+### Workspace
+*   `sigil init` — Start the step-by-step onboarding wizard.
+*   `sigil start` — Boots the local server and launches active agent loops.
+*   `sigil stop` — Halts all running agents and shuts down the server.
+*   `sigil status` — Show the status of the server and agent loops.
+
+### Agent Management
+*   `sigil agent create <name>` — Create a new agent with an isolated wallet.
+*   `sigil agent start <name>` — Launch a specific agent's loop.
+*   `sigil agent pause <name>` — Temporarily stop an agent's reasoning.
+*   `sigil agent destroy <name>` — Delete an agent and its data.
+*   `sigil agent list` — Show all agents and their status.
+
+### Interaction
+*   `sigil chat <agent> <message>` — Send a message to a specific agent.
+*   `sigil logs <agent> --follow` — Stream real-time logs and thoughts.
+*   `sigil tx list <agent>` — View the transaction history for an agent.
+
+## Configuration Commands
+
+### Providers
+*   `sigil provider add <name>` — Configure a new LLM provider.
+*   `sigil provider set-primary <name>` — Switch the active brain.
+*   `sigil provider list` — View all configured providers.
+
+### System
+*   `sigil config set --loop-interval <seconds>` — Adjust global loop timing.
+*   `sigil auth rotate` — Invalidate the current session token and generate a new one.
+*   `sigil kill` — Immediate emergency halt of all agents.

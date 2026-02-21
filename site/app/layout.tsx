@@ -1,16 +1,32 @@
+import { Footer } from '@/components/Footer';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { RootProvider } from 'fumadocs-ui/provider/next';
+import { ThemeProvider } from 'next-themes';
+import { JetBrains_Mono, Outfit } from 'next/font/google';
+import type { ReactNode } from 'react';
 import './global.css';
-import { Inter } from 'next/font/google';
 
-const inter = Inter({
+const sans = Outfit({
   subsets: ['latin'],
+  variable: '--font-sans',
 });
 
-export default function Layout({ children }: LayoutProps<'/'>) {
+const mono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+});
+
+export default function Layout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
-      <body className="flex flex-col min-h-screen">
-        <RootProvider>{children}</RootProvider>
+    <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
+      <body className="flex flex-col min-h-screen font-sans">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <RootProvider>
+            <ThemeToggle />
+            {children}
+            <Footer />
+          </RootProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

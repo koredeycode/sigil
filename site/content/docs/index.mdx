@@ -1,13 +1,25 @@
 ---
-title: Hello World
-description: Your first document
+title: Introduction
+description: Sigil is the local-first autonomous wallet interface for Solana.
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+# Sigil
 
-## What is Next?
+**Sigil** is a developer-first, autonomous wallet interface that lives on your local machine. It allows users to spawn **multiple independent AI agents**, each with its own wallet, directives, and thought loop — all managed from a single system.
 
-<Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
-</Cards>
+Unlike traditional wallets that are "dead" until clicked, Sigil is **alive**. Each agent runs a continuous "Thought Loop," monitoring balances, executing conditional transfers, managing SPL tokens, and rebalancing holdings while you sleep — all while keeping private keys explicitly secured in your OS Keychain.
+
+## The Tri-Head Architecture
+
+Sigil operates through three primary interfaces, all synchronized in real-time:
+
+1.  **The TUI (Terminal UI):** A rich, interactive terminal dashboard built with Ink.
+2.  **The CLI:** For headless operation, scripting, and cron-based automation.
+3.  **The Dashboard (Web UI):** A local visual interface to chat with agents and manage directives.
+
+## Core Value Pillars
+
+*   **Provider Agnostic:** Support for 10+ LLM providers.
+*   **Local Sovereignty:** SQLite database and Keychain storage. No cloud dependencies.
+*   **Synchronized State:** Real-time event stream via WebSockets.
+*   **Guardrails-First:** Hard-coded safety layers independent of the LLM.

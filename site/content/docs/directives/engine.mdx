@@ -1,0 +1,26 @@
+---
+title: The Directive Engine
+---
+
+# The Directive Engine
+
+Directives are **natural language rules** that define an agent's behavior. Instead of writing code, you describe logic in plain English.
+
+## How it Works
+
+1.  **Rule Definition**: You save a directive like `"Request an airdrop if my SOL balance is less than 1"`.
+2.  **Context Loading**: On every loop cycle, the agent's current state (balances, prices, transactions) is fed into the LLM alongside your directives.
+3.  **Evaluation**: The LLM determines if any directives are triggered based on the current context.
+4.  **Intent Generation**: If a rule triggers, the LLM produces a tool call (e.g., `request_airdrop`).
+
+## Structured Fields
+
+While the rules are written in natural language, they are stored with structured constraints:
+
+*   **Condition**: The raw human-language trigger.
+*   **Max Amount**: A hard cap on the action (e.g., "10% of portfolio").
+*   **Cooldown Period**: Minimum time between consecutive executions.
+*   **Is Active**: A toggle to enable/disable the rule instantly.
+
+## Why Natural Language?
+Natural language directives allow for non-deterministic "fuzzy" logic. For example: `"Only rebalance my portfolio if SOL feels undervalued relative to USDC"`—the LLM can leverage external data and reasoning to interpret "undervalued" in ways that fixed code cannot.

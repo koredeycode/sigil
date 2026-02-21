@@ -1,0 +1,22 @@
+---
+title: "Tool Registry: SPL Tokens"
+---
+
+# SPL Token Management
+
+Sigil provides deep on-chain integration for SPL (Solana Program Library) tokens. These tools are available to the agent during its thought loop.
+
+## Available Tools
+
+*   `create_token` — Create a new SPL token mint on devnet.
+*   `mint_tokens` — Mint tokens to a specified recipient (requires mint authority).
+*   `burn_tokens` — Burn tokens from the agent's wallet.
+*   `get_token_accounts` — List all associated token accounts owned by the wallet.
+*   `create_token_account` — Initialize a new token account for a specific mint.
+*   `close_token_account` — Reclaim rent by closing empty token accounts.
+*   `set_token_authority` — Transfer mint or freeze authority to another address.
+
+## Example Directives
+*   `"If a token account has zero balance, close it and reclaim rent"`
+*   `"Mint 100 DEMO tokens every day at 9am"`
+*   `"If I create a new token, mint 1,000,000 to my primary wallet"`

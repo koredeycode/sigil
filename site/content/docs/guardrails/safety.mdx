@@ -1,0 +1,22 @@
+---
+title: Safety Guardrails
+---
+
+# Safety & Guardrails
+
+Sigil operates with a "Safety-First" architecture. Guardrails are hard-coded checks that operate **independently of the LLM**. This ensures that even if a model produces a malicious or erroneous intent, it cannot be executed.
+
+## Transaction Guardrails
+
+The following limits are enforced by the sign-off layer:
+
+*   **Per-Trade Limit**: Hard cap on the percentage of portfolio value per trade (default 5%).
+*   **Daily Volume Limit**: Maximum total trading volume permitted within a 24h window.
+*   **Slippage Cap**: Maximum allowed price deviation for swaps (default 1%).
+*   **Recipient Allowlist**: Optional restriction to only allow transfers to known addresses.
+*   **Cool-Down Period**: Minimum wait time between trades to prevent runaway panic loops.
+
+## Emergency Controls
+
+*   **Global Kill Switch**: A single command (`sigil kill`) that wipes the session and halts all signing capabilities across all running agents.
+*   **Key Isolation**: Keys are only decrypted at the moment of signing and are never accessible to the reasoning layer.

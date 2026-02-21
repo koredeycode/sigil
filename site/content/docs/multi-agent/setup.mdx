@@ -1,0 +1,29 @@
+---
+title: Multi-Agent Management
+---
+
+# Multi-Agent Management
+
+Sigil is designed for **parallel autonomy**. You can spawn and manage dozens of independent agents from a single machine.
+
+## Isolation by Design
+
+Every agent you create is a completely isolated entity:
+
+*   **Isolated Wallet**: Each agent has its own unique keypair generated on initialization.
+*   **Isolated Directives**: Rules defined for "Agent A" never interfere with "Agent B."
+*   **Isolated Logs**: Reasoning traces and transaction history are stored separately.
+
+## Concurrent Loops
+
+Agents run as concurrent background processes within the Sigil core. You can observe all of them simultaneously:
+
+*   **TUI**: Switch between agents using arrow keys.
+*   **Web Dashboard**: View a grid of all active agents and their heartbeats.
+*   **CLI**: Use `sigil logs --all` to view a merged stream of activity.
+
+## Common Use Cases
+
+1.  **Treasury & Minter**: One agent manages liquidity pools while another handles token minting.
+2.  **Arb & Rebalance**: One agent monitors price discrepancies while another maintains target portfolio weights.
+3.  **The Watcher**: An agent dedicated entirely to closing empty accounts and reclaiming rent.

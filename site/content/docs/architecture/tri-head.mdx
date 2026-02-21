@@ -1,0 +1,23 @@
+---
+title: Tri-Head Architecture
+description: Learn about the internal reasoning and execution model of Sigil.
+---
+
+# Tri-Head Architecture
+
+Sigil agents operate using three distinct logical "heads" that work in parallel to ensure intelligent, safe, and efficient execution.
+
+## 1. The Reasoning Head
+
+Responsible for high-level goal translation. It takes natural language directives and decomposes them into a sequence of actionable steps.
+
+## 2. The Execution Head
+
+The engine that actually interacts with the world. It maps steps from the Reasoning Head to specific tool calls, such as:
+- `solana:transfer`
+- `jupiter:swap`
+- `serum:limitOrder`
+
+## 3. The Guardrail Head
+
+A security-first monitor that evaluates every proposed action against predefined safety policies. If an action violates a policy (e.g., "Max trade size: 10 SOL"), the Guardrail Head vetoes it immediately.

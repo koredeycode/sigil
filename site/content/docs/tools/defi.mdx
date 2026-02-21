@@ -1,0 +1,24 @@
+---
+title: "Tool Registry: DeFi"
+---
+
+# DeFi & Protocol Interaction
+
+Sigil agents can interact with real on-chain protocols on Solana Devnet. This enables complex autonomous trading and liquidity management.
+
+## Protocol Integration: SPL Token Swap
+
+Sigil utilizes the **SPL Token Swap** reference program to execute on-chain DeFi operations.
+
+### Tools
+*   `create_liquidity_pool` — Create a pool with two tokens and initial reserves.
+*   `swap_tokens` — Execute a token swap through an on-chain pool (Token A → Token B).
+*   `get_pool_info` — Fetch pool reserves, swap fees, and token pair details.
+
+## Portfolio Tools
+*   `get_portfolio_snapshot` — Full breakdown of holdings with percentages.
+*   `check_allocation_drift` — Compare current holdings to target ratios.
+*   `rebalance_portfolio` — Execute swaps to restore desired allocation ratios.
+
+## Trustless Execution
+All DeFi operations are subject to **Slippage Guardrails**, preventing agents from executing trades with unfavorable pricing.

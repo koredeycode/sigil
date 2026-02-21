@@ -1,0 +1,22 @@
+---
+title: "Concept: Agent Loop"
+---
+
+# The Agent Loop
+
+Each agent in Sigil runs its own independent `setInterval` process. By default, this loop triggers every 60 seconds, but it can be configured per agent.
+
+## The Cycle
+
+Each cycle of the loop follows a structured graph:
+
+1.  **Fetch Data:** The agent queries its SOL balance, SPL token holdings, and recent transaction history.
+2.  **Read Directives:** Any natural language rules defined by the user are loaded.
+3.  **LLM Decide:** The primary LLM provider evaluates the current state against the directives to decide if any action is needed.
+4.  **Guardrail Check:** If an action is proposed (e.g., a transfer), it is passed through a hard-coded safety layer.
+5.  **Execute:** If cleared, the transaction is built, signed, and submitted to Solana Devnet.
+6.  **Log:** The reasoning process ("Thoughts") and transaction outcome are logged to the local database.
+
+## LangGraph Powering the Loop
+
+The agent loop is modeled as a **LangGraph** state graph. Each step is a node with conditional edges, enabling complex branching, retries, and multi-step reasoning within a single cycle.

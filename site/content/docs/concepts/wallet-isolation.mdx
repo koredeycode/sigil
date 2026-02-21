@@ -1,0 +1,30 @@
+---
+title: "Concept: Wallet Isolation"
+---
+
+# Agent ↔ Wallet Isolation
+
+Sigil enforces a strict separation of responsibilities between the "Brain" and the "Signer."
+
+```text
+┌─────────────────────────────────────────┐
+│           Agent Layer (Brain)           │
+│  LLM Reasoning · Directive Engine · Loop  │
+│  "Decides WHAT to do"                  │
+├─────────────────────────────────────────┤
+│         Guardrails Layer (Gate)         │
+│  Per-trade limits · Allowlists · Caps  │
+│  "Validates WHETHER it's allowed"      │
+├─────────────────────────────────────────┤
+│         Wallet Layer (Signer)           │
+│  Key Storage · Tx Building · Signing   │
+│  "Executes HOW to do it"               │
+└─────────────────────────────────────────┘
+```
+
+## Key Principles
+
+*   **No Direct Key Access:** The Agent Layer produces *intents* (e.g., "transfer 1 SOL"), but it never handles private keys directly.
+*   **Encrypted Storage:** Private keys are stored using `keytar` in your operating system's Keychain/Credential Vault.
+*   **Deterministic Signatures:** The Signer only executes transactions that have been explicitly validated by the Guardrails layer.
+*   **Zero Cloud:** Keys are never sent to a server or stored in a way that is accessible outside of your local machine.
