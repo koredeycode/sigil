@@ -1,6 +1,6 @@
 import { clsx } from 'clsx';
-import { Bot, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { AlertCircle, Bot, Plus, Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import type { Agent } from '../hooks/useAgents';
 import { ApiClient } from '../lib/api';
 
@@ -17,15 +17,29 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
     const [condition, setCondition] = useState('');
     const [action, setAction] = useState('');
     const [creating, setCreating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'running' | 'paused' | 'killed'>('all');
+
+    const filteredAgents = useMemo(() => {
+        return agents.filter(agent => {
+            const matchesSearch = agent.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                               agent.id.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus = statusFilter === 'all' || agent.status === statusFilter;
+            return matchesSearch && matchesStatus;
+        });
+    }, [agents, searchTerm, statusFilter]);
 
     const handleCreate = async () => {
         const trimmedName = name.trim();
         if (!trimmedName) return;
 
         if (!/^[a-zA-Z0-9_-]+$/.test(trimmedName)) {
-            alert('Invalid agent name. Use only alphanumeric characters, dashes, or underscores.');
+            setError('Invalid agent name. Use only alphanumeric characters, dashes, or underscores.');
             return;
         }
+
+        setError(null);
 
         const token = localStorage.getItem('sigil_token');
         if (!token) return;
@@ -39,16 +53,17 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
             if (agent && agent.id && condition.trim() && action.trim()) {
                 await client.addDirective(agent.id, condition, action);
             }
-
+            
             setName('');
             setLoopInterval(60);
             setPrivateKey('');
             setCondition('');
             setAction('');
+            setError(null);
             refreshAgents();
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert('Failed to create agent');
+            setError(e.error || e.message || 'Failed to create agent');
         } finally {
             setCreating(false);
         }
@@ -73,6 +88,35 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                              {agents.length} Total
                          </span>
                     </div>
+
+                    {/* Filters Bar */}
+                    <div className="px-6 py-4 bg-secondary/10 border-b border-border flex flex-col sm:flex-row gap-4">
+                       <div className="relative flex-1">
+                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                           <input 
+                               value={searchTerm}
+                               onChange={e => setSearchTerm(e.target.value)}
+                               placeholder="Search by name or ID..."
+                               className="w-full pl-10 pr-4 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm"
+                           />
+                       </div>
+                       <div className="flex bg-background border border-border p-1 rounded-lg gap-1">
+                           {(['all', 'running', 'paused', 'killed'] as const).map(status => (
+                               <button
+                                   key={status}
+                                   onClick={() => setStatusFilter(status)}
+                                   className={clsx(
+                                       "px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-all",
+                                       statusFilter === status 
+                                           ? "bg-primary text-primary-foreground shadow-sm" 
+                                           : "text-muted-foreground hover:bg-secondary"
+                                   )}
+                               >
+                                   {status}
+                               </button>
+                           ))}
+                       </div>
+                    </div>
                     
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left">
@@ -85,7 +129,7 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
-                                {agents.map(agent => (
+                                {filteredAgents.map(agent => (
                                     <tr 
                                         key={agent.id} 
                                         className="hover:bg-secondary/20 transition-colors cursor-pointer"
@@ -121,10 +165,13 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                                         </td>
                                     </tr>
                                 ))}
-                                {agents.length === 0 && (
+                                {filteredAgents.length === 0 && (
                                     <tr>
                                         <td colSpan={4} className="px-6 py-8 text-center text-muted-foreground">
-                                            No agents created yet. Use the form to create one.
+                                            {searchTerm || statusFilter !== 'all' 
+                                                ? "No agents match your filters." 
+                                                : "No agents created yet. Use the form to create one."
+                                            }
                                         </td>
                                     </tr>
                                 )}
@@ -141,12 +188,18 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                     </div>
                     
                     <div className="space-y-3">
+                        {error && (
+                            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3 text-red-600 animate-in fade-in slide-in-from-top-1 duration-200">
+                                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                                <p className="text-xs font-medium leading-relaxed">{error}</p>
+                            </div>
+                        )}
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-muted-foreground">Name</label>
                             <input 
                                 value={name} 
                                 onChange={e => setName(e.target.value)}
-                                placeholder="e.g. treasury-agent" 
+                                placeholder="e.g. my-agent" 
                                 className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2 font-mono"
                             />
                         </div>

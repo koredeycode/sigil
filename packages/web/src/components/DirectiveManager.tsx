@@ -2,6 +2,7 @@ import { Check, Edit2, Plus, Target, Trash2, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { Agent } from '../hooks/useAgents';
 import { ApiClient, type Directive } from '../lib/api';
+import { ConfirmationModal } from './ConfirmationModal';
 
 interface DirectiveManagerProps {
     activeAgent: Agent | null;
@@ -15,6 +16,8 @@ export function DirectiveManager({ activeAgent }: DirectiveManagerProps) {
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editCondition, setEditCondition] = useState('');
     const [editAction, setEditAction] = useState('');
+    const [deletingDir, setDeletingDir] = useState<Directive | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const loadDirectives = useCallback(async () => {
         if (!activeAgent) return;
@@ -68,13 +71,17 @@ export function DirectiveManager({ activeAgent }: DirectiveManagerProps) {
     const handleDelete = async (id: number) => {
         const token = localStorage.getItem('sigil_token');
         if (!token) return;
+        setIsDeleting(true);
         try {
             const client = new ApiClient(token);
             await client.deleteDirective(id);
+            setDeletingDir(null);
             loadDirectives();
         } catch (e) {
             console.error('Failed to delete directive:', e);
             alert('Failed to delete directive');
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -173,7 +180,7 @@ export function DirectiveManager({ activeAgent }: DirectiveManagerProps) {
                                         <Edit2 className="w-3.5 h-3.5" />
                                     </button>
                                     <button 
-                                        onClick={() => handleDelete(dir.id)}
+                                        onClick={() => setDeletingDir(dir)}
                                         className="p-1.5 rounded-md text-muted-foreground hover:bg-red-500/10 hover:text-red-500 transition-colors"
                                         title="Delete Directive"
                                     >
@@ -191,6 +198,17 @@ export function DirectiveManager({ activeAgent }: DirectiveManagerProps) {
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal 
+                isOpen={deletingDir !== null}
+                onClose={() => setDeletingDir(null)}
+                onConfirm={() => deletingDir && handleDelete(deletingDir.id)}
+                isLoading={isDeleting}
+                title="Delete Directive"
+                message={`Are you sure you want to delete this directive? "IF ${deletingDir?.condition} THEN ${deletingDir?.action}"`}
+                confirmText="Delete"
+                variant="danger"
+            />
         </div>
     );
 }

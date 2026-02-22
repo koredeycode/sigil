@@ -1,5 +1,6 @@
-import { Copy, Pause, Play, Settings, Square, Terminal, X } from 'lucide-react';
-import { useState } from 'react';
+import { AlertCircle, Check, Copy, Pause, Play, Settings, Square, Terminal, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ConfirmationModal } from '../components/ConfirmationModal';
 import { DirectiveManager } from '../components/DirectiveManager';
 import { ApiClient } from '../lib/api';
 
@@ -9,23 +10,46 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [editName, setEditName] = useState('');
     const [editInterval, setEditInterval] = useState(60);
+    const [copiedKey, setCopiedKey] = useState(false);
+    const [confirmAction, setConfirmAction] = useState<'pause' | 'kill' | null>(null);
+    const [isActionLoading, setIsActionLoading] = useState(false);
+    const [profileError, setProfileError] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     if (!activeAgent) return null;
 
+    useEffect(() => {
+        if (copiedKey) {
+            const timer = setTimeout(() => setCopiedKey(false), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [copiedKey]);
+
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        // Simple mock toast for copy
-        alert('Copied to clipboard!');
+        setCopiedKey(true);
     };
 
     const handleControl = async (action: 'start' | 'pause' | 'kill') => {
+        if ((action === 'pause' || action === 'kill') && !confirmAction) {
+            setConfirmAction(action);
+            return;
+        }
+
         const token = localStorage.getItem('sigil_token');
         if (!token) return;
+        
+        setIsActionLoading(true);
         try {
             const client = new ApiClient(token);
             await client.controlAgent(activeAgent.id, action);
-        } catch (error) {
-            console.error(`Failed to ${action} agent:`, error);
+            setConfirmAction(null);
+            setError(null);
+        } catch (e: any) {
+            console.error(`Failed to ${action} agent:`, e);
+            setError(e.error || e.message || `Failed to ${action} agent`);
+        } finally {
+            setIsActionLoading(false);
         }
     };
 
@@ -37,6 +61,7 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
         setEditName(activeAgent.name);
         setEditInterval(activeAgent.loop_interval / 1000);
         setIsEditingProfile(true);
+        setProfileError(null);
     };
 
     const handleUpdateProfile = async () => {
@@ -48,14 +73,24 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
             const client = new ApiClient(token);
             await client.updateAgent(activeAgent.id, editName.trim(), editInterval * 1000);
             setIsEditingProfile(false);
-        } catch (error) {
-            console.error('Failed to update agent profile:', error);
-            alert('Failed to update agent profile');
+            setProfileError(null);
+        } catch (e: any) {
+            console.error('Failed to update agent profile:', e);
+            setProfileError(e.error || e.message || 'Failed to update agent profile');
         }
     };
 
     return (
         <div className="flex flex-col h-full space-y-6 overflow-y-auto pr-2">
+            {error && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3 text-red-600 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <p className="text-xs font-medium leading-relaxed flex-1">{error}</p>
+                    <button onClick={() => setError(null)} className="hover:opacity-70 transition-opacity">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
             <header className="flex flex-col space-y-2">
                 <div className="flex items-center gap-3">
                     <h1 className="text-3xl font-bold tracking-tight">{activeAgent.name}</h1>
@@ -91,8 +126,9 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
                                 <button 
                                     onClick={() => activeAgent.pubkey && copyToClipboard(activeAgent.pubkey)}
                                     className="p-1.5 hover:bg-secondary rounded text-muted-foreground hover:text-foreground transition-colors"
+                                    title={copiedKey ? "Copied!" : "Copy Public Key"}
                                 >
-                                    <Copy className="w-4 h-4" />
+                                    {copiedKey ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                                 </button>
                             </div>
                         </div>
@@ -184,6 +220,12 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
                             </button>
                         </div>
                         <div className="p-6 space-y-4">
+                            {profileError && (
+                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3 text-red-600 animate-in fade-in slide-in-from-top-1 duration-200">
+                                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                                    <p className="text-xs font-medium">{profileError}</p>
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Agent Name</label>
                                 <input 
@@ -222,6 +264,20 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal 
+                isOpen={confirmAction !== null}
+                onClose={() => setConfirmAction(null)}
+                onConfirm={() => confirmAction && handleControl(confirmAction)}
+                isLoading={isActionLoading}
+                title={confirmAction === 'kill' ? 'Kill Agent' : 'Pause Agent'}
+                message={confirmAction === 'kill' 
+                    ? `Are you sure you want to kill ${activeAgent.name}? This will stop the agent immediately and prevent it from running until restarted.`
+                    : `Are you sure you want to pause ${activeAgent.name}? It will stop its current cycle but can be resumed later.`
+                }
+                confirmText={confirmAction === 'kill' ? 'Kill Agent' : 'Pause Agent'}
+                variant={confirmAction === 'kill' ? 'danger' : 'warning'}
+            />
         </div>
     );
 }

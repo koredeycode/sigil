@@ -147,12 +147,12 @@ export class ApiClient {
     return this.request('POST', `/providers/primary`, { id });
   }
 
-  async fetchModels(provider: string, apiKey: string): Promise<ApiResponse<{ models?: { id: string; label: string }[]; error?: string }>> {
-    return this.request<{ models?: { id: string; label: string }[]; error?: string }>('POST', '/providers/models', { provider, apiKey });
+  async fetchModels(provider: string, apiKey: string, baseUrl?: string): Promise<ApiResponse<{ models?: { id: string; label: string }[]; error?: string }>> {
+    return this.request<{ models?: { id: string; label: string }[]; error?: string }>('POST', '/providers/models', { provider, apiKey, baseUrl });
   }
 
-  async addProvider(provider: string, apiKey: string, model: string): Promise<ApiResponse<any>> {
-    return this.request('POST', '/providers', { name: provider, apiKey, model });
+  async addProvider(provider: string, apiKey: string, model: string, baseUrl?: string, compat?: string): Promise<ApiResponse<any>> {
+    return this.request('POST', '/providers', { name: provider, apiKey, model, baseUrl, compat });
   }
 
   async deleteProvider(id: number): Promise<ApiResponse<void>> {

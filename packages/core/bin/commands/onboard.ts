@@ -158,7 +158,7 @@ export function registerOnboardCommand(program: Command) {
       } else {
         const agentName = await clack.text({
           message: 'Name your agent:',
-          initialValue: 'treasury',
+          initialValue: 'my-agent',
           validate: (val) => val.length < 1 ? 'Name cannot be empty' : undefined,
         });
         if (clack.isCancel(agentName)) { clack.cancel('Setup cancelled.'); process.exit(0); }

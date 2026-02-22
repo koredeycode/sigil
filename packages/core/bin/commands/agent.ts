@@ -43,7 +43,7 @@ export function registerAgentCommand(program: Command) {
 
         const inputName = await clack.text({
           message: 'Name your agent:',
-          placeholder: 'e.g. treasury',
+          placeholder: 'e.g. my-agent',
           validate: (val) => val.length < 1 ? 'Name cannot be empty' : undefined,
         });
         if (clack.isCancel(inputName)) { clack.cancel('Cancelled.'); process.exit(0); }

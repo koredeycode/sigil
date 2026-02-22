@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { Activity, Bot, ExternalLink, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
+import { Activity, Wallet, Bot, ExternalLink, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
@@ -153,10 +153,12 @@ const DashboardContent = ({ activeAgent }: { activeAgent: Agent | null }) => {
                     </div>
                 </Panel>
 
-                {/* Resizer: Simplified to a single element to guarantee clickability */}
+                {/* Resizer */}
                 <Separator 
-                    className="w-1.5 bg-border/30 hover:bg-primary/50 cursor-col-resize transition-colors" 
-                />
+                    className="w-1.5 flex items-center justify-center bg-transparent hover:bg-primary/5 transition-colors cursor-col-resize group outline-none" 
+                >
+                    <div className="w-0.5 h-8 rounded-full bg-border group-hover:bg-primary/50 transition-colors" />
+                </Separator>
 
                 {/* Right Column: Wallet View */}
                 <Panel defaultSize="30%">
@@ -227,7 +229,7 @@ const Dashboard = () => {
             <aside className="w-64 bg-card border-r border-border flex flex-col">
                 <div className="p-6">
                     <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
-                        <Activity className="w-6 h-6 text-primary" />
+                        <Wallet className="w-6 h-6 text-primary" />
                         Sigil
                     </h2>
                 </div>

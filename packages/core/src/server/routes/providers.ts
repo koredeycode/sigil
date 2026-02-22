@@ -24,17 +24,19 @@ providersRouter.get('/', (_req, res) => {
 // POST /api/providers — add a provider
 providersRouter.post('/', (req, res) => {
   try {
-    const { name, apiKey, model, isPrimary } = req.body;
+    const { name, apiKey, model, isPrimary, baseUrl, compat } = req.body;
     if (!name || !model) {
       res.status(400).json({ error: 'name and model are required' });
       return;
     }
     const encryptedKey = apiKey ? encryptApiKey(apiKey) : null;
-    const result = addProvider(name, encryptedKey, model, isPrimary ?? false);
+    const result = addProvider(name, encryptedKey, model, isPrimary ?? false, baseUrl, compat);
     res.status(201).json({ message: 'Provider created successfully', data: {
       id: Number(result.lastInsertRowid),
       name,
       model,
+      baseUrl,
+      compat,
       isPrimary: isPrimary ?? false,
     }});
   } catch (error) {
