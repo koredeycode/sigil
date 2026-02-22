@@ -16,14 +16,14 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
     const [profileError, setProfileError] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    if (!activeAgent) return null;
-
     useEffect(() => {
         if (copiedKey) {
             const timer = setTimeout(() => setCopiedKey(false), 2000);
             return () => clearTimeout(timer);
         }
     }, [copiedKey]);
+
+    if (!activeAgent) return null;
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);

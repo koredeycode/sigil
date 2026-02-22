@@ -48,6 +48,8 @@ export function DirectiveManager({ activeAgent }: DirectiveManagerProps) {
         loadDirectives();
     }, [loadDirectives]);
 
+    if (!activeAgent) return <div className="p-4 text-muted-foreground text-sm">Select an agent</div>;
+
     const handleAdd = async () => {
         if (!activeAgent || !condition.trim() || !action.trim()) return;
         const token = localStorage.getItem('sigil_token');
