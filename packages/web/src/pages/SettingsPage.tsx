@@ -538,12 +538,15 @@ export function SettingsPage() {
                                         value={selectedModel}
                                         onChange={setSelectedModel}
                                         options={availableModels}
-                                        position="top"
+                                        position="bottom"
                                     />
                                 </div>
                             )}
+
+                            {/* Spacer to allow scrolling past the bottom dropdown */}
+                            <div className="h-32" />
                         </div>
-                        <div className="px-6 py-4 border-t border-border flex justify-end gap-3 bg-secondary/10">
+                        <div className="px-6 py-4 border-t border-border flex justify-end gap-3 bg-secondary/10 shrink-0">
                             <button 
                                 onClick={() => {
                                     setIsAddingProvider(false);

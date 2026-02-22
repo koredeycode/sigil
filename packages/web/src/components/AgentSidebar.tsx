@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { Bot, ExternalLink } from 'lucide-react';
+import { Bot, ExternalLink, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Agent } from '../hooks/useAgents';
 
@@ -28,20 +28,32 @@ export function AgentSidebar({ agents, activeAgentId, onSelectAgent }: AgentSide
                     )}
                 >
                     <div className="flex items-center gap-2">
-                        <Bot className="w-4 h-4" />
-                        <span className="truncate max-w-[120px]">{agent.name}</span>
+                        <div className="relative">
+                            <Bot className="w-5 h-5 text-muted-foreground" />
+                            <span className={clsx(
+                                "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card",
+                                agent.status === 'running' && "bg-green-500",
+                                agent.status === 'paused' && "bg-orange-500",
+                                agent.status === 'killed' && "bg-red-500",
+                                agent.status === 'running' && "animate-pulse"
+                            )} />
+                        </div>
+                        <span className="truncate max-w-[120px] font-medium">{agent.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className={clsx(
-                            "w-2 h-2 rounded-full",
-                            agent.status === 'running' && "bg-green-500",
-                            agent.status === 'paused' && "bg-orange-500",
-                            agent.status === 'killed' && "bg-red-500",
-                        )} />
+                        <Link 
+                            to="/"
+                            onClick={(e) => { e.stopPropagation(); onSelectAgent(agent.id); }}
+                            className="p-1 rounded-sm hover:bg-background/20 text-muted-foreground hover:text-foreground transition-colors"
+                            title="Open Chat"
+                        >
+                            <MessageSquare className="w-3 h-3" />
+                        </Link>
                         <Link 
                             to={`/agents/${agent.id}`}
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => { e.stopPropagation(); onSelectAgent(agent.id); }}
                             className="p-1 rounded-sm hover:bg-background/20 text-muted-foreground hover:text-foreground transition-colors"
+                            title="View Details"
                         >
                             <ExternalLink className="w-3 h-3" />
                         </Link>
