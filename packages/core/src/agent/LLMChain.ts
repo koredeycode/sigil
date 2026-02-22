@@ -41,34 +41,29 @@ export function createModel(provider: ProviderRow): BaseChatModel {
         temperature: 0,
       });
 
-    case 'ollama':
-      // Ollama uses the OpenAI-compatible API
-      return new ChatOpenAI({
-        openAIApiKey: 'ollama', // dummy key for local
-        modelName: provider.model,
-        temperature: 0,
-        configuration: {
-          baseURL: 'http://localhost:11434/v1',
-        },
-      });
+    case 'custom':
+    default: {
+      // Custom or unknown provider — use base_url + compat to route
+      const baseURL = provider.base_url ?? undefined;
+      const compat = provider.compat ?? 'openai';
 
-    case 'lmstudio':
-      return new ChatOpenAI({
-        openAIApiKey: 'lmstudio',
-        modelName: provider.model,
-        temperature: 0,
-        configuration: {
-          baseURL: 'http://localhost:1234/v1',
-        },
-      });
+      if (compat === 'anthropic') {
+        return new ChatAnthropic({
+          anthropicApiKey: apiKey || 'none',
+          modelName: provider.model,
+          temperature: 0,
+          ...(baseURL ? { clientOptions: { baseURL } } : {}),
+        });
+      }
 
-    default:
-      // Fallback: treat as OpenAI-compatible API
+      // Default to OpenAI-compatible
       return new ChatOpenAI({
-        openAIApiKey: apiKey,
+        openAIApiKey: apiKey || 'none',
         modelName: provider.model,
         temperature: 0,
+        ...(baseURL ? { configuration: { baseURL } } : {}),
       });
+    }
   }
 }
 

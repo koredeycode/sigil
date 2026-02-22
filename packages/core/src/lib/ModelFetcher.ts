@@ -42,18 +42,6 @@ const PROVIDER_ENDPOINTS: Record<string, { url: string; parseModels: (data: any)
           label: m.displayName ?? m.name.replace('models/', ''),
         })),
   },
-  ollama: {
-    url: 'http://localhost:11434/api/tags',
-    parseModels: (data) =>
-      (data.models ?? [])
-        .map((m: any) => ({ id: m.name, label: `${m.name} (${formatBytes(m.size)})` })),
-  },
-  lmstudio: {
-    url: 'http://localhost:1234/v1/models',
-    parseModels: (data) =>
-      (data.data ?? [])
-        .map((m: any) => ({ id: m.id, label: m.id })),
-  },
 };
 
 function formatBytes(bytes: number): string {
@@ -100,18 +88,32 @@ export async function fetchModelsForProvider(
     clearTimeout(timeout);
 
     if (!res.ok) {
-        let errMsg = `HTTP ${res.status} ${res.statusText}`;
+        let errMsg = '';
         try {
             const errData = await res.json();
-            errMsg += ` - ${JSON.stringify(errData.error || errData)}`;
-        } catch {}
-        return { models: null, error: `API Error: ${errMsg}` };
+            const e = errData.error;
+            if (typeof e === 'string') {
+              errMsg = e;
+            } else if (e?.message) {
+              errMsg = e.message;
+            } else if (errData.message) {
+              errMsg = errData.message;
+            } else {
+              errMsg = `HTTP ${res.status} ${res.statusText}`;
+            }
+        } catch {
+            errMsg = `HTTP ${res.status} ${res.statusText}`;
+        }
+        return { models: null, error: errMsg };
     }
 
     const data = await res.json();
     const models = config.parseModels(data);
     return { models: models.length > 0 ? models : null, error: null };
   } catch (err: any) {
-    return { models: null, error: `Network/Fetch Error: ${err.message || 'Unknown error'}` };
+    const msg = err.name === 'AbortError'
+      ? 'Request timed out — is the provider reachable?'
+      : (err.message || 'Unknown error');
+    return { models: null, error: msg };
   }
 }

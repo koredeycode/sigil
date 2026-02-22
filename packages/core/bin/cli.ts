@@ -18,24 +18,29 @@ import { registerStopCommand } from './commands/stop.js';
 import { register as registerTuiCommand } from './commands/tui.js';
 import { registerTxCommand } from './commands/tx.js';
 
+const version = "0.1.0";
+
 const program = new Command();
 
 program
   .name('sigil')
   .description('The Local-First Autonomous Agent for Solana')
-  .version('0.1.0');
+  .version(version);
 
-const BANNER = `
-  ███████╗  ██╗   ██████╗   ██╗  ██╗
-  ██╔════╝  ██║  ██╔════╝   ██║  ██║
-  ███████╗  ██║  ██║  ███╗  ██║  ██║
-  ╚════██║  ██║  ██║   ██║  ██║  ██║
-  ███████║  ██║  ╚██████╔╝  ██║  ███████╗
-  ╚══════╝  ╚═╝   ╚═════╝   ╚═╝  ╚══════╝
-`;
+// const BANNER = `
+//   ███████╗  ██╗   ██████╗   ██╗  ██╗
+//   ██╔════╝  ██║  ██╔════╝   ██║  ██║
+//   ███████╗  ██║  ██║  ███╗  ██║  ██║
+//   ╚════██║  ██║  ██║   ██║  ██║  ██║
+//   ███████║  ██║  ╚██████╔╝  ██║  ███████╗
+//   ╚══════╝  ╚═╝   ╚═════╝   ╚═╝  ╚══════╝
+// `;
 
-console.log(BANNER);
-console.log('  The Local-First Autonomous Agent for Solana\n');
+// console.log(BANNER);
+// console.log('  The Local-First Autonomous Agent for Solana\n');
+
+console.log(`Sigil v${version}`);
+
 
 // Register all command groups
 try {

@@ -14,78 +14,137 @@ export function registerOnboardCommand(program: Command) {
     .command('onboard')
     .description('Guided onboarding wizard — set up your first agent and provider')
     .action(async () => {
-      // 1. LLM Provider
-      const providerName = await clack.select({
-        message: 'Which LLM provider would you like to use?',
-        options: [
-          { value: 'groq', label: 'Groq (Fastest inference)' },
-          { value: 'openai', label: 'OpenAI (GPT-4o)' },
-          { value: 'anthropic', label: 'Anthropic (Claude)' },
-          { value: 'google', label: 'Google (Gemini)' },
-          { value: 'ollama', label: 'Ollama (Local)' },
-          { value: 'lmstudio', label: 'LM Studio (Local)' },
-        ],
-      });
-
-      if (clack.isCancel(providerName)) { clack.cancel('Setup cancelled.'); process.exit(0); }
-
+      // 1. LLM Provider setup (with retry on failure)
+      let providerName: string | symbol = '';
       let apiKey: string | symbol | null = null;
-      const needsKey = !['ollama', 'lmstudio'].includes(String(providerName));
-
-      if (needsKey) {
-        apiKey = await clack.password({
-          message: `Enter your ${String(providerName)} API key:`,
-        });
-        if (clack.isCancel(apiKey)) { clack.cancel('Setup cancelled.'); process.exit(0); }
-      }
-
-      // Model selection options per provider
-      // Fetch models dynamically
-      const s = clack.spinner();
-      s.start(`Fetching available models from ${String(providerName)}...`);
-      const { models, error } = await fetchModelsForProvider(String(providerName), apiKey ? String(apiKey) : null);
-      s.stop(models ? `Found ${models.length} models` : 'Could not fetch models — enter manually');
-
-      if (error) {
-        clack.log.error(error);
-      }
-
+      let baseUrl: string | null = null;
+      let compat: string = 'openai';
       let model: string | symbol = '';
+      let providerReady = false;
 
-      if (models && models.length > 0) {
-        const modelOptions = [
-          ...models.map(m => ({ value: m.id, label: m.label })),
-          { value: '__manual__', label: '✏️  Enter manually...' },
-        ];
-
-        model = await clack.select({
-          message: 'Which model?',
-          options: modelOptions,
+      while (!providerReady) {
+        providerName = await clack.select({
+          message: 'Which LLM provider would you like to use?',
+          options: [
+            { value: 'openai', label: 'OpenAI' },
+            { value: 'anthropic', label: 'Anthropic' },
+            { value: 'google', label: 'Google' },
+            { value: 'groq', label: 'Groq' },
+            { value: 'custom', label: 'Custom Provider' },
+          ],
         });
 
-        if (String(model) === '__manual__') {
-          model = await clack.text({
-            message: 'Enter model name manually:',
-            validate: (val) => val.length < 1 ? 'Model name cannot be empty' : undefined,
+        if (clack.isCancel(providerName)) { clack.cancel('Setup cancelled.'); process.exit(0); }
+
+        const isCustom = String(providerName) === 'custom';
+        apiKey = null;
+        baseUrl = null;
+        compat = 'openai';
+        model = '';
+
+        if (isCustom) {
+          // Custom provider flow
+          const customName = await clack.text({
+            message: 'Provider name:',
+            placeholder: 'e.g. ollama, lmstudio, my-server',
+            validate: (val) => val.length < 1 ? 'Name cannot be empty' : undefined,
           });
-        }
-      } else {
-        model = await clack.text({
-          message: 'Which model?',
-          initialValue: '',
-          placeholder: 'e.g. gpt-4o',
-          validate: (val) => val.length < 1 ? 'Model name cannot be empty' : undefined,
-        });
-      }
+          if (clack.isCancel(customName)) { clack.cancel('Setup cancelled.'); process.exit(0); }
+          providerName = String(customName);
 
-      if (clack.isCancel(model)) { clack.cancel('Setup cancelled.'); process.exit(0); }
+          const inputBaseUrl = await clack.text({
+            message: 'API Base URL:',
+            initialValue: 'http://localhost:11434/v1',
+            validate: (val) => val.length < 1 ? 'Base URL cannot be empty' : undefined,
+          });
+          if (clack.isCancel(inputBaseUrl)) { clack.cancel('Setup cancelled.'); process.exit(0); }
+          baseUrl = String(inputBaseUrl);
+
+          const inputApiKey = await clack.text({
+            message: 'API Key (leave blank if not required):',
+            initialValue: '',
+          });
+          if (clack.isCancel(inputApiKey)) { clack.cancel('Setup cancelled.'); process.exit(0); }
+          apiKey = String(inputApiKey) || null;
+
+          const compatChoice = await clack.select({
+            message: 'Endpoint compatibility:',
+            options: [
+              { value: 'openai', label: 'OpenAI-compatible', hint: 'Most providers (Ollama, LM Studio, vLLM, etc.)' },
+              { value: 'anthropic', label: 'Anthropic-compatible' },
+            ],
+          });
+          if (clack.isCancel(compatChoice)) { clack.cancel('Setup cancelled.'); process.exit(0); }
+          compat = String(compatChoice);
+
+          model = await clack.text({
+            message: 'Model ID:',
+            placeholder: 'e.g. llama3, mistral, gpt-4o',
+            validate: (val) => val.length < 1 ? 'Model ID cannot be empty' : undefined,
+          });
+          if (clack.isCancel(model)) { clack.cancel('Setup cancelled.'); process.exit(0); }
+
+          providerReady = true;
+        } else {
+          // Standard provider flow
+          apiKey = await clack.password({
+            message: `Enter your ${String(providerName)} API key:`,
+          });
+          if (clack.isCancel(apiKey)) { clack.cancel('Setup cancelled.'); process.exit(0); }
+
+          // Fetch models dynamically
+          const s2 = clack.spinner();
+          s2.start(`Fetching available models from ${String(providerName)}...`);
+          const { models, error } = await fetchModelsForProvider(String(providerName), apiKey ? String(apiKey) : null);
+          s2.stop(models ? `Found ${models.length} models` : 'Failed to fetch models');
+
+          if (error) {
+            clack.log.error(error);
+            const retry = await clack.confirm({
+              message: 'Would you like to try a different provider or API key?',
+              initialValue: true,
+            });
+            if (clack.isCancel(retry) || retry) {
+              continue; // restart the loop
+            }
+            // User chose not to retry — exit
+            clack.cancel('Setup cancelled.');
+            process.exit(0);
+          }
+
+          if (models && models.length > 0) {
+            const modelOptions = [
+              ...models.map(m => ({ value: m.id, label: m.label })),
+              { value: '__manual__', label: '✏️  Enter manually...' },
+            ];
+
+            model = await clack.select({
+              message: 'Which model?',
+              options: modelOptions,
+            });
+
+            if (String(model) === '__manual__') {
+              model = await clack.text({
+                message: 'Enter model name manually:',
+                validate: (val) => val.length < 1 ? 'Model name cannot be empty' : undefined,
+              });
+            }
+          }
+
+          if (clack.isCancel(model)) { clack.cancel('Setup cancelled.'); process.exit(0); }
+
+          providerReady = true;
+        }
+      }
 
       // Initialize DB
       getDatabase();
 
+      const s = clack.spinner();
+
       // Store provider
       const encKey = apiKey ? encryptApiKey(String(apiKey)) : null;
-      addProvider(String(providerName), encKey, String(model), true);
+      addProvider(String(providerName), encKey, String(model), true, baseUrl, compat);
 
       clack.log.success(`Provider "${providerName}" added as primary`);
 
@@ -95,57 +154,48 @@ export function registerOnboardCommand(program: Command) {
       });
 
       if (clack.isCancel(createFirst) || !createFirst) {
-        clack.outro('Run `sigil agent create <name>` when you\'re ready.');
-        process.exit(0);
-      }
-
-      const agentName = await clack.text({
-        message: 'Name your agent:',
-        initialValue: 'treasury',
-        validate: (val) => val.length < 1 ? 'Name cannot be empty' : undefined,
-      });
-      if (clack.isCancel(agentName)) { clack.cancel('Setup cancelled.'); process.exit(0); }
-
-      // 3. Loop interval
-      const wantImport = await clack.confirm({
-        message: 'Do you want to import an existing Solana wallet using a base58 private key? (Default: No, generate new)',
-        initialValue: false,
-      });
-      if (clack.isCancel(wantImport)) { clack.cancel('Cancelled.'); process.exit(0); }
-
-      let privateKey: string | undefined = undefined;
-      if (wantImport) {
-        const inputKey = await clack.password({
-          message: 'Enter base58 Private Key (hidden):',
-          validate: (val) => val.length < 32 ? 'Key seems too short' : undefined,
+        clack.log.info('You can create an agent later by running `sigil agent create <name>`.');
+      } else {
+        const agentName = await clack.text({
+          message: 'Name your agent:',
+          initialValue: 'treasury',
+          validate: (val) => val.length < 1 ? 'Name cannot be empty' : undefined,
         });
-        if (clack.isCancel(inputKey)) { clack.cancel('Cancelled.'); process.exit(0); }
-        privateKey = String(inputKey);
+        if (clack.isCancel(agentName)) { clack.cancel('Setup cancelled.'); process.exit(0); }
+
+        // 3. Loop interval
+        const wantImport = await clack.confirm({
+          message: 'Do you want to import an existing Solana wallet using a base58 private key? (Default: No, generate new)',
+          initialValue: false,
+        });
+        if (clack.isCancel(wantImport)) { clack.cancel('Cancelled.'); process.exit(0); }
+
+        let privateKey: string | undefined = undefined;
+        if (wantImport) {
+          const inputKey = await clack.password({
+            message: 'Enter base58 Private Key (hidden):',
+            validate: (val) => val.length < 32 ? 'Key seems too short' : undefined,
+          });
+          if (clack.isCancel(inputKey)) { clack.cancel('Cancelled.'); process.exit(0); }
+          privateKey = String(inputKey);
+        }
+
+        const inputInterval = await clack.text({
+          message: 'Loop interval (seconds):',
+          initialValue: '60',
+          validate: (val) => isNaN(Number(val)) ? 'Must be a number' : undefined,
+        });
+        if (clack.isCancel(inputInterval)) { clack.cancel('Cancelled.'); process.exit(0); }
+        const loopInterval = String(inputInterval);
+
+        s.start('Creating agent and wallet...');
+        const agent = await agentManager.create(agentName as string, Number(loopInterval) * 1000, privateKey);
+        s.stop(`Agent "${agent.name}" created.`);
+        clack.log.info(`Wallet: ${agent.pubkey}`);
       }
-
-      const inputInterval = await clack.text({
-        message: 'Loop interval (seconds):',
-        initialValue: '60',
-        validate: (val) => isNaN(Number(val)) ? 'Must be a number' : undefined,
-      });
-      if (clack.isCancel(inputInterval)) { clack.cancel('Cancelled.'); process.exit(0); }
-      const loopInterval = String(inputInterval);
-
-      s.start('Creating agent and wallet...');
-      const agent = await agentManager.create(agentName, Number(loopInterval) * 1000, privateKey);
-      s.stop(`Agent "${agent.name}" created.`);
-      clack.log.info(`Wallet: ${agent.pubkey}`);
 
       // 4. Start Sigil Daemon
-      const startDaemonConfirm = await clack.confirm({
-        message: 'Onboarding complete! Would you like to start the Sigil backend now?',
-        initialValue: true,
-      });
-
-      if (clack.isCancel(startDaemonConfirm) || !startDaemonConfirm) {
-        clack.outro('Setup complete. Run `sigil start` when you\'re ready. 🚀');
-        process.exit(0);
-      }
+      clack.log.info('Onboarding complete! Starting Sigil now...');
 
       s.start('Starting background daemon...');
       try {

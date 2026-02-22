@@ -27,6 +27,7 @@ export function getDatabase(): DatabaseSync {
   db.exec('PRAGMA foreign_keys = ON');
 
   initializeTables(db);
+  migrateProviders(db);
   seedDefaults(db);
 
   return db;
@@ -70,6 +71,8 @@ function initializeTables(db: DatabaseSync): void {
       name        TEXT NOT NULL,
       api_key     TEXT,
       model       TEXT NOT NULL,
+      base_url    TEXT,
+      compat      TEXT DEFAULT 'openai' CHECK(compat IN ('openai', 'anthropic')),
       is_primary  INTEGER DEFAULT 0,
       added_at    DATETIME DEFAULT CURRENT_TIMESTAMP
     );
@@ -113,6 +116,14 @@ function initializeTables(db: DatabaseSync): void {
       FOREIGN KEY (agent_id) REFERENCES agents(id)
     );
   `);
+}
+
+/**
+ * Add new columns to existing providers table (safe to re-run).
+ */
+function migrateProviders(db: DatabaseSync): void {
+  try { db.exec('ALTER TABLE providers ADD COLUMN base_url TEXT'); } catch {}
+  try { db.exec("ALTER TABLE providers ADD COLUMN compat TEXT DEFAULT 'openai'"); } catch {}
 }
 
 /**
@@ -236,15 +247,15 @@ export function setConfig(key: string, value: string) {
 }
 
 // Providers
-export function addProvider(name: string, apiKey: string | null, model: string, isPrimary = false) {
+export function addProvider(name: string, apiKey: string | null, model: string, isPrimary = false, baseUrl: string | null = null, compat: string | null = null) {
   const db = getDatabase();
   // If setting as primary, clear all other primaries first
   if (isPrimary) {
     db.prepare('UPDATE providers SET is_primary = 0').run();
   }
   return db.prepare(
-    'INSERT INTO providers (name, api_key, model, is_primary) VALUES (?, ?, ?, ?)'
-  ).run(name, apiKey, model, isPrimary ? 1 : 0);
+    'INSERT INTO providers (name, api_key, model, is_primary, base_url, compat) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(name, apiKey, model, isPrimary ? 1 : 0, baseUrl, compat ?? 'openai');
 }
 
 export function getAllProviders() {
@@ -402,6 +413,8 @@ export interface ProviderRow {
   name: string;
   api_key: string | null;
   model: string;
+  base_url: string | null;
+  compat: 'openai' | 'anthropic';
   is_primary: number;
   added_at: string;
 }
