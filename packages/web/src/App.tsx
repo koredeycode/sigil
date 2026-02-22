@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
-import { Activity, Bot, ExternalLink, LayoutDashboard, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
+import { Activity, Bot, ExternalLink, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
 import { useState } from 'react';
+import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
 import { AgentSidebar } from './components/AgentSidebar';
@@ -76,47 +77,15 @@ const DashboardContent = ({ activeAgent }: { activeAgent: Agent | null }) => {
     const [isLogsOpen, setIsLogsOpen] = useState(false);
     const { primaryProvider } = useProviders();
 
-    const [leftWidth, setLeftWidth] = useState(70); // percentage
-    const [isDragging, setIsDragging] = useState(false);
-
-    const handleDrag = (e: React.MouseEvent) => {
-        e.preventDefault();
-        const container = e.currentTarget.parentElement;
-        if (!container) return;
-        
-        setIsDragging(true);
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-        
-        const startX = e.clientX;
-        const startWidth = leftWidth;
-        const containerWidth = container.getBoundingClientRect().width;
-        
-        const onMouseMove = (moveEvent: MouseEvent) => {
-            requestAnimationFrame(() => {
-                const delta = moveEvent.clientX - startX;
-                const deltaPercentage = (delta / containerWidth) * 100;
-                const newWidth = Math.min(Math.max(startWidth + deltaPercentage, 50), 75);
-                setLeftWidth(newWidth);
-            });
-        };
-        
-        const onMouseUp = () => {
-            setIsDragging(false);
-            document.body.style.cursor = '';
-            document.body.style.userSelect = '';
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-        };
-        
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-    };
+    const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+        id: "sigil-dashboard-layout",
+        storage: localStorage
+    });
 
     if (!activeAgent) {
          return (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-4">
-                <LayoutDashboard className="w-16 h-16 opacity-20" />
+                <MessageSquare className="w-16 h-16 opacity-20" />
                 <h2 className="text-xl font-medium">No Agent Selected</h2>
                 <p className="text-sm">Select an agent from the sidebar to view their dashboard.</p>
             </div>
@@ -169,72 +138,63 @@ const DashboardContent = ({ activeAgent }: { activeAgent: Agent | null }) => {
                 </button>
             </header>
 
-            <div className="flex flex-1 min-h-0 overflow-hidden relative">
+           
+            <Group defaultLayout={defaultLayout} onLayoutChanged={onLayoutChanged} orientation="horizontal" className="h-full w-full">
+                
                 {/* Left Column: Full-Height Chat */}
-                <div 
-                    className={cn(
-                        "flex flex-col min-h-0 shrink-0",
-                        isDragging && "pointer-events-none select-none"
-                    )} 
-                    style={{ width: `calc(${leftWidth}% - 8px)` }}
-                >
-                    <div className="flex-1 flex flex-col min-h-0 bg-card border border-border rounded-lg shadow-sm overflow-hidden">
+                <Panel defaultSize="70%" maxSize="75%" minSize="50%">
+                    {/* Inner wrapper takes care of the flex layout instead of the Panel */}
+                    <div className="flex flex-col h-full bg-card border border-border rounded-lg shadow-sm overflow-hidden">
                         <div className="px-4 py-3 border-b border-border flex items-center gap-2 bg-secondary/30 shrink-0">
                             <MessageSquare className="w-4 h-4 text-muted-foreground" />
                             <h3 className="font-medium text-sm">Agent Chat</h3>
                         </div>
                         <ChatBox activeAgent={activeAgent} />
                     </div>
-                </div>
+                </Panel>
 
-                {/* Resizer */}
-                <div 
-                    className="w-4 shrink-0 flex items-center justify-center cursor-col-resize group z-10"
-                    onMouseDown={handleDrag}
-                >
-                    <div className="w-1 h-8 rounded-full bg-border group-hover:bg-primary/50 transition-colors" />
-                </div>
+                {/* Resizer: Simplified to a single element to guarantee clickability */}
+                <Separator 
+                    className="w-1.5 bg-border/30 hover:bg-primary/50 cursor-col-resize transition-colors" 
+                />
 
                 {/* Right Column: Wallet View */}
-                <div 
-                    className={cn(
-                        "flex flex-col min-h-0 shrink-0",
-                        isDragging && "pointer-events-none select-none"
-                    )} 
-                    style={{ width: `calc(${100 - leftWidth}% - 8px)` }}
-                >
-                    <WalletView activeAgent={activeAgent} />
-                </div>
-
-                {/* Log Drawer Overlay */}
-                <div className={cn(
-                    "fixed top-0 right-0 bottom-0 w-[500px] xl:w-[600px] max-w-full bg-card text-foreground border-l border-border shadow-2xl flex flex-col z-50 transition-transform duration-300 ease-in-out",
-                    isLogsOpen ? "translate-x-0" : "translate-x-full"
-                )}>
-                    <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0 bg-secondary/30">
-                        <div className="flex items-center gap-2">
-                            <Terminal className="w-4 h-4 text-muted-foreground" />
-                            <h3 className="font-medium text-sm">Live Logs for <span className="text-primary font-bold">{activeAgent.name}</span></h3>
-                        </div>
-                        <button
-                            onClick={() => setIsLogsOpen(false)}
-                            className="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                            <span className="sr-only">Close Logs</span>
-                            ×
-                        </button>
+                <Panel defaultSize="30%">
+                    <div className="flex flex-col h-full">
+                        <WalletView activeAgent={activeAgent} />
                     </div>
-                    <LogTerminal activeAgent={activeAgent} />
-                </div>
+                </Panel>
                 
-                {/* Overlay backdrop when logs are open (optional, helps focus) */}
-                {isLogsOpen && (
-                    <div 
-                        className="fixed inset-0 bg-black/50 z-40 transition-opacity" 
+            </Group>
+            
+            {/* Log Drawer Overlay */}
+            <div className={cn(
+                "fixed top-0 right-0 bottom-0 w-[500px] xl:w-[600px] max-w-full bg-card text-foreground border-l border-border shadow-2xl flex flex-col z-50 transition-transform duration-300 ease-in-out",
+                isLogsOpen ? "translate-x-0" : "translate-x-full"
+            )}>
+                <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0 bg-secondary/30">
+                    <div className="flex items-center gap-2">
+                        <Terminal className="w-4 h-4 text-muted-foreground" />
+                        <h3 className="font-medium text-sm">Live Logs for <span className="text-primary font-bold">{activeAgent.name}</span></h3>
+                    </div>
+                    <button
                         onClick={() => setIsLogsOpen(false)}
-                    />
-                )}
+                        className="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <span className="sr-only">Close Logs</span>
+                        ×
+                    </button>
+                </div>
+                <LogTerminal activeAgent={activeAgent} />
             </div>
+            
+            {/* Overlay backdrop when logs are open (optional, helps focus) */}
+            {isLogsOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-40 transition-opacity" 
+                    onClick={() => setIsLogsOpen(false)}
+                />
+            )}
         </div>
     );
 };
@@ -283,8 +243,8 @@ const Dashboard = () => {
                                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                             )}
                         >
-                            <LayoutDashboard className="w-4 h-4" />
-                            Dashboard
+                            <MessageSquare className="w-4 h-4" />
+                            Chat
                         </Link>
                         <Link 
                              to="/agents"

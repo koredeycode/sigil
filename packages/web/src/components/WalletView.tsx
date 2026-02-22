@@ -1,4 +1,4 @@
-import { Activity, ArrowRightLeft, Coins, PieChart as PieChartIcon } from 'lucide-react';
+import { Activity, ArrowRightLeft, Check, Coins, Copy, PieChart as PieChartIcon } from 'lucide-react';
 import { useState } from 'react';
 import { PortfolioChart } from './PortfolioChart';
 import { TransactionLedger } from './TransactionLedger';
@@ -17,13 +17,27 @@ import type { Agent } from '../hooks/useAgents';
 export function WalletView({ activeAgent }: { activeAgent: Agent | null }) {
     const [activeTab, setActiveTab] = useState<'portfolio' | 'transactions'>('portfolio');
     const [showChart, setShowChart] = useState(false);
+    const [copied, setCopied] = useState(false);
+
+    const truncatedAddress = activeAgent?.pubkey
+        ? `${activeAgent.pubkey.slice(0, 4)}...${activeAgent.pubkey.slice(-4)}`
+        : '';
+
+    const handleCopyAddress = () => {
+        if (!activeAgent?.pubkey) return;
+        navigator.clipboard.writeText(activeAgent.pubkey);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     return (
         <div className="flex flex-col h-full bg-card border border-border rounded-xl shadow-sm overflow-hidden">
             {/* Header section with Account Value & Action Buttons */}
             <div className="p-6 pb-2 space-y-4">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold tracking-tight">Portfolio</h2>
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-2xl font-bold tracking-tight">Portfolio</h2>
+                    </div>
                     {/* Tab Switcher */}
                     <div className="flex space-x-1 p-1 bg-secondary rounded-lg">
                         <button
@@ -50,6 +64,26 @@ export function WalletView({ activeAgent }: { activeAgent: Agent | null }) {
                         </button>
                     </div>
                 </div>
+                {activeAgent && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/40 border border-border/60 w-fit">
+                        <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-primary">{activeAgent.name[0]?.toUpperCase()}</span>
+                        </div>
+                        <span className="text-xs font-semibold text-foreground">{activeAgent.name}</span>
+                        <span className="w-px h-3 bg-border"></span>
+                        <code className="text-[11px] font-mono text-muted-foreground">{truncatedAddress}</code>
+                        <button
+                            onClick={handleCopyAddress}
+                            className="p-1 -mr-1 rounded-full hover:bg-background/80 text-muted-foreground hover:text-foreground transition-colors"
+                            title="Copy wallet address"
+                        >
+                            {copied
+                                ? <Check className="w-3 h-3 text-green-500" />
+                                : <Copy className="w-3 h-3" />
+                            }
+                        </button>
+                    </div>
+                )}
 
                 <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">Account Value</p>

@@ -155,6 +155,10 @@ export class ApiClient {
     return this.request('POST', '/providers', { name: provider, apiKey, model });
   }
 
+  async deleteProvider(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>('DELETE', `/providers/${id}`);
+  }
+
   // --- Directives ---
   async getDirectives(agentId: string): Promise<ApiResponse<Directive[]>> {
     return this.request<Directive[]>('GET', `/directives?agentId=${agentId}`);
