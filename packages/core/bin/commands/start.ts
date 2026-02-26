@@ -1,6 +1,6 @@
 import type { Command } from 'commander';
-import { runCycle } from '../../src/agent/AgentLoop.js';
 import { agentManager } from '../../src/agent/AgentManager.js';
+import { cronScheduler } from '../../src/agent/CronScheduler.js';
 import { createSessionToken } from '../../src/lib/Auth.js';
 import { getRunningPid, removePid, spawnDaemon, writePid } from '../../src/lib/Daemon.js';
 import { getDatabase } from '../../src/lib/Database.js';
@@ -28,6 +28,8 @@ export function registerStartCommand(program: Command) {
         
         // Clean up on exit
         const cleanup = () => {
+          cronScheduler.shutdown();
+          agentManager.shutdown();
           removePid();
           process.exit(0);
         };
@@ -37,18 +39,29 @@ export function registerStartCommand(program: Command) {
         getDatabase();
         const token = createSessionToken();
 
-        // Wire up the cycle runner
-        agentManager.setCycleRunner(runCycle);
-
         // Start the API server
         await startServer();
 
-        // Start all non-killed agents
-        await agentManager.startAll();
+        // Ensure main agent exists, auto-create on first boot
+        let mainAgent = agentManager.getMainAgent();
+        if (!mainAgent) {
+          console.log('  ⓘ No agent found — initializing main agent...');
+          mainAgent = await agentManager.initMainAgent();
+          console.log(`  ✔ Main agent created. Wallet: ${mainAgent.pubkey}`);
+        }
+
+        // Start the main agent
+        await agentManager.start();
+
+        // Load and start cron jobs
+        cronScheduler.loadAll();
+        cronScheduler.loadDirectiveCycles();
 
         const agents = agentManager.list();
+        const cronInfo = cronScheduler.listActive();
         console.log(`  Session Token: ${token}`);
-        console.log(`  Agents: ${agents.length} loaded\n`);
+        console.log(`  Agents: ${agents.length} loaded`);
+        console.log(`  Cron Jobs: ${cronInfo.cronJobs} active, ${cronInfo.directiveCycles} directive cycles\n`);
       } else {
         // Spawn background daemon
         console.log('\n  ⎔ Sigil — Starting background process...\n');

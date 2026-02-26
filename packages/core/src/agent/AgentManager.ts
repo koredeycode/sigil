@@ -1,37 +1,67 @@
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import {
-    AgentRow,
-    createAgent as dbCreateAgent,
-    deleteAgent as dbDeleteAgent,
-    getAgent,
-    getAllAgents,
-    updateAgentProfile,
-    updateAgentStatus,
+  AgentRow,
+  createAgent as dbCreateAgent,
+  deleteAgent as dbDeleteAgent,
+  getAgent,
+  getAllAgents,
+  updateAgentProfile,
+  updateAgentStatus,
 } from '../lib/Database.js';
 import { createWallet, deleteWallet, getKeypair, importWallet, renameWallet, wipeFromMemory } from '../wallet/Wallet.js';
+import { invalidateAgentGraph, invokeSolanaAgent } from './AgentLoop.js';
+import { clearAgentKit } from './ToolRegistry.js';
+
+const MAIN_AGENT_NAME = 'sigil';
 
 /**
- * AgentManager — manages the lifecycle of all agents.
- * Maintains a map of active agent loops (setInterval handles).
+ * AgentManager — manages a single main Sigil agent.
+ * 
+ * The system uses one primary agent ("sigil") that handles all
+ * chat interactions, tool calls, and directive evaluations.
+ * Future sub-agents can be layered on top.
  */
 export class AgentManager extends EventEmitter {
-  private loops: Map<string, NodeJS.Timeout> = new Map();
-  private cycleRunner: ((agentId: string, agentName: string) => Promise<void>) | null = null;
 
   /**
-   * Set the function that runs on each agent cycle.
-   * This is injected by AgentLoop to avoid circular dependencies.
+   * Get the main agent, or null if not yet initialized.
    */
-  setCycleRunner(runner: (agentId: string, agentName: string) => Promise<void>): void {
-    this.cycleRunner = runner;
+  getMainAgent(): AgentRow | undefined {
+    return getAgent(MAIN_AGENT_NAME);
   }
 
   /**
-   * Create a new agent with its own wallet or import an existing one.
+   * Initialize the main agent. Called on first boot or after a reset.
+   * Creates the "sigil" agent with a new wallet or imports an existing one.
+   */
+  async initMainAgent(privateKey?: string): Promise<AgentRow> {
+    const existing = this.getMainAgent();
+    if (existing) {
+      return existing;
+    }
+
+    const id = uuidv4();
+    let pubkey: string;
+
+    if (privateKey) {
+      pubkey = await importWallet(MAIN_AGENT_NAME, privateKey);
+    } else {
+      pubkey = await createWallet(MAIN_AGENT_NAME);
+    }
+
+    dbCreateAgent(id, MAIN_AGENT_NAME, pubkey);
+
+    const agent = getAgent(id)!;
+    this.emit('agent:created', { agent: MAIN_AGENT_NAME, pubkey, id });
+
+    return agent;
+  }
+
+  /**
+   * Create a named agent (for future sub-agent support).
    */
   async create(name: string, loopInterval = 60000, privateKey?: string): Promise<AgentRow> {
-    // Check for duplicate name
     const existing = getAgent(name);
     if (existing) {
       throw new Error(`Agent "${name}" already exists`);
@@ -49,70 +79,58 @@ export class AgentManager extends EventEmitter {
     dbCreateAgent(id, name, pubkey, loopInterval);
 
     const agent = getAgent(id)!;
-
     this.emit('agent:created', { agent: name, pubkey, id });
 
     return agent;
   }
 
   /**
-   * Start an agent's loop. Loads the wallet key and begins the cycle.
+   * Invoke the main agent with a message.
+   * If no agentNameOrId is given, uses the main agent.
    */
-  async start(nameOrId: string): Promise<void> {
-    const agent = getAgent(nameOrId);
-    if (!agent) throw new Error(`Agent "${nameOrId}" not found`);
-
-    if (this.loops.has(agent.id)) {
-      throw new Error(`Agent "${agent.name}" is already running`);
+  async invoke(
+    nameOrId?: string,
+    message?: string,
+    opts?: { includeHistory?: boolean }
+  ): Promise<{ response: string; toolResults: Array<{ tool: string; result: string }> }> {
+    if (!message && nameOrId) {
+      // If only one string arg, treat it as the message to the main agent
+      message = nameOrId;
+      nameOrId = undefined;
     }
 
-    // Pre-load the keypair into memory
+    const agent = nameOrId ? getAgent(nameOrId) : this.getMainAgent();
+    if (!agent) throw new Error(nameOrId ? `Agent "${nameOrId}" not found` : 'Main agent not initialized. Run `sigil agent init` first.');
+    if (!message) throw new Error('Message is required');
+
+    return invokeSolanaAgent(agent.id, agent.name, message, opts);
+  }
+
+  /**
+   * Start the main agent (enables cron scheduling for directives).
+   */
+  async start(nameOrId?: string): Promise<void> {
+    const agent = nameOrId ? getAgent(nameOrId) : this.getMainAgent();
+    if (!agent) throw new Error('Agent not found');
+
     await getKeypair(agent.name);
-
-    // Update status in DB
     updateAgentStatus(agent.id, 'running');
-
-    // Start the loop
-    const loop = setInterval(async () => {
-      if (this.cycleRunner) {
-        try {
-          await this.cycleRunner(agent.id, agent.name);
-        } catch (error) {
-          this.emit('agent:error', {
-            agent: agent.name,
-            error: error instanceof Error ? error.message : String(error),
-            timestamp: new Date().toISOString(),
-          });
-        }
-      }
-    }, agent.loop_interval);
-
-    this.loops.set(agent.id, loop);
-
     this.emit('agent:status', { agent: agent.name, status: 'running' });
   }
 
   /**
-   * Pause an agent — stops the loop but keeps the key in memory.
-   * Resuming is instant.
+   * Pause the main agent.
    */
-  pause(nameOrId: string): void {
-    const agent = getAgent(nameOrId);
-    if (!agent) throw new Error(`Agent "${nameOrId}" not found`);
-
-    const loop = this.loops.get(agent.id);
-    if (loop) {
-      clearInterval(loop);
-      this.loops.delete(agent.id);
-    }
+  pause(nameOrId?: string): void {
+    const agent = nameOrId ? getAgent(nameOrId) : this.getMainAgent();
+    if (!agent) throw new Error('Agent not found');
 
     updateAgentStatus(agent.id, 'paused');
     this.emit('agent:status', { agent: agent.name, status: 'paused' });
   }
 
   /**
-   * Update an agent's profile (name and interval).
-   * If running, applies the new interval immediately by restarting the loop.
+   * Update agent profile.
    */
   async update(nameOrId: string, newName: string, newInterval: number): Promise<AgentRow> {
     const agent = getAgent(nameOrId);
@@ -122,79 +140,55 @@ export class AgentManager extends EventEmitter {
       throw new Error(`Agent name "${newName}" is already taken`);
     }
 
-    const wasRunning = this.loops.has(agent.id);
-
-    if (wasRunning) {
-      this.pause(agent.id); // Stops loop temporarily
-    }
-
     if (newName !== agent.name) {
       await renameWallet(agent.name, newName);
+      clearAgentKit(agent.name);
     }
 
     updateAgentProfile(agent.id, newName, newInterval);
-
-    if (wasRunning) {
-      await this.start(agent.id); // Restarts loop with new interval
-    }
+    invalidateAgentGraph(agent.id);
 
     return getAgent(agent.id)!;
   }
 
   /**
-   * Kill an agent — hard security halt.
-   * Stops the loop AND wipes the private key from memory.
-   * Restarting requires explicit user action.
+   * Kill the main agent — wipes keys from memory.
    */
-  kill(nameOrId: string): void {
-    const agent = getAgent(nameOrId);
-    if (!agent) throw new Error(`Agent "${nameOrId}" not found`);
+  kill(nameOrId?: string): void {
+    const agent = nameOrId ? getAgent(nameOrId) : this.getMainAgent();
+    if (!agent) throw new Error('Agent not found');
 
-    // Stop the loop
-    const loop = this.loops.get(agent.id);
-    if (loop) {
-      clearInterval(loop);
-      this.loops.delete(agent.id);
-    }
-
-    // Wipe key from memory (stays in Keychain)
     wipeFromMemory(agent.name);
+    clearAgentKit(agent.name);
+    invalidateAgentGraph(agent.id);
 
     updateAgentStatus(agent.id, 'killed');
     this.emit('agent:status', { agent: agent.name, status: 'killed' });
   }
 
   /**
-   * Destroy an agent — removes all data and the wallet.
-   * The key is removed from OS Keychain.
+   * Destroy an agent — removes all data.
    */
   async destroy(nameOrId: string): Promise<void> {
     const agent = getAgent(nameOrId);
     if (!agent) throw new Error(`Agent "${nameOrId}" not found`);
 
-    // Stop loop if running
-    const loop = this.loops.get(agent.id);
-    if (loop) {
-      clearInterval(loop);
-      this.loops.delete(agent.id);
-    }
+    clearAgentKit(agent.name);
+    invalidateAgentGraph(agent.id);
 
-    // Remove wallet from keychain
     await deleteWallet(agent.name);
-
-    // Remove all agent data from DB
     dbDeleteAgent(agent.id);
 
     this.emit('agent:destroyed', { agent: agent.name });
   }
 
   /**
-   * Kill all running agents — used for global kill switch and shutdown.
+   * Kill all running agents.
    */
   killAll(): void {
     const agents = getAllAgents();
     for (const agent of agents) {
-      if (this.loops.has(agent.id)) {
+      if (agent.status === 'running') {
         this.kill(agent.id);
       }
     }
@@ -205,9 +199,8 @@ export class AgentManager extends EventEmitter {
    */
   async startAll(): Promise<void> {
     const agents = getAllAgents();
-    const startPromises = agents
-      .filter((agent) => agent.status === 'running' || agent.status === 'paused')
-      .map(async (agent) => {
+    for (const agent of agents) {
+      if (agent.status === 'running' || agent.status === 'paused') {
         try {
           await this.start(agent.id);
         } catch (error) {
@@ -217,42 +210,31 @@ export class AgentManager extends EventEmitter {
             timestamp: new Date().toISOString(),
           });
         }
-      });
-
-    await Promise.allSettled(startPromises);
+      }
+    }
   }
 
   /**
-   * Get all agents with their current status.
+   * List all agents.
    */
   list(): AgentRow[] {
     return getAllAgents();
   }
 
   /**
-   * Get a single agent by name or ID.
+   * Get an agent by name or ID.
    */
   get(nameOrId: string): AgentRow | undefined {
     return getAgent(nameOrId);
   }
 
   /**
-   * Check if an agent loop is currently active.
-   */
-  isRunning(agentId: string): boolean {
-    return this.loops.has(agentId);
-  }
-
-  /**
-   * Graceful shutdown — kill all loops and clean up.
+   * Graceful shutdown.
    */
   shutdown(): void {
-    for (const [id, loop] of this.loops) {
-      clearInterval(loop);
-    }
-    this.loops.clear();
+    this.killAll();
   }
 }
 
-// Singleton instance
+// Singleton
 export const agentManager = new AgentManager();

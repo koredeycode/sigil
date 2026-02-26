@@ -5,6 +5,7 @@ import { Command } from 'commander';
 import { registerAgentCommand } from './commands/agent.js';
 import { registerAuthCommand } from './commands/auth.js';
 import { registerChatCommand } from './commands/chat.js';
+import { registerConfigCommand } from './commands/config.js';
 import { registerDashboardCommand } from './commands/dashboard.js';
 import { registerDirectiveCommand } from './commands/directive.js';
 import { registerHealthCommand } from './commands/health.js';
@@ -55,6 +56,7 @@ try {
   registerDirectiveCommand(program);
   registerProviderCommand(program);
   registerChatCommand(program);
+  registerConfigCommand(program);
   registerLogsCommand(program);
   registerTxCommand(program);
   registerAuthCommand(program);

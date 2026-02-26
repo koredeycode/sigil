@@ -27,7 +27,7 @@ export function getDatabase(): DatabaseSync {
   db.exec('PRAGMA foreign_keys = ON');
 
   initializeTables(db);
-  migrateProviders(db);
+  // migrateProviders(db);
   seedDefaults(db);
 
   return db;
@@ -115,16 +115,29 @@ function initializeTables(db: DatabaseSync): void {
       timestamp   DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (agent_id) REFERENCES agents(id)
     );
+
+    -- Cron Jobs: scheduled tasks for agents
+    CREATE TABLE IF NOT EXISTS cron_jobs (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      agent_id    TEXT NOT NULL,
+      name        TEXT NOT NULL,
+      expression  TEXT NOT NULL,
+      task_prompt TEXT NOT NULL,
+      is_active   INTEGER DEFAULT 1,
+      last_run    DATETIME,
+      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (agent_id) REFERENCES agents(id)
+    );
   `);
 }
 
 /**
  * Add new columns to existing providers table (safe to re-run).
  */
-function migrateProviders(db: DatabaseSync): void {
-  try { db.exec('ALTER TABLE providers ADD COLUMN base_url TEXT'); } catch {}
-  try { db.exec("ALTER TABLE providers ADD COLUMN compat TEXT DEFAULT 'openai'"); } catch {}
-}
+// function migrateProviders(db: DatabaseSync): void {
+//   try { db.exec('ALTER TABLE providers ADD COLUMN base_url TEXT'); } catch {}
+//   try { db.exec("ALTER TABLE providers ADD COLUMN compat TEXT DEFAULT 'openai'"); } catch {}
+// }
 
 /**
  * Seed default config values if they don't already exist.
@@ -192,9 +205,11 @@ export function updateAgentProfile(id: string, name: string, loopInterval: numbe
 
 export function deleteAgent(id: string) {
   const db = getDatabase();
+  db.prepare('DELETE FROM cron_jobs WHERE agent_id = ?').run(id);
   db.prepare('DELETE FROM directives WHERE agent_id = ?').run(id);
   db.prepare('DELETE FROM logs WHERE agent_id = ?').run(id);
   db.prepare('DELETE FROM transactions WHERE agent_id = ?').run(id);
+  db.prepare('DELETE FROM chats WHERE agent_id = ?').run(id);
   db.prepare('DELETE FROM agents WHERE id = ?').run(id);
 }
 
@@ -442,4 +457,63 @@ export interface TransactionRow {
   signature: string | null;
   status: 'pending' | 'confirmed' | 'failed';
   fee: number | null;
+}
+
+export interface CronJobRow {
+  id: number;
+  agent_id: string;
+  name: string;
+  expression: string;
+  task_prompt: string;
+  is_active: number;
+  last_run: string | null;
+  created_at: string;
+}
+
+// ─── Cron Jobs ─────────────────────────────────────────────────────────────────
+
+export function insertCronJob(
+  agentId: string,
+  name: string,
+  expression: string,
+  taskPrompt: string
+) {
+  const db = getDatabase();
+  return db.prepare(
+    'INSERT INTO cron_jobs (agent_id, name, expression, task_prompt) VALUES (?, ?, ?, ?)'
+  ).run(agentId, name, expression, taskPrompt);
+}
+
+export function getCronJobsForAgent(agentId: string) {
+  const db = getDatabase();
+  return db.prepare(
+    'SELECT * FROM cron_jobs WHERE agent_id = ? ORDER BY created_at DESC'
+  ).all(agentId) as unknown as CronJobRow[];
+}
+
+export function getAllActiveCronJobs() {
+  const db = getDatabase();
+  return db.prepare(
+    'SELECT * FROM cron_jobs WHERE is_active = 1'
+  ).all() as unknown as CronJobRow[];
+}
+
+export function toggleCronJob(id: number, active: boolean) {
+  const db = getDatabase();
+  return db.prepare('UPDATE cron_jobs SET is_active = ? WHERE id = ?').run(active ? 1 : 0, id);
+}
+
+export function updateCronJobLastRun(id: number) {
+  const db = getDatabase();
+  return db.prepare('UPDATE cron_jobs SET last_run = CURRENT_TIMESTAMP WHERE id = ?').run(id);
+}
+
+export function deleteCronJob(id: number) {
+  const db = getDatabase();
+  return db.prepare('DELETE FROM cron_jobs WHERE id = ?').run(id);
+}
+
+export function getCronJob(id: number) {
+  const db = getDatabase();
+  return db.prepare('SELECT * FROM cron_jobs WHERE id = ?').get(id) as unknown as CronJobRow | undefined;
 }

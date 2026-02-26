@@ -1,11 +1,6 @@
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { Router } from 'express';
 import { agentManager } from '../../agent/AgentManager.js';
-import { buildSystemPrompt, getPrimaryModel } from '../../agent/LLMChain.js';
-import { createTools } from '../../agent/ToolRegistry.js';
-import { getAgent, getAgentChats, getAgentDirectives, insertChat, insertLog } from '../../lib/Database.js';
-import { getConnection, lamportsToSol } from '../../wallet/TransactionBuilder.js';
-import { getKeypair } from '../../wallet/Wallet.js';
+import { getAgent, getAgentChats, insertChat } from '../../lib/Database.js';
 
 export const chatRouter: Router = Router();
 
@@ -36,28 +31,7 @@ chatRouter.post('/', async (req, res) => {
       return;
     }
 
-    // Get current state for context
-    const keypair = await getKeypair(agent.name);
-    const connection = getConnection();
-    const balance = await connection.getBalance(keypair.publicKey);
-    const solBalance = lamportsToSol(balance);
-
-    const directiveTexts = getAgentDirectives(agent.id).map(
-      (d) => `${d.condition} → ${d.action}`
-    );
-
-    const systemPrompt = buildSystemPrompt(
-      agent.name,
-      agent.pubkey,
-      solBalance,
-      directiveTexts
-    );
-
-    const model = getPrimaryModel();
-    const tools = createTools(agent.id, agent.name);
-    const modelWithTools = model.bindTools!(tools);
-
-    // Emit chat message event
+    // Emit user message event
     agentManager.emit('chat:message', {
       agent: agent.name,
       role: 'user',
@@ -65,48 +39,22 @@ chatRouter.post('/', async (req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    const response = await modelWithTools.invoke([
-      new SystemMessage(systemPrompt),
-      new HumanMessage(message),
-    ]);
-
     // Save user message to DB
     insertChat(agent.id, 'user', message);
 
-    const content = typeof response.content === 'string'
-      ? response.content
-      : JSON.stringify(response.content);
+    // Invoke the LangGraph agent
+    const { response, toolResults } = await agentManager.invoke(agentId, message, {
+      includeHistory: true,
+    });
 
-    // Execute any tool calls
-    const toolResults: Array<{ tool: string; result: string }> = [];
-
-    if (response.tool_calls && response.tool_calls.length > 0) {
-      for (const toolCall of response.tool_calls) {
-        const tool = tools.find((t) => t.name === toolCall.name);
-        if (tool) {
-          const result = await tool.invoke(toolCall.args);
-          toolResults.push({ tool: toolCall.name, result: String(result) });
-
-          agentManager.emit('agent:action', {
-            agent: agent.name,
-            tool: toolCall.name,
-            params: toolCall.args,
-            timestamp: new Date().toISOString(),
-          });
-        }
-      }
-    }
-
-    insertLog(agent.id, 'chat', content, message);
-    
     // Save assistant message to DB
-    insertChat(agent.id, 'assistant', content);
+    insertChat(agent.id, 'assistant', response);
 
     // Emit agent response
     agentManager.emit('chat:message', {
       agent: agent.name,
       role: 'assistant',
-      content,
+      content: response,
       tools: toolResults,
       timestamp: new Date().toISOString(),
     });
@@ -115,9 +63,9 @@ chatRouter.post('/', async (req, res) => {
       message: 'Chat sent successfully',
       data: {
         agent: agent.name,
-        response: content,
+        response,
         tools: toolResults,
-      }
+      },
     });
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : String(error), data: null });

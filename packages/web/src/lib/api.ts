@@ -179,4 +179,57 @@ export class ApiClient {
   async getLogs(agentId: string, limit = 50): Promise<ApiResponse<AgentLog[]>> {
     return this.request<AgentLog[]>('GET', `/agents/${agentId}/logs?limit=${limit}`);
   }
+
+  // --- Wallet (live devnet data) ---
+  async getWalletBalance(agentId: string): Promise<ApiResponse<{
+    sol: number;
+    solLamports: number;
+    tokens: Array<{ address: string; mint: string; balance: number; decimals: number; symbol?: string }>;
+    pubkey: string;
+  }>> {
+    return this.request('GET', `/wallet/${agentId}/balance`);
+  }
+
+  async getWalletTransactions(agentId: string, limit = 20): Promise<ApiResponse<Array<{
+    signature: string;
+    blockTime: string | null;
+    slot: number;
+    status: string;
+    err: any;
+    memo: string | null;
+  }>>> {
+    return this.request('GET', `/wallet/${agentId}/transactions?limit=${limit}`);
+  }
+
+  async getTransactionDetail(agentId: string, signature: string): Promise<ApiResponse<{
+    signature: string;
+    slot: number;
+    blockTime: string | null;
+    fee: number;
+    status: string;
+    error: string | null;
+    instructions: Array<{ programId: string; program: string | null; parsed: any }>;
+    preBalances: number[];
+    postBalances: number[];
+    logMessages: string[] | null;
+  }>> {
+    return this.request('GET', `/wallet/${agentId}/transaction/${signature}`);
+  }
+
+  // --- Cron Jobs ---
+  async getCronJobs(agentId: string): Promise<ApiResponse<any[]>> {
+    return this.request('GET', `/cron/${agentId}`);
+  }
+
+  async createCronJob(agentId: string, name: string, expression: string, taskPrompt: string): Promise<ApiResponse<any>> {
+    return this.request('POST', '/cron', { agentId, name, expression, taskPrompt });
+  }
+
+  async deleteCronJob(id: number): Promise<ApiResponse<void>> {
+    return this.request<void>('DELETE', `/cron/${id}`);
+  }
+
+  async toggleCronJob(id: number, active: boolean): Promise<ApiResponse<any>> {
+    return this.request('PATCH', `/cron/${id}`, { active });
+  }
 }

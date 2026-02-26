@@ -8,10 +8,12 @@ import { authMiddleware } from './middleware/auth.js';
 import { agentsRouter } from './routes/agents.js';
 import { chatRouter } from './routes/chat.js';
 import { configRouter } from './routes/config.js';
+import { cronRouter } from './routes/cron.js';
 import { directivesRouter } from './routes/directives.js';
 import { providersRouter } from './routes/providers.js';
 import { statusRouter } from './routes/status.js';
 import { transactionsRouter } from './routes/transactions.js';
+import { walletRouter } from './routes/wallet.js';
 import { setupSocket } from './socket.js';
 import { attachWebDashboard } from './web.js';
 
@@ -29,7 +31,7 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
   // Socket.IO
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: [`http://localhost:${API_PORT + 1}`, 'http://localhost:5173'],
+      origin: '*',
       methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     },
   });
@@ -55,6 +57,8 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
   app.use('/api/transactions', transactionsRouter);
   app.use('/api/providers', providersRouter);
   app.use('/api/config', configRouter);
+  app.use('/api/cron', cronRouter);
+  app.use('/api/wallet', walletRouter);
 
   // Global error handler
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

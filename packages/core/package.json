@@ -13,6 +13,7 @@
     "build": "tsc",
     "start": "node dist/src/index.js",
     "test": "vitest run",
+    "db:reset": "tsx scripts/reset-db.ts",
     "test:watch": "vitest"
   },
   "dependencies": {
@@ -42,6 +43,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.4",
+    "@types/node-cron": "^3.0.11",
     "@types/uuid": "^10.0.0",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3",

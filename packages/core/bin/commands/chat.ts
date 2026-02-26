@@ -1,40 +1,24 @@
 import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
 import { agentManager } from '../../src/agent/AgentManager.js';
-import { getDatabase } from '../../src/lib/Database.js';
+import { getDatabase, insertChat } from '../../src/lib/Database.js';
 
 export function registerChatCommand(program: Command) {
   program
-    .command('chat [agent] [message]')
-    .description('Chat with a specific agent')
-    .action(async (agent?: string, message?: string) => {
+    .command('chat [message]')
+    .description('Chat with the main Sigil agent')
+    .action(async (message?: string) => {
       getDatabase();
 
+      const agent = agentManager.getMainAgent();
       if (!agent) {
-        const agents = agentManager.list();
-        if (agents.length === 0) {
-          clack.log.warning('No agents found. Run `sigil agent create` first.');
-          process.exit(0);
-        }
-
-        const selected = await clack.select({
-          message: 'Which agent do you want to chat with?',
-          options: agents.map(a => ({
-            value: a.name,
-            label: a.name,
-            hint: `${a.status} — ${a.pubkey.slice(0, 8)}...`,
-          })),
-        });
-        if (clack.isCancel(selected)) { clack.cancel('Cancelled.'); process.exit(0); }
-        agent = String(selected);
+        console.log('  Agent not initialized. Run `sigil agent init` first.');
+        process.exit(1);
       }
-
-      const a = agentManager.get(agent);
-      if (!a) { console.log(`Agent "${agent}" not found.`); return; }
 
       if (!message) {
         const input = await clack.text({
-          message: `Message for ${agent}:`,
+          message: `Message for ${agent.name}:`,
           placeholder: 'Type your message...',
           validate: (val) => val.length < 1 ? 'Message cannot be empty' : undefined,
         });
@@ -42,9 +26,31 @@ export function registerChatCommand(program: Command) {
         message = String(input);
       }
 
-      console.log(`You: ${message}`);
-      console.log('Agent is thinking...');
-      // In headless mode, we'd need the server running. For now, print a note.
-      console.log('(Start the server with `sigil start` first, then use chat via API or TUI)');
+      console.log(`\n  You: ${message}`);
+      console.log('  Agent is thinking...\n');
+
+      try {
+        insertChat(agent.id, 'user', message);
+
+        const { response, toolResults } = await agentManager.invoke(agent.id, message, {
+          includeHistory: true,
+        });
+
+        insertChat(agent.id, 'assistant', response);
+
+        if (toolResults.length > 0) {
+          console.log('  ┌─ Tool Calls ─────────────────────');
+          for (const tr of toolResults) {
+            console.log(`  │ ⚡ ${tr.tool}`);
+            const resultPreview = tr.result.length > 120 ? tr.result.substring(0, 120) + '...' : tr.result;
+            console.log(`  │   → ${resultPreview}`);
+          }
+          console.log('  └──────────────────────────────────\n');
+        }
+
+        console.log(`  ${agent.name}: ${response}\n`);
+      } catch (error) {
+        console.error(`  Error: ${error instanceof Error ? error.message : String(error)}`);
+      }
     });
 }
