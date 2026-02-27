@@ -6,6 +6,7 @@ export interface Agent {
   pubkey: string;
   status: 'running' | 'paused' | 'killed';
   loop_interval: number;
+  prompt: string | null;
   created_at: string;
 }
 
@@ -52,18 +53,6 @@ export interface Provider {
   model: string;
   is_primary: number;
   added_at: string;
-}
-
-export interface Directive {
-  id: number;
-  agentId: string;
-  condition: string;
-  action: string;
-  isActive: number | boolean;
-  maxAmount: string | null;
-  cooldown: number;
-  lastExec: string | null;
-  createdAt: string;
 }
 
 export interface ApiResponse<T = any> {
@@ -114,12 +103,12 @@ export class ApiClient {
     return this.request<Agent>('GET', `/agents/${id}`);
   }
 
-  async createAgent(name: string, loopInterval: number, privateKey?: string): Promise<ApiResponse<Agent>> {
-    return this.request<Agent>('POST', '/agents', { name, loopInterval, privateKey });
+  async createAgent(name: string, loopInterval: number, privateKey?: string, prompt?: string): Promise<ApiResponse<Agent>> {
+    return this.request<Agent>('POST', '/agents', { name, loopInterval, privateKey, prompt });
   }
 
-  async updateAgent(id: string, name: string, loopInterval: number): Promise<ApiResponse<Agent>> {
-    return this.request<Agent>('PUT', `/agents/${id}`, { name, loopInterval });
+  async updateAgent(id: string, name: string, loopInterval: number, prompt?: string): Promise<ApiResponse<Agent>> {
+    return this.request<Agent>('PUT', `/agents/${id}`, { name, loopInterval, prompt });
   }
 
   async sendChat(agentId: string, message: string): Promise<ApiResponse<ChatResponse>> {
@@ -157,23 +146,6 @@ export class ApiClient {
 
   async deleteProvider(id: number): Promise<ApiResponse<void>> {
     return this.request<void>('DELETE', `/providers/${id}`);
-  }
-
-  // --- Directives ---
-  async getDirectives(agentId: string): Promise<ApiResponse<Directive[]>> {
-    return this.request<Directive[]>('GET', `/directives?agentId=${agentId}`);
-  }
-
-  async addDirective(agentId: string, condition: string, action: string): Promise<ApiResponse<Directive>> {
-    return this.request<Directive>('POST', '/directives', { agentId, condition, action });
-  }
-
-  async updateDirective(id: number, condition: string, action: string): Promise<ApiResponse<Directive>> {
-    return this.request<Directive>('PUT', `/directives/${id}`, { condition, action });
-  }
-
-  async deleteDirective(id: number): Promise<ApiResponse<void>> {
-    return this.request<void>('DELETE', `/directives/${id}`);
   }
 
   async getLogs(agentId: string, limit = 50): Promise<ApiResponse<AgentLog[]>> {

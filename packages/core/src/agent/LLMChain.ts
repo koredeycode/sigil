@@ -88,11 +88,11 @@ export function getPrimaryModel(): BaseChatModel {
 export function buildSystemPrompt(
   agentName: string,
   pubkey: string,
-  directives: string[]
+  prompt?: string | null
 ): string {
-  const directiveList = directives.length > 0
-    ? directives.map((d, i) => `  ${i + 1}. ${d}`).join('\n')
-    : '  (none)';
+  const customInstructions = prompt
+    ? `\nYour specific instructions for this session:\n${prompt}\n`
+    : '';
 
   return `You are Sigil, an autonomous Solana wallet agent managing agent "${agentName}" with wallet ${pubkey}.
 
@@ -104,13 +104,10 @@ You have access to an extensive set of Solana tools including:
 - Domain: register and resolve .sol domains via SNS
 - Cross-chain: bridge via Wormhole and deBridge
 - And many more specialized Solana tools
-
-Your active directives are:
-${directiveList}
+${customInstructions}
 
 INSTRUCTIONS:
 - Use your tools to fetch current state (balance, tokens, prices) before making decisions.
-- When evaluating directives, check each condition against live wallet state.
 - For user conversations, be helpful and execute requested actions using your tools.
 - Always explain what you did and why after taking actions.
 - When asked about capabilities, describe the tools available to you.

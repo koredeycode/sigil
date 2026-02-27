@@ -148,49 +148,18 @@ export function registerOnboardCommand(program: Command) {
 
       clack.log.success(`Provider "${providerName}" added as primary`);
 
-      // 2. Create first agent
+      // 2. Initialize main agent
       const createFirst = await clack.confirm({
-        message: 'Create your first agent?',
+        message: 'Initialize the main Sigil agent now?',
       });
 
       if (clack.isCancel(createFirst) || !createFirst) {
-        clack.log.info('You can create an agent later by running `sigil agent create <name>`.');
+        clack.log.info('You can initialize the main agent later by running `sigil agent init`.');
       } else {
-        const agentName = await clack.text({
-          message: 'Name your agent:',
-          initialValue: 'my-agent',
-          validate: (val) => val.length < 1 ? 'Name cannot be empty' : undefined,
-        });
-        if (clack.isCancel(agentName)) { clack.cancel('Setup cancelled.'); process.exit(0); }
-
-        // 3. Loop interval
-        const wantImport = await clack.confirm({
-          message: 'Do you want to import an existing Solana wallet using a base58 private key? (Default: No, generate new)',
-          initialValue: false,
-        });
-        if (clack.isCancel(wantImport)) { clack.cancel('Cancelled.'); process.exit(0); }
-
-        let privateKey: string | undefined = undefined;
-        if (wantImport) {
-          const inputKey = await clack.password({
-            message: 'Enter base58 Private Key (hidden):',
-            validate: (val) => val.length < 32 ? 'Key seems too short' : undefined,
-          });
-          if (clack.isCancel(inputKey)) { clack.cancel('Cancelled.'); process.exit(0); }
-          privateKey = String(inputKey);
-        }
-
-        const inputInterval = await clack.text({
-          message: 'Loop interval (seconds):',
-          initialValue: '60',
-          validate: (val) => isNaN(Number(val)) ? 'Must be a number' : undefined,
-        });
-        if (clack.isCancel(inputInterval)) { clack.cancel('Cancelled.'); process.exit(0); }
-        const loopInterval = String(inputInterval);
-
-        s.start('Creating agent and wallet...');
-        const agent = await agentManager.create(agentName as string, Number(loopInterval) * 1000, privateKey);
-        s.stop(`Agent "${agent.name}" created.`);
+        s.start('Initializing main agent and wallet...');
+        const agent = await agentManager.initMainAgent();
+        await agentManager.start(agent.id);
+        s.stop(`Main agent "${agent.name}" initialized.`);
         clack.log.info(`Wallet: ${agent.pubkey}`);
       }
 

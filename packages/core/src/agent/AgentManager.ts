@@ -1,13 +1,13 @@
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  AgentRow,
-  createAgent as dbCreateAgent,
-  deleteAgent as dbDeleteAgent,
-  getAgent,
-  getAllAgents,
-  updateAgentProfile,
-  updateAgentStatus,
+    AgentRow,
+    createAgent as dbCreateAgent,
+    deleteAgent as dbDeleteAgent,
+    getAgent,
+    getAllAgents,
+    updateAgentProfile,
+    updateAgentStatus,
 } from '../lib/Database.js';
 import { createWallet, deleteWallet, getKeypair, importWallet, renameWallet, wipeFromMemory } from '../wallet/Wallet.js';
 import { invalidateAgentGraph, invokeSolanaAgent } from './AgentLoop.js';
@@ -61,7 +61,7 @@ export class AgentManager extends EventEmitter {
   /**
    * Create a named agent (for future sub-agent support).
    */
-  async create(name: string, loopInterval = 60000, privateKey?: string): Promise<AgentRow> {
+  async create(name: string, loopInterval = 60000, privateKey?: string, prompt?: string): Promise<AgentRow> {
     const existing = getAgent(name);
     if (existing) {
       throw new Error(`Agent "${name}" already exists`);
@@ -76,7 +76,7 @@ export class AgentManager extends EventEmitter {
       pubkey = await createWallet(name);
     }
 
-    dbCreateAgent(id, name, pubkey, loopInterval);
+    dbCreateAgent(id, name, pubkey, loopInterval, prompt || null);
 
     const agent = getAgent(id)!;
     this.emit('agent:created', { agent: name, pubkey, id });
@@ -200,7 +200,7 @@ export class AgentManager extends EventEmitter {
   async startAll(): Promise<void> {
     const agents = getAllAgents();
     for (const agent of agents) {
-      if (agent.status === 'running' || agent.status === 'paused') {
+      if (agent.status === 'running') {
         try {
           await this.start(agent.id);
         } catch (error) {

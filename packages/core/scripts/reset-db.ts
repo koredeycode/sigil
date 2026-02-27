@@ -22,10 +22,25 @@ const SIGIL_DIR = path.join(os.homedir(), '.sigil');
 const DB_PATH = path.join(SIGIL_DIR, 'sigil.db');
 const DB_WAL = path.join(SIGIL_DIR, 'sigil.db-wal');
 const DB_SHM = path.join(SIGIL_DIR, 'sigil.db-shm');
+const PID_FILE = path.join(SIGIL_DIR, 'run.pid');
 
 console.log('\n  ⎔ Sigil — Database Reset\n');
 
-// Step 1: Remove existing database files
+// Step 1: Kill any running daemon
+if (fs.existsSync(PID_FILE)) {
+  const pid = parseInt(fs.readFileSync(PID_FILE, 'utf8'), 10);
+  try {
+    process.kill(pid);
+    console.log(`  ✔ Stopped running daemon (PID: ${pid})`);
+  } catch (err: any) {
+    if (err.code === 'ESRCH') {
+      console.log(`  ⓘ Daemon PID ${pid} not running, cleaning up stale pidfile.`);
+    }
+  }
+  fs.unlinkSync(PID_FILE);
+}
+
+// Step 2: Remove existing database files
 const filesToRemove = [DB_PATH, DB_WAL, DB_SHM];
 let removed = 0;
 

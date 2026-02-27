@@ -45,6 +45,7 @@ function initializeTables(db: DatabaseSync): void {
       pubkey      TEXT NOT NULL,
       status      TEXT DEFAULT 'paused' CHECK(status IN ('running', 'paused', 'killed')),
       loop_interval INTEGER DEFAULT 60000,
+      prompt      TEXT,
       created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -75,20 +76,6 @@ function initializeTables(db: DatabaseSync): void {
       compat      TEXT DEFAULT 'openai' CHECK(compat IN ('openai', 'anthropic')),
       is_primary  INTEGER DEFAULT 0,
       added_at    DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-
-    -- Directives: per-agent autonomous rules
-    CREATE TABLE IF NOT EXISTS directives (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      agent_id    TEXT NOT NULL,
-      condition   TEXT NOT NULL,
-      action      TEXT NOT NULL,
-      max_amount  TEXT,
-      cooldown    INTEGER DEFAULT 0,
-      is_active   INTEGER DEFAULT 1,
-      last_exec   DATETIME,
-      created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (agent_id) REFERENCES agents(id)
     );
 
     -- Transactions: every on-chain action
@@ -174,11 +161,11 @@ export function closeDatabase(): void {
 // ─── Query Helpers ─────────────────────────────────────────────────────────
 
 // Agents
-export function createAgent(id: string, name: string, pubkey: string, loopInterval = 60000) {
+export function createAgent(id: string, name: string, pubkey: string, loopInterval = 60000, prompt: string | null = null) {
   const db = getDatabase();
   return db.prepare(
-    'INSERT INTO agents (id, name, pubkey, loop_interval) VALUES (?, ?, ?, ?)'
-  ).run(id, name, pubkey, loopInterval);
+    'INSERT INTO agents (id, name, pubkey, loop_interval, prompt) VALUES (?, ?, ?, ?, ?)'
+  ).run(id, name, pubkey, loopInterval, prompt);
 }
 
 export function getAgent(nameOrId: string) {
@@ -203,10 +190,14 @@ export function updateAgentProfile(id: string, name: string, loopInterval: numbe
   return db.prepare('UPDATE agents SET name = ?, loop_interval = ? WHERE id = ?').run(name, loopInterval, id);
 }
 
+export function updateAgentPrompt(id: string, prompt: string) {
+  const db = getDatabase();
+  return db.prepare('UPDATE agents SET prompt = ? WHERE id = ?').run(prompt, id);
+}
+
 export function deleteAgent(id: string) {
   const db = getDatabase();
   db.prepare('DELETE FROM cron_jobs WHERE agent_id = ?').run(id);
-  db.prepare('DELETE FROM directives WHERE agent_id = ?').run(id);
   db.prepare('DELETE FROM logs WHERE agent_id = ?').run(id);
   db.prepare('DELETE FROM transactions WHERE agent_id = ?').run(id);
   db.prepare('DELETE FROM chats WHERE agent_id = ?').run(id);
@@ -294,63 +285,7 @@ export function removeProvider(id: number) {
   return db.prepare('DELETE FROM providers WHERE id = ?').run(id);
 }
 
-// Directives
-export function addDirective(
-  agentId: string,
-  condition: string,
-  action: string,
-  maxAmount?: string,
-  cooldown = 0
-) {
-  const db = getDatabase();
-  return db.prepare(
-    'INSERT INTO directives (agent_id, condition, action, max_amount, cooldown) VALUES (?, ?, ?, ?, ?)'
-  ).run(agentId, condition, action, maxAmount ?? null, cooldown);
-}
-
-export function updateDirective(
-  id: number,
-  condition: string,
-  action: string,
-  maxAmount?: string,
-  cooldown = 0
-) {
-  const db = getDatabase();
-  return db.prepare(
-    'UPDATE directives SET condition = ?, action = ?, max_amount = ?, cooldown = ? WHERE id = ?'
-  ).run(condition, action, maxAmount ?? null, cooldown, id);
-}
-
-export function getAgentDirectives(agentId: string) {
-  const db = getDatabase();
-  return db.prepare(
-    'SELECT * FROM directives WHERE agent_id = ? AND is_active = 1'
-  ).all(agentId) as unknown as DirectiveRow[];
-}
-
-export function getAllDirectivesForAgent(agentId: string) {
-  const db = getDatabase();
-  return db.prepare(
-    'SELECT * FROM directives WHERE agent_id = ?'
-  ).all(agentId) as unknown as DirectiveRow[];
-}
-
-export function toggleDirective(id: number, active: boolean) {
-  const db = getDatabase();
-  return db.prepare('UPDATE directives SET is_active = ? WHERE id = ?').run(active ? 1 : 0, id);
-}
-
-export function updateDirectiveLastExec(id: number) {
-  const db = getDatabase();
-  return db.prepare('UPDATE directives SET last_exec = CURRENT_TIMESTAMP WHERE id = ?').run(id);
-}
-
-export function deleteDirective(id: number) {
-  const db = getDatabase();
-  return db.prepare('DELETE FROM directives WHERE id = ?').run(id);
-}
-
-// Transactions
+// Logs
 export function insertTransaction(
   agentId: string,
   type: string,
@@ -403,6 +338,7 @@ export interface AgentRow {
   pubkey: string;
   status: 'running' | 'paused' | 'killed';
   loop_interval: number;
+  prompt: string | null;
   created_at: string;
 }
 
@@ -432,18 +368,6 @@ export interface ProviderRow {
   compat: 'openai' | 'anthropic';
   is_primary: number;
   added_at: string;
-}
-
-export interface DirectiveRow {
-  id: number;
-  agent_id: string;
-  condition: string;
-  action: string;
-  max_amount: string | null;
-  cooldown: number;
-  is_active: number;
-  last_exec: string | null;
-  created_at: string;
 }
 
 export interface TransactionRow {

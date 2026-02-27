@@ -9,6 +9,7 @@ export interface Agent {
   role?: string;
   status: 'running' | 'paused' | 'killed';
   loop_interval: number;
+  prompt?: string | null;
   pubkey?: string;
   created_at?: string;
 }

@@ -1,10 +1,9 @@
 import { clsx } from 'clsx';
-import { Activity, Wallet, Bot, ExternalLink, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
+import { Activity, Bot, Clock, ExternalLink, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users, Wallet } from 'lucide-react';
 import { useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
-import { AgentSidebar } from './components/AgentSidebar';
 import { ChatBox } from './components/ChatBox';
 import { LogTerminal } from './components/LogTerminal';
 import { WalletView } from './components/WalletView';
@@ -15,6 +14,8 @@ import { useProviders } from './hooks/useProviders';
 import { SocketProvider } from './hooks/useSocket';
 import { AgentDetails } from './pages/AgentDetails';
 import { AgentManager } from './pages/AgentManager';
+import { CronsPage } from './pages/CronsPage';
+import { LogsPage } from './pages/LogsPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 function cn(...inputs: (string | undefined | null | false)[]) {
@@ -202,7 +203,7 @@ const DashboardContent = ({ activeAgent }: { activeAgent: Agent | null }) => {
 };
 
 const Dashboard = () => {
-    const { agents, activeAgent, activeAgentId, setActiveAgentId } = useAgents();
+    const { agents, activeAgent, setActiveAgentId } = useAgents();
     const location = useLocation();
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
@@ -235,69 +236,76 @@ const Dashboard = () => {
                 </div>
                 
                 <div className="px-3 flex-1 overflow-y-auto">
-                    <div className="space-y-1 mb-6">
-                        <Link 
-                            to="/"
-                            className={cn(
-                                "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                                location.pathname === '/' 
-                                    ? "bg-primary/10 text-primary" 
-                                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                            )}
-                        >
-                            <MessageSquare className="w-4 h-4" />
-                            Chat
-                        </Link>
-                        <Link 
-                             to="/agents"
-                             className={cn(
-                                "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                                location.pathname === '/agents' 
-                                    ? "bg-primary/10 text-primary" 
-                                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                            )}
-                        >
-                            <Users className="w-4 h-4" />
-                            Agents
-                        </Link>
-                        <Link 
-                             to="/settings"
-                             className={cn(
-                                "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                                location.pathname === '/settings' 
-                                    ? "bg-primary/10 text-primary" 
-                                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                            )}
-                        >
-                            <Settings className="w-4 h-4" />
-                            Settings
-                        </Link>
-
-                        <div className="pt-2 px-3 pb-2 hidden">
-                            <button
-                                onClick={toggleTheme}
-                                className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-secondary text-sm font-medium hover:bg-secondary/80 transition-colors"
+                    <div className="space-y-6 mb-6 mt-4">
+                        {/* Main Group */}
+                        <div className="space-y-1">
+                            <div className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Main</div>
+                            <Link 
+                                to="/"
+                                className={cn(
+                                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                                    location.pathname === '/' 
+                                        ? "bg-primary/10 text-primary" 
+                                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                                )}
                             >
-                                <span className="flex items-center gap-2 text-muted-foreground">
-                                    {isDarkMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-                                    Theme
-                                </span>
-                                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-background text-foreground shadow-sm">
-                                    {isDarkMode ? 'Dark' : 'Light'}
-                                </span>
-                            </button>
+                                <MessageSquare className="w-4 h-4" />
+                                Chat
+                            </Link>
                         </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-border">
-                        <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Active Agents
-                        </h3>
-                        <AgentSidebar 
-                            agents={agents} 
-                            activeAgentId={activeAgentId} 
-                            onSelectAgent={(id) => setActiveAgentId(id)} 
-                        />
+                        
+                        {/* System Group */}
+                        <div className="space-y-1">
+                            <div className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">System</div>
+                            <Link 
+                                 to="/agents"
+                                 className={cn(
+                                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                                    location.pathname.startsWith('/agents') 
+                                        ? "bg-primary/10 text-primary" 
+                                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                                )}
+                            >
+                                <Users className="w-4 h-4" />
+                                Agents
+                            </Link>
+                            <Link 
+                                 to="/logs"
+                                 className={cn(
+                                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                                    location.pathname.startsWith('/logs') 
+                                        ? "bg-primary/10 text-primary" 
+                                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                                )}
+                            >
+                                <Terminal className="w-4 h-4" />
+                                Logs
+                            </Link>
+                            <Link 
+                                 to="/crons"
+                                 className={cn(
+                                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                                    location.pathname.startsWith('/crons') 
+                                        ? "bg-primary/10 text-primary" 
+                                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                                )}
+                            >
+                                <Clock className="w-4 h-4" />
+                                Crons
+                            </Link>
+                            <Link 
+                                 to="/settings"
+                                 className={cn(
+                                    "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                                    location.pathname === '/settings' 
+                                        ? "bg-primary/10 text-primary" 
+                                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                                )}
+                            >
+                                <Settings className="w-4 h-4" />
+                                Settings
+                            </Link>
+                        </div>
                     </div>
                 </div>
                 
@@ -342,6 +350,8 @@ const Dashboard = () => {
                             />
                         } 
                     />
+                    <Route path="/crons" element={<CronsPage activeAgent={activeAgent} agents={agents} onSelectAgent={setActiveAgentId} />} />
+                    <Route path="/logs" element={<LogsPage activeAgent={activeAgent} agents={agents} onSelectAgent={setActiveAgentId} />} />
                     <Route path="/settings" element={<SettingsPage />} />
                 </Routes>
             </main>

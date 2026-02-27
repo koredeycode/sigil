@@ -13,12 +13,12 @@ agentsRouter.get('/', (_req, res) => {
 // POST /api/agents — create a new agent
 agentsRouter.post('/', async (req, res) => {
   try {
-    const { name, loopInterval, privateKey } = req.body;
+    const { name, loopInterval, privateKey, prompt } = req.body;
     if (!name || typeof name !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(name)) {
       res.status(400).json({ message: 'Invalid agent name. Use only alphanumeric characters, dashes, or underscores.', data: null });
       return;
     }
-    const agent = await agentManager.create(name, loopInterval, privateKey);
+    const agent = await agentManager.create(name, loopInterval, privateKey, prompt);
     res.status(201).json({ message: 'Agent created successfully', data: agent });
   } catch (error) {
     res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });

@@ -4,19 +4,19 @@ import {
     getAllActiveCronJobs,
     updateCronJobLastRun
 } from '../lib/Database.js';
-import { invokeSolanaAgent, runDirectiveCycle } from './AgentLoop.js';
+import { invokeSolanaAgent, runAutonomousCycle } from './AgentLoop.js';
 import { agentManager } from './AgentManager.js';
 
 /**
  * CronScheduler — manages scheduled tasks for agents.
  * 
  * Supports two types of scheduled work:
- * 1. Directive cycles: periodically evaluate agent directives
+ * 1. Autonomous cycles: periodically evaluate the agent environment
  * 2. Custom cron jobs: user-defined scheduled prompts to the agent
  */
 class CronScheduler {
   private tasks: Map<string, cron.ScheduledTask> = new Map();
-  private directiveTasks: Map<string, cron.ScheduledTask> = new Map();
+  private autonomousTasks: Map<string, cron.ScheduledTask> = new Map();
 
   /**
    * Schedule a custom cron job.
@@ -56,10 +56,10 @@ class CronScheduler {
   }
 
   /**
-   * Start directive evaluation cycle for an agent.
+   * Start autonomous evaluation cycle for an agent.
    */
-  startDirectiveCycle(agentId: string, agentName: string, intervalMs: number): void {
-    this.stopDirectiveCycle(agentId);
+  startAutonomousCycle(agentId: string, agentName: string, intervalMs: number): void {
+    this.stopAutonomousCycle(agentId);
 
     // Convert interval to a cron expression (minimum 1 minute)
     const minutes = Math.max(1, Math.round(intervalMs / 60000));
@@ -70,24 +70,24 @@ class CronScheduler {
       if (!agent || agent.status !== 'running') return;
 
       try {
-        await runDirectiveCycle(agentId, agentName);
+        await runAutonomousCycle(agentId, agentName);
       } catch (error) {
-        console.error(`[Cron:directive:${agentName}] Error:`, error);
+        console.error(`[Cron:autonomous:${agentName}] Error:`, error);
       }
     });
 
-    this.directiveTasks.set(agentId, task);
-    console.info(`[Cron] Started directive cycle for ${agentName} (every ${minutes} min)`);
+    this.autonomousTasks.set(agentId, task);
+    console.info(`[Cron] Started autonomous cycle for ${agentName} (every ${minutes} min)`);
   }
 
   /**
-   * Stop directive evaluation cycle for an agent.
+   * Stop autonomous evaluation cycle for an agent.
    */
-  stopDirectiveCycle(agentId: string): void {
-    const task = this.directiveTasks.get(agentId);
+  stopAutonomousCycle(agentId: string): void {
+    const task = this.autonomousTasks.get(agentId);
     if (task) {
       task.stop();
-      this.directiveTasks.delete(agentId);
+      this.autonomousTasks.delete(agentId);
     }
   }
 
@@ -123,13 +123,13 @@ class CronScheduler {
   }
 
   /**
-   * Load directive cycles for all running agents.
+   * Load autonomous cycles for all running agents.
    */
-  loadDirectiveCycles(): void {
+  loadAutonomousCycles(): void {
     const agents = agentManager.list();
     for (const agent of agents) {
       if (agent.status === 'running') {
-        this.startDirectiveCycle(agent.id, agent.name, agent.loop_interval);
+        this.startAutonomousCycle(agent.id, agent.name, agent.loop_interval);
       }
     }
   }
@@ -137,10 +137,10 @@ class CronScheduler {
   /**
    * Get info about all active scheduled tasks.
    */
-  listActive(): { cronJobs: number; directiveCycles: number } {
+  listActive(): { cronJobs: number; autonomousCycles: number } {
     return {
       cronJobs: this.tasks.size,
-      directiveCycles: this.directiveTasks.size,
+      autonomousCycles: this.autonomousTasks.size,
     };
   }
 
@@ -153,10 +153,10 @@ class CronScheduler {
     }
     this.tasks.clear();
 
-    for (const [, task] of this.directiveTasks) {
+    for (const [, task] of this.autonomousTasks) {
       task.stop();
     }
-    this.directiveTasks.clear();
+    this.autonomousTasks.clear();
     console.info('[Cron] All scheduled tasks stopped');
   }
 }

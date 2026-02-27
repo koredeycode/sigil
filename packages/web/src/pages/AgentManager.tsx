@@ -14,8 +14,7 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
     const [name, setName] = useState('');
     const [loopInterval, setLoopInterval] = useState(60);
     const [privateKey, setPrivateKey] = useState('');
-    const [condition, setCondition] = useState('');
-    const [action, setAction] = useState('');
+    const [prompt, setPrompt] = useState('');
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -47,18 +46,17 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
         setCreating(true);
         try {
             const client = new ApiClient(token);
-            const response = await client.createAgent(trimmedName, loopInterval * 1000, privateKey ? privateKey.trim() : undefined);
-            const agent = response.data;
-            
-            if (agent && agent.id && condition.trim() && action.trim()) {
-                await client.addDirective(agent.id, condition, action);
-            }
+            await client.createAgent(
+                trimmedName, 
+                loopInterval * 1000, 
+                privateKey ? privateKey.trim() : undefined,
+                prompt ? prompt.trim() : undefined
+            );
             
             setName('');
             setLoopInterval(60);
             setPrivateKey('');
-            setCondition('');
-            setAction('');
+            setPrompt('');
             setError(null);
             refreshAgents();
         } catch (e: any) {
@@ -224,18 +222,12 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                             />
                         </div>
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-muted-foreground">Initial Directive (Optional)</label>
-                            <input 
-                                value={condition} 
-                                onChange={e => setCondition(e.target.value)} 
-                                placeholder="Condition (e.g. 'SOL > $1000')" 
-                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm mb-2"
-                            />
-                            <input 
-                                value={action} 
-                                onChange={e => setAction(e.target.value)} 
-                                placeholder="Action (e.g. 'Sell 1 SOL')" 
-                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                            <label className="text-sm font-medium text-muted-foreground">Initial Prompt (Optional)</label>
+                            <textarea 
+                                value={prompt} 
+                                onChange={e => setPrompt(e.target.value)} 
+                                placeholder="Describe the agent's goals and instructions..." 
+                                className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm min-h-[80px] resize-y"
                             />
                         </div>
                         <button 

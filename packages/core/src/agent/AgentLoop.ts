@@ -1,7 +1,7 @@
 import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { MemorySaver } from '@langchain/langgraph';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { getAgent, getAgentChats, getAgentDirectives, insertLog } from '../lib/Database.js';
+import { getAgent, getAgentChats, insertLog } from '../lib/Database.js';
 import { agentManager } from './AgentManager.js';
 import { buildSystemPrompt, getPrimaryModel } from './LLMChain.js';
 import { createTools } from './ToolRegistry.js';
@@ -27,14 +27,10 @@ async function getOrCreateGraph(agentId: string, agentName: string) {
   const model = getPrimaryModel();
   const tools = await createTools(agent.name, agent.id);
 
-  const directiveTexts = getAgentDirectives(agentId).map(
-    (d) => `${d.condition} → ${d.action}`
-  );
-
   const systemPrompt = buildSystemPrompt(
     agentName,
     agent.pubkey,
-    directiveTexts
+    agent.prompt
   );
 
   const graph = createReactAgent({
@@ -107,6 +103,7 @@ export async function invokeSolanaAgent(
                 console.info(
                   `[Token Usage:${agentName}] Input: ${usage.promptTokens} | Output: ${usage.completionTokens} | Total: ${usage.totalTokens}`
                 );
+                insertLog(agentId, 'token_usage', `Input: ${usage.promptTokens} | Output: ${usage.completionTokens} | Total: ${usage.totalTokens}`, 'LLM Iteration');
               }
             }
           }
@@ -177,11 +174,11 @@ export async function invokeSolanaAgent(
 }
 
 /**
- * Run a directive-triggered cycle for an agent.
- * Evaluates active directives and sends triggered ones as messages to the agent.
+ * Run an autonomous cycle for an agent.
+ * Evaluates active instructions and sends triggered ones as messages to the agent.
  */
-export async function runDirectiveCycle(agentId: string, agentName: string): Promise<void> {
-  console.info(`[AgentLoop:${agentName}] Running directive cycle`);
+export async function runAutonomousCycle(agentId: string, agentName: string): Promise<void> {
+  console.info(`[AgentLoop:${agentName}] Running autonomous cycle`);
 
   const agent = getAgent(agentId);
   if (!agent || agent.status === 'killed') {
@@ -189,18 +186,9 @@ export async function runDirectiveCycle(agentId: string, agentName: string): Pro
     return;
   }
 
-  const directives = getAgentDirectives(agentId);
-  if (directives.length === 0) {
-    insertLog(agentId, 'cycle_skip', 'No active directives');
-    return;
-  }
+  const agentPrompt = agent.prompt || 'No active instructions.';
 
-  // Format directives as a prompt for the agent
-  const directivePrompt = directives.map(
-    (d) => `- Condition: "${d.condition}" → Action: "${d.action}"${d.max_amount ? ` (max: ${d.max_amount})` : ''}`
-  ).join('\n');
-
-  const message = `You have active directives that need evaluation. Please check each condition against the current wallet state and execute any that are triggered:\n\n${directivePrompt}\n\nCheck the current state using your tools and act on any triggered conditions.`;
+  const message = `[AUTONOMOUS CYCLE]\nEvaluate the following instructions against your current wallet state and take any necessary actions:\n\n---\n${agentPrompt}\n---\n\nIf the condition for an action is met, execute it now. If not, briefly explain why.`;
 
   await invokeSolanaAgent(agentId, agentName, message);
 }

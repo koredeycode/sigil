@@ -2,6 +2,7 @@ import type { Command } from 'commander';
 import { agentManager } from '../../src/agent/AgentManager.js';
 import { cronScheduler } from '../../src/agent/CronScheduler.js';
 import { createSessionToken } from '../../src/lib/Auth.js';
+import { getAuthToken } from '../../src/lib/Config.js';
 import { getRunningPid, removePid, spawnDaemon, writePid } from '../../src/lib/Daemon.js';
 import { getDatabase } from '../../src/lib/Database.js';
 import { startServer } from '../../src/server/app.js';
@@ -37,7 +38,10 @@ export function registerStartCommand(program: Command) {
         process.on('SIGTERM', cleanup);
 
         getDatabase();
-        const token = createSessionToken();
+        let token = getAuthToken();
+        if (!token) {
+          token = createSessionToken();
+        }
 
         // Start the API server
         await startServer();
@@ -48,20 +52,21 @@ export function registerStartCommand(program: Command) {
           console.log('  ⓘ No agent found — initializing main agent...');
           mainAgent = await agentManager.initMainAgent();
           console.log(`  ✔ Main agent created. Wallet: ${mainAgent.pubkey}`);
+          await agentManager.start(mainAgent.id);
         }
 
-        // Start the main agent
-        await agentManager.start();
+        // Auto-resume all agents that were previously running
+        await agentManager.startAll();
 
         // Load and start cron jobs
         cronScheduler.loadAll();
-        cronScheduler.loadDirectiveCycles();
+        cronScheduler.loadAutonomousCycles();
 
         const agents = agentManager.list();
         const cronInfo = cronScheduler.listActive();
         console.log(`  Session Token: ${token}`);
         console.log(`  Agents: ${agents.length} loaded`);
-        console.log(`  Cron Jobs: ${cronInfo.cronJobs} active, ${cronInfo.directiveCycles} directive cycles\n`);
+        console.log(`  Cron Jobs: ${cronInfo.cronJobs} active, ${cronInfo.autonomousCycles} autonomous cycles\n`);
       } else {
         // Spawn background daemon
         console.log('\n  ⎔ Sigil — Starting background process...\n');

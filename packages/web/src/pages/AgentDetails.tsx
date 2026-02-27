@@ -1,7 +1,6 @@
 import { AlertCircle, Check, Copy, Pause, Play, Settings, Square, Terminal, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ConfirmationModal } from '../components/ConfirmationModal';
-import { DirectiveManager } from '../components/DirectiveManager';
 import { ApiClient } from '../lib/api';
 
 import type { Agent } from '../hooks/useAgents';
@@ -10,6 +9,7 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [editName, setEditName] = useState('');
     const [editInterval, setEditInterval] = useState(60);
+    const [editPrompt, setEditPrompt] = useState('');
     const [copiedKey, setCopiedKey] = useState(false);
     const [confirmAction, setConfirmAction] = useState<'pause' | 'kill' | null>(null);
     const [isActionLoading, setIsActionLoading] = useState(false);
@@ -60,6 +60,7 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
     const openEditProfile = () => {
         setEditName(activeAgent.name);
         setEditInterval(activeAgent.loop_interval / 1000);
+        setEditPrompt(activeAgent.prompt || '');
         setIsEditingProfile(true);
         setProfileError(null);
     };
@@ -71,7 +72,7 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
 
         try {
             const client = new ApiClient(token);
-            await client.updateAgent(activeAgent.id, editName.trim(), editInterval * 1000);
+            await client.updateAgent(activeAgent.id, editName.trim(), editInterval * 1000, editPrompt.trim());
             setIsEditingProfile(false);
             setProfileError(null);
         } catch (e: any) {
@@ -197,14 +198,37 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
                     </div>
                 </div>
 
-                {/* Directives Manager */}
+                {/* Instructions Manager */}
                 <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col min-h-[400px]">
-                    <div className="px-6 py-4 border-b border-border bg-secondary/30">
-                        <h2 className="text-lg font-semibold">Operating Directives</h2>
-                        <p className="text-sm text-muted-foreground">Rules and guidelines this agent must follow.</p>
+                    <div className="px-6 py-4 border-b border-border bg-secondary/30 flex items-center justify-between">
+                        <div>
+                            <h2 className="text-lg font-semibold">Agent Instructions</h2>
+                            <p className="text-sm text-muted-foreground">The prompt driving this agent's autonomous cycle.</p>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setEditName(activeAgent.name);
+                                setEditInterval(activeAgent.loop_interval / 1000);
+                                setEditPrompt(activeAgent.prompt || '');
+                                setIsEditingProfile(true);
+                                setProfileError(null);
+                            }}
+                            className="bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border border-primary/20"
+                        >
+                            Edit Instructions
+                        </button>
                     </div>
-                    <div className="flex-1 min-h-0 bg-background/50">
-                       <DirectiveManager activeAgent={activeAgent} />
+                    <div className="flex-1 min-h-0 bg-background/50 p-6 overflow-y-auto">
+                       {activeAgent.prompt ? (
+                           <div className="whitespace-pre-wrap font-mono text-sm leading-relaxed p-4 bg-secondary/30 border border-border rounded-md">
+                               {activeAgent.prompt}
+                           </div>
+                       ) : (
+                           <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-3">
+                               <AlertCircle className="w-8 h-8 opacity-20" />
+                               <p className="text-sm">No specific instructions set.</p>
+                           </div>
+                       )}
                     </div>
                 </div>
             </div>
@@ -243,6 +267,15 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
                                     onChange={(e) => setEditInterval(parseInt(e.target.value) || 1)}
                                     min="1"
                                     className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium">Instructions</label>
+                                <textarea 
+                                    value={editPrompt}
+                                    onChange={(e) => setEditPrompt(e.target.value)}
+                                    placeholder="Describe the agent's goals and instructions..."
+                                    className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary min-h-[100px] resize-y font-mono text-sm"
                                 />
                             </div>
                         </div>
