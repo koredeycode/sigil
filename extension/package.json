@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
-    "package": "plasmo package"
+    "package": "plasmo package && cp build/chrome-mv3-prod.zip ../site/public/sigil-extension.zip"
   },
   "dependencies": {
     "bs58": "^6.0.0",
@@ -28,6 +28,7 @@
     "typescript": "5.3.3"
   },
   "manifest": {
+    "permissions": ["storage"],
     "host_permissions": [
       "https://*/*"
     ]

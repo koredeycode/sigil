@@ -30,14 +30,17 @@ export default function TestDappPage() {
   }, []);
 
   const connectWallet = async () => {
-    if (!provider) {
-       alert("Sigil Extension not found!");
+    // @ts-ignore
+    const currentProvider = provider || window.sigil;
+    
+    if (!currentProvider) {
+       alert("Sigil Extension not found! Make sure it is installed and enabled.");
        return;
     }
     
     setIsConnecting(true);
     try {
-      const res = await provider.connect();
+      const res = await currentProvider.connect();
       setPubkey(res.publicKey.toBase58 ? res.publicKey.toBase58() : res.publicKey);
       setIsWalletModalOpen(false);
     } catch (error: any) {

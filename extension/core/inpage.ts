@@ -1,14 +1,7 @@
-import type { PlasmoCSConfig } from "plasmo";
-
-export const config: PlasmoCSConfig = {
-  matches: ["<all_urls>"],
-  world: "MAIN",
-  all_frames: true
-};
-
 import bs58 from 'bs58';
 import { Buffer } from 'buffer';
 import { EventEmitter } from 'eventemitter3';
+
 
 interface SigilProvider extends EventEmitter {
   isSigil: boolean;
@@ -54,12 +47,15 @@ class SigilWalletProvider extends EventEmitter implements SigilProvider {
   }
 
   private _request(method: string, params?: any): Promise<any> {
+    console.log(`[Sigil Provider] Preparing request: ${method}`, params);
     return new Promise((resolve, reject) => {
       const id = crypto.randomUUID();
 
       const handler = (event: MessageEvent) => {
         if (event.source !== window || event.data.target !== 'sigil-inpage' || event.data.id !== id) return;
         window.removeEventListener('message', handler);
+
+        console.log(`[Sigil Provider] Received response for ${method} (${id}):`, event.data);
 
         if (event.data.error) {
           reject(new Error(event.data.error));
@@ -70,6 +66,7 @@ class SigilWalletProvider extends EventEmitter implements SigilProvider {
 
       window.addEventListener('message', handler);
 
+      console.log(`[Sigil Provider] Posting message to window:`, { target: 'sigil-content', id, method, params });
       window.postMessage({
         target: 'sigil-content',
         id,
@@ -80,12 +77,23 @@ class SigilWalletProvider extends EventEmitter implements SigilProvider {
   }
 
   async connect(options?: { onlyIfTrusted?: boolean }): Promise<{ publicKey: { toBase58: () => string; toBytes: () => Uint8Array } }> {
-    const res = await this._request('connect', options);
-    this._setPublicKey(res.publicKey);
-    this.emit('connect', this.publicKey);
-    return { publicKey: this.publicKey! };
-  }
+    console.log(`[Sigil Provider] connect called with options:`, options);
+    try {
+      const res = await this._request('connect', options);
+      console.log(`[Sigil Provider] _request('connect') resolved with:`, res);
+      
+      if (!res || !res.publicKey) {
+          throw new Error("Invalid response from 'connect'. Missing publicKey. " + JSON.stringify(res));
+      }
 
+      this._setPublicKey(res.publicKey);
+      this.emit('connect', this.publicKey);
+      return { publicKey: this.publicKey! };
+    } catch (e) {
+      console.error(`[Sigil Provider] connect failed:`, e);
+      throw e;
+    }
+  }
   async disconnect(): Promise<void> {
     await this._request('disconnect');
     this.publicKey = null;
@@ -127,12 +135,14 @@ class SigilWalletProvider extends EventEmitter implements SigilProvider {
 
 // Ensure web3.js is available or not strictly required for injection
 try {
+  console.log("[Sigil Extension] Injecting window.sigil provider...");
   const provider = new SigilWalletProvider();
   Object.defineProperty(window, 'sigil', {
     value: provider,
     writable: false,
   });
   window.dispatchEvent(new Event('sigil#initialized'));
+  console.log("[Sigil Extension] Successfully injected window.sigil provider.");
 } catch (e) {
-  console.error("Failed to inject window.sigil provider:", e);
+  console.error("[Sigil Extension] Failed to inject window.sigil provider:", e);
 }

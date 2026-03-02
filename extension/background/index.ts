@@ -1,18 +1,21 @@
 export { };
 
-const SIGIL_SERVER_URL = "http://localhost:7445";
+const SIGIL_SERVER_URL = "http://127.0.0.1:7445";
 
 // Background service worker
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log("[Sigil Background] Received message:", request, "from sender:", sender);
   const { method, params } = request;
 
   if (method === "connect") {
     const requestId = Date.now().toString();
     const origin = sender.origin || sender.tab?.url || "Unknown dApp";
+    console.log(`[Sigil Background] Processing 'connect' for origin: ${origin}, requestId: ${requestId}`);
 
     chrome.storage.local.set({ 
        [`request_${requestId}`]: { type: "connect", origin }
     }, () => {
+       console.log(`[Sigil Background] Saved request_${requestId} to storage. Opening popup...`);
        chrome.windows.create({
           url: `popup.html?request=${requestId}`,
           type: "popup",
