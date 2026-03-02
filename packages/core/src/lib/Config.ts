@@ -60,3 +60,28 @@ export function getAuthToken(): string | undefined {
 export function setAuthToken(token: string): void {
   setConfig('auth_token', token);
 }
+
+export function getRpcUrl(): string {
+  return getConfig('rpc_url') || process.env.RPC_URL || 'https://api.devnet.solana.com';
+}
+
+export function setRpcUrl(url: string): void {
+  setConfig('rpc_url', url);
+}
+
+export function getMainAgentId(): string | undefined {
+  const val = getConfig('main_agent_id');
+  return val || undefined;
+}
+
+export function setMainAgentId(id: string): void {
+  setConfig('main_agent_id', id);
+}
+
+export function getMainAgentName(): string {
+  return getConfig('main_agent_name') || 'sigil';
+}
+
+export function setMainAgentName(name: string): void {
+  setConfig('main_agent_name', name);
+}

@@ -150,6 +150,9 @@ function seedDefaults(db: DatabaseSync): void {
     slippage_cap: '1',            // percentage
     cooldown_period: '30',        // seconds
     confirmation_threshold: '50', // SOL value requiring confirmation
+    rpc_url: 'https://api.devnet.solana.com',
+    main_agent_id: '',
+    main_agent_name: 'sigil',
   };
 
   for (const [key, value] of Object.entries(defaults)) {
@@ -221,10 +224,15 @@ export function insertLog(agentId: string, action: string, result?: string, thou
   ).run(agentId, action, result ?? null, thought ?? null);
 }
 
-export function getAgentLogs(agentId: string, limit = 50) {
+export function getAgentLogs(agentId: string, limit = 50, before?: number) {
   const db = getDatabase();
+  if (before) {
+    return db.prepare(
+      'SELECT * FROM logs WHERE agent_id = ? AND id < ? ORDER BY id DESC LIMIT ?'
+    ).all(agentId, before, limit) as unknown as LogRow[];
+  }
   return db.prepare(
-    'SELECT * FROM logs WHERE agent_id = ? ORDER BY timestamp DESC LIMIT ?'
+    'SELECT * FROM logs WHERE agent_id = ? ORDER BY id DESC LIMIT ?'
   ).all(agentId, limit) as unknown as LogRow[];
 }
 
@@ -236,13 +244,21 @@ export function insertChat(agentId: string, role: 'user' | 'assistant' | 'system
   ).run(agentId, role, content, tools ?? null);
 }
 
-export function getAgentChats(agentId: string, limit = 100) {
+export function getAgentChats(agentId: string, limit = 100, before?: number) {
   const db = getDatabase();
   // We want the most recent messages, but returned in chronological order
+  if (before) {
+    const rows = db.prepare(
+      `SELECT * FROM (
+         SELECT * FROM chats WHERE agent_id = ? AND id < ? ORDER BY id DESC LIMIT ?
+       ) ORDER BY id ASC`
+    ).all(agentId, before, limit) as unknown as ChatRow[];
+    return rows;
+  }
   const rows = db.prepare(
     `SELECT * FROM (
-       SELECT * FROM chats WHERE agent_id = ? ORDER BY timestamp DESC LIMIT ?
-     ) ORDER BY timestamp ASC`
+       SELECT * FROM chats WHERE agent_id = ? ORDER BY id DESC LIMIT ?
+     ) ORDER BY id ASC`
   ).all(agentId, limit) as unknown as ChatRow[];
   return rows;
 }

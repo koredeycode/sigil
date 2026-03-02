@@ -97,6 +97,75 @@ const COMPAT_OPTIONS = [
     { id: 'anthropic', label: 'Anthropic Compatible' },
 ];
 
+function BlockchainSettings() {
+    const [rpcUrl, setRpcUrl] = useState('https://api.devnet.solana.com');
+    const [isSaving, setIsSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const [loadingConfig, setLoadingConfig] = useState(true);
+
+    useEffect(() => {
+        const fetchConfig = async () => {
+            const token = localStorage.getItem('sigil_token');
+            if (!token) { setLoadingConfig(false); return; }
+            try {
+                const client = new ApiClient(token);
+                const res = await client.getConfig();
+                if (res.data?.rpc_url) setRpcUrl(res.data.rpc_url);
+            } catch (e) { console.error('Failed to load config:', e); }
+            finally { setLoadingConfig(false); }
+        };
+        fetchConfig();
+    }, []);
+
+    const handleSave = async () => {
+        const token = localStorage.getItem('sigil_token');
+        if (!token) return;
+        setIsSaving(true);
+        try {
+            const client = new ApiClient(token);
+            await client.setConfig({ rpc_url: rpcUrl });
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+        } catch (e) { console.error('Failed to save RPC URL:', e); }
+        finally { setIsSaving(false); }
+    };
+
+    return (
+        <div className="space-y-6 max-w-2xl">
+            <section className="space-y-4">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                    <Wallet className="w-4 h-4" />
+                    Blockchain
+                </h2>
+                <div className="bg-card border border-border rounded-xl divide-y divide-border shadow-sm">
+                    <div className="p-4 flex flex-col gap-3">
+                        <div className="space-y-1">
+                            <h3 className="font-medium text-sm">Solana RPC Endpoint</h3>
+                            <p className="text-xs text-muted-foreground">Custom node URL for on-chain transactions (Devnet only)</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <input 
+                                className="flex-1 px-3 py-2 bg-secondary/50 border border-input rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                                value={loadingConfig ? '' : rpcUrl}
+                                onChange={(e) => setRpcUrl(e.target.value)}
+                                placeholder={loadingConfig ? 'Loading...' : 'https://api.devnet.solana.com'}
+                                disabled={loadingConfig}
+                            />
+                            <button
+                                onClick={handleSave}
+                                disabled={isSaving || loadingConfig}
+                                className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {saved ? <><Check className="w-4 h-4" /> Saved</> : isSaving ? 'Saving...' : 'Save'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    );
+}
+
 export function SettingsPage() {
     const [activeTab, setActiveTab] = useState<SettingsTab>('system');
     const [providers, setProviders] = useState<AIProvider[]>([]);
@@ -336,35 +405,7 @@ export function SettingsPage() {
 
                 {/* Blockchain Tab */}
                 {activeTab === 'blockchain' && (
-                    <div className="space-y-6 max-w-2xl">
-                        <section className="space-y-4">
-                            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                                <Wallet className="w-4 h-4" />
-                                Blockchain
-                            </h2>
-                            <div className="bg-card border border-border rounded-xl divide-y divide-border shadow-sm">
-                                <div className="p-4 flex flex-col gap-3">
-                                    <div className="space-y-1">
-                                        <h3 className="font-medium text-sm">Solana RPC Endpoint</h3>
-                                        <p className="text-xs text-muted-foreground">Custom node URL for on-chain transactions</p>
-                                    </div>
-                                    <input 
-                                        className="w-full px-3 py-2 bg-secondary/50 border border-input rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                                        defaultValue="https://api.mainnet-beta.solana.com"
-                                    />
-                                </div>
-                                <div className="p-4 flex items-center justify-between">
-                                     <div className="space-y-0.5">
-                                        <h3 className="font-medium text-sm">Auto-Approve Transactions</h3>
-                                        <p className="text-xs text-muted-foreground">Skip confirmation for low value trades</p>
-                                    </div>
-                                    <button className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                                        <span className="translate-x-4 inline-block h-4 w-4 transform rounded-full bg-background transition-transform"></span>
-                                    </button>
-                                </div>
-                            </div>
-                        </section>
-                    </div>
+                    <BlockchainSettings />
                 )}
 
                 {/* Providers Tab */}

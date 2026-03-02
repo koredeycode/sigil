@@ -2,6 +2,7 @@ import { clsx } from 'clsx';
 import { AlertCircle, RefreshCw, Terminal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { CustomSelect } from '../components/CustomSelect';
 import type { Agent } from '../hooks/useAgents';
 import { useSocket } from '../hooks/useSocket';
 import { ApiClient } from '../lib/api';
@@ -11,13 +12,19 @@ export function LogsPage({ agents }: { agents: Agent[] }) {
     const agentIdParam = searchParams.get('agent');
     const navigate = useNavigate();
 
-    // The active agent context
-    const activeAgent = agents.find(a => a.id === agentIdParam) || null;
+    // Auto-select main agent if no param
+    const activeAgent = agents.find(a => a.id === agentIdParam)
+        || agents.find(a => a.name === 'sigil')
+        || agents[0]
+        || null;
 
     const { socket } = useSocket();
     const endRef = useRef<HTMLDivElement>(null);
+    const logContainerRef = useRef<HTMLDivElement>(null);
     const [logs, setLogs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [logFilter, setLogFilter] = useState<string>('all');
 
@@ -28,10 +35,13 @@ export function LogsPage({ agents }: { agents: Agent[] }) {
 
         setIsLoading(true);
         setError(null);
+        setHasMore(true);
         try {
             const client = new ApiClient(token);
             const res = await client.getLogs(activeAgent.id, 100);
-            setLogs(res.data ? res.data.reverse() : []);
+            const data = res.data ? res.data.reverse() : [];
+            setLogs(data);
+            setHasMore(data.length >= 100);
         } catch (err: any) {
             console.error('Failed to fetch logs:', err);
             setError(err.error || err.message || 'Failed to fetch logs');
@@ -43,6 +53,31 @@ export function LogsPage({ agents }: { agents: Agent[] }) {
     useEffect(() => {
         fetchLogs();
     }, [activeAgent?.id]);
+
+    // Scroll-to-top: load older logs
+    const handleScrollUp = async () => {
+        const el = logContainerRef.current;
+        if (!el || !activeAgent || loadingMore || !hasMore) return;
+        if (el.scrollTop < 60) {
+            setLoadingMore(true);
+            const oldestId = logs.length > 0 ? Number(logs[0].id) : undefined;
+            const token = localStorage.getItem('sigil_token');
+            if (!token) { setLoadingMore(false); return; }
+            try {
+                const client = new ApiClient(token);
+                const res = await client.getLogs(activeAgent.id, 50, oldestId);
+                const older = res.data ? res.data.reverse() : [];
+                if (older.length === 0) { setHasMore(false); }
+                else {
+                    const prevHeight = el.scrollHeight;
+                    setLogs(prev => [...older, ...prev]);
+                    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight - prevHeight; });
+                    if (older.length < 50) setHasMore(false);
+                }
+            } catch (e) { console.error('Failed to load older logs:', e); }
+            finally { setLoadingMore(false); }
+        }
+    };
 
     useEffect(() => {
         if (!socket || !activeAgent) return;
@@ -89,37 +124,34 @@ export function LogsPage({ agents }: { agents: Agent[] }) {
 
             {/* Agent Selector */}
             <div className="flex items-center gap-4 bg-card border border-border rounded-xl p-4 shrink-0 shadow-sm mr-2">
-                <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">Target Agent:</label>
-                <select 
-                    value={activeAgent?.id || ''} 
-                    onChange={(e) => handleSelectAgent(e.target.value)}
-                    className="flex-1 max-w-sm bg-background border border-input text-foreground text-sm rounded-md focus:ring-primary focus:border-primary block p-2"
-                >
-                    <option value="" disabled>Select an agent</option>
-                    {agents.map(a => (
-                        <option key={a.id} value={a.id}>{a.name}</option>
-                    ))}
-                </select>
+                <div className="flex-1 max-w-sm">
+                    <CustomSelect
+                        label="Target Agent"
+                        value={activeAgent?.id || ''}
+                        onChange={handleSelectAgent}
+                        options={agents.map(a => ({ id: a.id, label: a.name }))}
+                    />
+                </div>
 
-                <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium text-muted-foreground whitespace-nowrap hidden sm:block">Filter:</label>
-                    <select
+                <div className="flex-1 max-w-xs">
+                    <CustomSelect
+                        label="Filter"
                         value={logFilter}
-                        onChange={(e) => setLogFilter(e.target.value)}
-                        className="bg-background border border-input text-foreground text-sm rounded-md focus:ring-primary focus:border-primary block p-2"
-                    >
-                        <option value="all">All Actions</option>
-                        <option value="agent_invoke">Invoke / Thought</option>
-                        <option value="tool">Tool Execution</option>
-                        <option value="token_usage">Token Usage</option>
-                        <option value="error">Errors</option>
-                    </select>
+                        onChange={setLogFilter}
+                        options={[
+                            { id: 'all', label: 'All Actions' },
+                            { id: 'agent_invoke', label: 'Invoke / Thought' },
+                            { id: 'tool', label: 'Tool Execution' },
+                            { id: 'token_usage', label: 'Token Usage' },
+                            { id: 'error', label: 'Errors' },
+                        ]}
+                    />
                 </div>
 
                 <button 
                     onClick={fetchLogs}
                     disabled={!activeAgent || isLoading}
-                    className="ml-auto inline-flex items-center gap-2 p-2 hover:bg-secondary rounded-md text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                    className="ml-auto inline-flex items-center gap-2 p-2 hover:bg-secondary rounded-md text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 self-end"
                     title="Refresh logs"
                 >
                     <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin cursor-not-allowed' : ''}`} />
@@ -159,8 +191,13 @@ export function LogsPage({ agents }: { agents: Agent[] }) {
                         <Terminal className="w-4 h-4 mr-2 opacity-50 text-foreground" />
                         <span className="text-xs font-bold uppercase tracking-widest opacity-50 text-foreground">Log Viewer</span>
                     </div>
-                    <div className="overflow-y-auto w-full pt-12 pb-4 px-4 flex-col-reverse flex">
+                    <div ref={logContainerRef} onScroll={handleScrollUp} className="overflow-y-auto w-full pt-12 pb-4 px-4 flex-col-reverse flex">
                         <div className="space-y-2">
+                            {loadingMore && (
+                                <div className="flex justify-center py-2">
+                                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                                </div>
+                            )}
                             {logs.filter(log => {
                                 if (logFilter === 'all') return true;
                                 if (logFilter === 'error') return log.action === 'agent_error' || log.action === 'cycle_error';

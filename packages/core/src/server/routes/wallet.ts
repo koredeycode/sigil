@@ -1,13 +1,12 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { Router } from 'express';
+import { getRpcUrl } from '../../lib/Config.js';
 import { getAgent } from '../../lib/Database.js';
 
 export const walletRouter: Router = Router();
 
-const RPC_URL = process.env.RPC_URL || 'https://api.devnet.solana.com';
-
 function getConnection(): Connection {
-  return new Connection(RPC_URL, 'confirmed');
+  return new Connection(getRpcUrl(), 'confirmed');
 }
 
 // GET /api/wallet/:agentId/balance — SOL balance + token accounts from devnet

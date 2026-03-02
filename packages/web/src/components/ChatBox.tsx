@@ -21,7 +21,10 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
     const [input, setInput] = useState('');
     const [sending, setSending] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const chatContainerRef = useRef<HTMLDivElement>(null);
 
     const { socket } = useSocket();
 
@@ -83,13 +86,16 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
 
     useEffect(() => {
         if (!activeAgent) return;
+        setHasMore(true);
         const fetchHistory = async () => {
             const token = localStorage.getItem('sigil_token');
             if (!token) return;
             try {
                 const client = new ApiClient(token);
                 const res = await client.getChats(activeAgent.id);
-                setMessages(res.data || []);
+                const data = res.data || [];
+                setMessages(data);
+                setHasMore(data.length >= 100);
                 scrollToBottom();
             } catch (e) {
                 console.error('Failed to load chat history:', e);
@@ -97,6 +103,32 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
         };
         fetchHistory();
     }, [activeAgent]);
+
+    // Scroll-to-top: load older messages
+    const handleScroll = async () => {
+        const el = chatContainerRef.current;
+        if (!el || !activeAgent || loadingMore || !hasMore) return;
+        if (el.scrollTop < 60) {
+            setLoadingMore(true);
+            const oldestId = messages.length > 0 ? Number(messages[0].id) : undefined;
+            const token = localStorage.getItem('sigil_token');
+            if (!token) { setLoadingMore(false); return; }
+            try {
+                const client = new ApiClient(token);
+                const res = await client.getChats(activeAgent.id, 50, oldestId);
+                const older = res.data || [];
+                if (older.length === 0) { setHasMore(false); }
+                else {
+                    const prevHeight = el.scrollHeight;
+                    setMessages(prev => [...older, ...prev]);
+                    // Preserve scroll position
+                    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight - prevHeight; });
+                    if (older.length < 50) setHasMore(false);
+                }
+            } catch (e) { console.error('Failed to load older chats:', e); }
+            finally { setLoadingMore(false); }
+        }
+    };
 
     // WebSocket listener for incoming messages
     useEffect(() => {
@@ -145,7 +177,12 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
 
     return (
         <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div ref={chatContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 space-y-4">
+                {loadingMore && (
+                    <div className="flex justify-center py-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                    </div>
+                )}
                 {messages.length === 0 && !sending ? (
                     <div className="flex items-center justify-center h-full text-muted-foreground text-sm italic opacity-50">
                         No active chat history. Start the conversation below.

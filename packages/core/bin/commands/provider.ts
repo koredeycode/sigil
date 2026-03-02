@@ -170,4 +170,59 @@ export function registerProviderCommand(program: Command) {
       removeProvider(Number(id));
       clack.log.success(`Provider ${id} removed.`);
     });
+
+  provider
+    .command('models [name]')
+    .option('-k, --key <key>', 'API key for the provider')
+    .option('-u, --url <url>', 'Base URL for custom/local providers')
+    .description('List available models for a provider')
+    .action(async (name?: string, opts?: { key?: string; url?: string }) => {
+      getDatabase();
+
+      if (!name) {
+        clack.intro('Fetch available models');
+
+        const selected = await clack.select({
+          message: 'Which provider?',
+          options: [
+            { value: 'groq', label: 'Groq' },
+            { value: 'openai', label: 'OpenAI' },
+            { value: 'anthropic', label: 'Anthropic' },
+            { value: 'google', label: 'Google (Gemini)' },
+            { value: 'ollama', label: 'Ollama (Local)' },
+            { value: 'lmstudio', label: 'LM Studio (Local)' },
+          ],
+        });
+        if (clack.isCancel(selected)) { clack.cancel('Cancelled.'); process.exit(0); }
+        name = String(selected);
+      }
+
+      const needsKey = !['ollama', 'lmstudio'].includes(name);
+      if (needsKey && !opts?.key) {
+        const key = await clack.password({ message: `Enter your ${name} API key:` });
+        if (clack.isCancel(key)) { clack.cancel('Cancelled.'); process.exit(0); }
+        opts = { ...opts, key: String(key) };
+      }
+
+      const s = clack.spinner();
+      s.start(`Fetching models from ${name}...`);
+      const { models, error } = await fetchModelsForProvider(name, opts?.key ?? null, opts?.url);
+      s.stop(models ? `Found ${models.length} model(s)` : 'Failed to fetch models');
+
+      if (error) {
+        clack.log.error(error);
+        process.exit(1);
+      }
+
+      if (!models || models.length === 0) {
+        clack.log.warning('No models found for this provider.');
+        process.exit(0);
+      }
+
+      console.log('');
+      for (const m of models) {
+        console.log(`  ${m.id}${m.label !== m.id ? ` — ${m.label}` : ''}`);
+      }
+      console.log(`\n  Total: ${models.length} models`);
+    });
 }

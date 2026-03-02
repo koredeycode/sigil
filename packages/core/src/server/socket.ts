@@ -2,9 +2,9 @@ import { Connection, PublicKey } from '@solana/web3.js';
 import { Server as SocketIOServer } from 'socket.io';
 import { agentManager } from '../agent/AgentManager.js';
 import { validateToken } from '../lib/Auth.js';
+import { getRpcUrl } from '../lib/Config.js';
 import { getAgent } from '../lib/Database.js';
 
-const RPC_URL = process.env.RPC_URL || 'https://api.devnet.solana.com';
 
 /**
  * Active account subscriptions per agent.
@@ -124,7 +124,7 @@ export function setupSocket(io: SocketIOServer): void {
       // Set up on-chain account change listener
       if (!accountSubscriptions.has(agent.id)) {
         try {
-          const connection = new Connection(RPC_URL, 'confirmed');
+          const connection = new Connection(getRpcUrl(), 'confirmed');
           const pubkey = new PublicKey(agent.pubkey);
 
           const subId = connection.onAccountChange(pubkey, (accountInfo) => {
@@ -149,7 +149,7 @@ export function setupSocket(io: SocketIOServer): void {
       const subId = accountSubscriptions.get(data.agentId);
       if (subId !== undefined) {
         try {
-          const connection = new Connection(RPC_URL, 'confirmed');
+          const connection = new Connection(getRpcUrl(), 'confirmed');
           connection.removeAccountChangeListener(subId);
           accountSubscriptions.delete(data.agentId);
         } catch (error) {
@@ -164,7 +164,7 @@ export function setupSocket(io: SocketIOServer): void {
  * Clean up all account subscriptions.
  */
 export function cleanupSubscriptions(): void {
-  const connection = new Connection(RPC_URL, 'confirmed');
+  const connection = new Connection(getRpcUrl(), 'confirmed');
   for (const [agentId, subId] of accountSubscriptions) {
     try {
       connection.removeAccountChangeListener(subId);

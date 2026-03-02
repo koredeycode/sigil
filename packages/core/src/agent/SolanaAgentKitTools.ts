@@ -1,5 +1,6 @@
 import bs58 from 'bs58';
 import { SolanaAgentKit } from 'solana-agent-kit';
+import { getRpcUrl } from '../lib/Config.js';
 import { getKeypair } from '../wallet/Wallet.js';
 
 /**
@@ -17,7 +18,7 @@ export async function getSolanaAgentKit(agentName: string): Promise<SolanaAgentK
 
   const keypair = await getKeypair(agentName);
   const privateKeyBase58 = bs58.encode(keypair.secretKey);
-  const rpcUrl = process.env.RPC_URL || 'https://api.devnet.solana.com';
+  const rpcUrl = getRpcUrl();
 
   const agent = new SolanaAgentKit(privateKeyBase58, rpcUrl, {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',

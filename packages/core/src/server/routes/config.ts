@@ -13,6 +13,9 @@ configRouter.get('/', (_req, res) => {
     'slippage_cap',
     'cooldown_period',
     'confirmation_threshold',
+    'rpc_url',
+    'main_agent_id',
+    'main_agent_name',
   ];
 
   const config: Record<string, string | undefined> = {};

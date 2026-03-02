@@ -177,7 +177,7 @@ const DashboardContent = ({ agents }: { agents: Agent[] }) => {
 };
 
 const Dashboard = () => {
-    const { agents, setActiveAgentId } = useAgents();
+    const { agents } = useAgents();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
     const isDarkMode = theme === 'dark';
@@ -319,7 +319,7 @@ const Dashboard = () => {
                             />
                         } 
                     />
-                    <Route path="/crons" element={<CronsPage agents={agents} onSelectAgent={setActiveAgentId} />} />
+                    <Route path="/crons" element={<CronsPage agents={agents} />} />
                     <Route path="/logs" element={<LogsPage agents={agents} />} />
                     <Route path="/settings" element={<SettingsPage />} />
                 </Routes>

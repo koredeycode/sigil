@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
+import { setMainAgentId, setMainAgentName } from '../lib/Config.js';
 import {
   AgentRow,
   createAgent as dbCreateAgent,
@@ -52,8 +53,15 @@ export class AgentManager extends EventEmitter {
 
     dbCreateAgent(id, MAIN_AGENT_NAME, pubkey);
 
+    // Persist main agent info in config
+    setMainAgentId(id);
+    setMainAgentName(MAIN_AGENT_NAME);
+
     const agent = getAgent(id)!;
     this.emit('agent:created', { agent: MAIN_AGENT_NAME, pubkey, id });
+
+    // Auto-start the main agent
+    await this.start(id);
 
     return agent;
   }
@@ -80,6 +88,9 @@ export class AgentManager extends EventEmitter {
 
     const agent = getAgent(id)!;
     this.emit('agent:created', { agent: name, pubkey, id });
+
+    // Auto-start the agent
+    await this.start(id);
 
     return agent;
   }

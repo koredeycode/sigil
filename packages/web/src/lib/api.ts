@@ -99,6 +99,14 @@ export class ApiClient {
     return this.request<Agent[]>('GET', '/agents');
   }
 
+  async getConfig(): Promise<ApiResponse<Record<string, string>>> {
+    return this.request<Record<string, string>>('GET', '/config');
+  }
+
+  async setConfig(updates: Record<string, string>): Promise<ApiResponse<any>> {
+    return this.request('POST', '/config', updates);
+  }
+
   async getAgent(id: string): Promise<ApiResponse<Agent>> {
     return this.request<Agent>('GET', `/agents/${id}`);
   }
@@ -115,8 +123,10 @@ export class ApiClient {
     return this.request<ChatResponse>('POST', '/chat', { agentId, message });
   }
 
-  async getChats(agentId: string, limit = 100): Promise<ApiResponse<ChatMessage[]>> {
-    return this.request<ChatMessage[]>('GET', `/chat/${agentId}?limit=${limit}`);
+  async getChats(agentId: string, limit = 100, before?: number): Promise<ApiResponse<ChatMessage[]>> {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (before) params.set('before', String(before));
+    return this.request<ChatMessage[]>('GET', `/chat/${agentId}?${params}`);
   }
 
   async controlAgent(agentId: string, action: 'start' | 'pause' | 'kill'): Promise<ApiResponse<Agent>> {
@@ -148,8 +158,10 @@ export class ApiClient {
     return this.request<void>('DELETE', `/providers/${id}`);
   }
 
-  async getLogs(agentId: string, limit = 50): Promise<ApiResponse<AgentLog[]>> {
-    return this.request<AgentLog[]>('GET', `/agents/${agentId}/logs?limit=${limit}`);
+  async getLogs(agentId: string, limit = 50, before?: number): Promise<ApiResponse<AgentLog[]>> {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (before) params.set('before', String(before));
+    return this.request<AgentLog[]>('GET', `/agents/${agentId}/logs?${params}`);
   }
 
   // --- Wallet (live devnet data) ---

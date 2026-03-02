@@ -9,7 +9,8 @@ chatRouter.get('/:agentId', (req, res) => {
   try {
     const { agentId } = req.params;
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 100;
-    const chats = getAgentChats(agentId, limit);
+    const before = req.query.before ? parseInt(req.query.before as string, 10) : undefined;
+    const chats = getAgentChats(agentId, limit, before);
     res.json({ message: 'Success', data: chats });
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : String(error), data: null });

@@ -88,7 +88,8 @@ agentsRouter.delete('/:id', async (req, res) => {
 agentsRouter.get('/:id/logs', (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
-    const logs = getAgentLogs(req.params.id, limit);
+    const before = req.query.before ? parseInt(req.query.before as string, 10) : undefined;
+    const logs = getAgentLogs(req.params.id, limit, before);
     res.json({ message: 'Success', data: logs });
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : String(error), data: null });

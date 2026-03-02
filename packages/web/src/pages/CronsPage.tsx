@@ -1,15 +1,20 @@
 import { AlertCircle, Clock, Plus, Power, PowerOff, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { CustomSelect } from '../components/CustomSelect';
 import type { Agent } from '../hooks/useAgents';
 import { ApiClient } from '../lib/api';
 
-export function CronsPage({ agents, onSelectAgent }: { agents: Agent[], onSelectAgent: (id: string) => void }) {
+export function CronsPage({ agents }: { agents: Agent[] }) {
     const [searchParams] = useSearchParams();
     const agentIdParam = searchParams.get('agent');
     const navigate = useNavigate();
 
-    const activeAgent = agents.find(a => a.id === agentIdParam) || null;
+    // Auto-select main agent if no param
+    const activeAgent = agents.find(a => a.id === agentIdParam)
+        || agents.find(a => a.name === 'sigil')
+        || agents[0]
+        || null;
 
     const [crons, setCrons] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -110,20 +115,14 @@ export function CronsPage({ agents, onSelectAgent }: { agents: Agent[], onSelect
 
             {/* Agent Selector */}
             <div className="flex items-center gap-4 bg-card border border-border rounded-xl p-4 shrink-0 shadow-sm">
-                <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">Target Agent:</label>
-                <select 
-                    value={activeAgent?.id || ''} 
-                    onChange={(e) => {
-                        onSelectAgent(e.target.value);
-                        navigate(`/crons?agent=${e.target.value}`);
-                    }}
-                    className="flex-1 max-w-sm bg-background border border-input text-foreground text-sm rounded-md focus:ring-primary focus:border-primary block p-2"
-                >
-                    <option value="" disabled>Select an agent to view crons</option>
-                    {agents.map(a => (
-                        <option key={a.id} value={a.id}>{a.name}</option>
-                    ))}
-                </select>
+                <div className="flex-1 max-w-sm">
+                    <CustomSelect
+                        label="Target Agent"
+                        value={activeAgent?.id || ''}
+                        onChange={(id) => navigate(`/crons?agent=${id}`)}
+                        options={agents.map(a => ({ id: a.id, label: a.name }))}
+                    />
+                </div>
                 <button 
                     onClick={() => setIsCreating(true)}
                     disabled={!activeAgent}
