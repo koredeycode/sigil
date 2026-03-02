@@ -40,7 +40,7 @@ export function TransactionDetailModal({ agentId, signature, onClose }: Transact
     }, [agentId, signature]);
 
     return (
-        <div className="absolute inset-0 z-40 flex flex-col bg-card rounded-xl" onClick={onClose}>
+        <div className="fixed inset-0 z-50 flex flex-col bg-background" onClick={onClose}>
             <div
                 className="flex flex-col h-full w-full max-h-full overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
@@ -72,7 +72,7 @@ export function TransactionDetailModal({ agentId, signature, onClose }: Transact
                 </div>
 
                 {/* Content */}
-                <div className="overflow-y-auto p-5 space-y-5 max-h-[calc(80vh-80px)]">
+                <div className="flex-1 overflow-y-auto p-5 space-y-5">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-12 gap-3">
                             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
