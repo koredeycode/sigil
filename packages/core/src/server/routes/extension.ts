@@ -1,7 +1,13 @@
+import { Connection, PublicKey } from '@solana/web3.js';
 import { Router } from 'express';
 import { agentManager } from '../../agent/AgentManager.js';
+import { getRpcUrl } from '../../lib/Config.js';
 
 export const extensionRouter: Router = Router();
+
+function getConnection(): Connection {
+  return new Connection(getRpcUrl(), 'confirmed');
+}
 
 // POST /api/extension/connect
 extensionRouter.post('/connect', (req, res) => {
@@ -12,10 +18,85 @@ extensionRouter.post('/connect', (req, res) => {
       return;
     }
     
-    // Return pubkey to the extension
-    res.json({ message: 'Success', data: { publicKey: mainAgent.pubkey } });
+    // Return pubkey and name to the extension
+    res.json({ message: 'Success', data: { publicKey: mainAgent.pubkey, name: mainAgent.name } });
   } catch (err: any) {
     res.status(500).json({ message: err.message, data: null });
+  }
+});
+
+// GET /api/extension/portfolio
+extensionRouter.get('/portfolio', async (req, res) => {
+  try {
+    const mainAgent = agentManager.getMainAgent();
+    if (!mainAgent || !mainAgent.pubkey) {
+      res.status(404).json({ message: 'No active agent found', data: null });
+      return;
+    }
+
+    const connection = getConnection();
+    const pubkey = new PublicKey(mainAgent.pubkey);
+
+    const balance = await connection.getBalance(pubkey);
+    const solBalance = balance / 1e9;
+
+    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+      pubkey,
+      { programId: new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA') }
+    );
+
+    const tokens = tokenAccounts.value.map((ta) => {
+      const info = ta.account.data.parsed.info;
+      return {
+        address: ta.pubkey.toBase58(),
+        mint: info.mint,
+        balance: info.tokenAmount.uiAmount ?? 0,
+        decimals: info.tokenAmount.decimals,
+        symbol: info.tokenAmount.uiAmountString,
+      };
+    });
+
+    res.json({
+      message: 'Success',
+      data: {
+        sol: solBalance,
+        solLamports: balance,
+        tokens,
+        pubkey: mainAgent.pubkey,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message, data: null });
+  }
+});
+
+// GET /api/extension/transactions
+extensionRouter.get('/transactions', async (req, res) => {
+  try {
+    const mainAgent = agentManager.getMainAgent();
+    if (!mainAgent || !mainAgent.pubkey) {
+      res.status(404).json({ message: 'No active agent found', data: null });
+      return;
+    }
+
+    const connection = getConnection();
+    const pubkey = new PublicKey(mainAgent.pubkey);
+    const limit = 20;
+
+    const signatures = await connection.getSignaturesForAddress(pubkey, { limit });
+
+    const transactions = signatures.map((s) => ({
+      signature: s.signature,
+      blockTime: s.blockTime ? new Date(s.blockTime * 1000).toISOString() : null,
+      slot: s.slot,
+      status: s.confirmationStatus,
+      err: s.err,
+      memo: s.memo,
+    }));
+
+    res.json({ message: 'Success', data: transactions });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message, data: null });
   }
 });
 

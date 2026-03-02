@@ -42,7 +42,11 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
 
   // Request Logging Middleware
   app.use((req, res, next) => {
-    console.info(`[API Request] ${req.method} ${req.originalUrl}`);
+    const start = Date.now();
+    res.on('finish', () => {
+        const ms = Date.now() - start;
+        console.info(`[API Request] ${req.method} ${req.originalUrl} - ${res.statusCode} (${ms}ms)`);
+    });
     next();
   });
 

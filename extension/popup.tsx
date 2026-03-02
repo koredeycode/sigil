@@ -7,10 +7,43 @@ const SIGIL_SERVER_URL = "http://127.0.0.1:7445";
 export default function IndexPopup() {
   const [requestObj, setRequestObj] = useState<any>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [mainPubkey, setMainPubkey] = useState<string>("");
+  const [agentName, setAgentName] = useState<string>("");
+  const [portfolio, setPortfolio] = useState<any>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'transactions'>('portfolio');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  useEffect(() => {
+    // Determine initial theme
+    chrome.storage.local.get(['sigil_theme'], (result) => {
+       if (result.sigil_theme) {
+           setTheme(result.sigil_theme);
+       } else {
+           const isSysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+           setTheme(isSysDark ? 'dark' : 'light');
+       }
+    });
+
+    // Listen for storage changes across different popup windows
+    const listener = (changes: any, namespace: string) => {
+       if (namespace === 'local' && changes.sigil_theme) {
+           setTheme(changes.sigil_theme.newValue);
+       }
+    };
+    chrome.storage.onChanged.addListener(listener);
+    return () => chrome.storage.onChanged.removeListener(listener);
+  }, []);
+
+  const toggleTheme = () => {
+      setTheme(t => {
+          const next = t === 'dark' ? 'light' : 'dark';
+          chrome.storage.local.set({ sigil_theme: next });
+          return next;
+      });
+  };
 
   // Theme colors
   const colors = {
@@ -46,17 +79,51 @@ export default function IndexPopup() {
       const res = await fetch(`${SIGIL_SERVER_URL}/api/status`);
       if (res.ok) {
         setIsConnected(true);
-        const extRes = await fetch(`${SIGIL_SERVER_URL}/api/extension/connect`, { method: "POST" });
-        if (extRes.ok) {
-            const data = await extRes.json();
-            setMainPubkey(data.data.publicKey);
-        }
+        try {
+            const extRes = await fetch(`${SIGIL_SERVER_URL}/api/extension/connect`, { method: "POST" });
+            if (extRes.ok) {
+                const data = await extRes.json();
+                setMainPubkey(data.data.publicKey);
+                if (data.data.name) setAgentName(data.data.name);
+            }
+        } catch (e) {}
+
+        try {
+            const portRes = await fetch(`${SIGIL_SERVER_URL}/api/extension/portfolio`);
+            if (portRes.ok) {
+                const pData = await portRes.json();
+                setPortfolio(pData.data);
+            }
+        } catch(e) {}
+
+        try {
+            const txRes = await fetch(`${SIGIL_SERVER_URL}/api/extension/transactions`);
+            if (txRes.ok) {
+                const txData = await txRes.json();
+                setTransactions(txData.data);
+            }
+        } catch(e) {}
       } else {
         setIsConnected(false);
       }
     } catch (e) {
       setIsConnected(false);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const renderNotConnected = () => {
+    if (isLoading || isConnected === null || isConnected) return null;
+    return (
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: theme === 'dark' ? "rgba(9, 9, 11, 0.9)" : "rgba(250, 250, 250, 0.9)", zIndex: 100, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", textAlign: "center", backdropFilter: "blur(4px)" }}>
+             <img src={iconBase64} alt="Sigil" style={{ width: "64px", height: "64px", borderRadius: "50%", marginBottom: "24px", opacity: 0.5, filter: "grayscale(100%)" }} />
+             <h2 style={{ margin: "0 0 12px 0", fontSize: "20px", color: colors.text }}>Sigil is Offline</h2>
+             <p style={{ margin: 0, fontSize: "14px", color: colors.textMuted, lineHeight: "1.5" }}>
+                 The extension cannot connect to your local backend. Please ensure you are running <code>sigil start</code> in your terminal.
+             </p>
+        </div>
+    );
   };
 
   const resolveRequest = async (data: any, error?: string) => {
@@ -83,7 +150,7 @@ export default function IndexPopup() {
 
   if (requestObj?.type === "connect") {
       return (
-         <div style={{ padding: "24px", width: "100%", height: "100vh", fontFamily: "sans-serif", backgroundColor: colors.bg, color: colors.text, display: "flex", flexDirection: "column", transition: "all 0.2s" }}>
+         <div style={{ padding: "24px", boxSizing: "border-box", width: "100%", height: "100vh", fontFamily: "sans-serif", backgroundColor: colors.bg, color: colors.text, display: "flex", flexDirection: "column", transition: "all 0.2s" }}>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
                 <img src={iconBase64} alt="Sigil" style={{ width: "64px", height: "64px", borderRadius: "50%", marginBottom: "16px", objectFit: "cover" }} />
                 <h2 style={{ fontSize: "20px", margin: "0 0 8px 0" }}>Connect to Sigil</h2>
@@ -134,11 +201,15 @@ export default function IndexPopup() {
               <h2 style={{ fontSize: "24px", fontWeight: "bold", margin: 0 }}>Portfolio</h2>
               <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                   <button 
-                      onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+                      onClick={toggleTheme}
                       style={{ background: "none", border: "none", cursor: "pointer", fontSize: "16px", color: colors.textMuted, padding: 0 }}
                       title="Toggle Theme"
                   >
-                      {theme === 'dark' ? '☀️' : '🌙'}
+                      {theme === 'dark' ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                      ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                      )}
                   </button>
                   <div style={{ padding: "6px", borderRadius: "8px", cursor: "pointer", display: "flex" }}>
                       <img src={iconBase64} alt="Sigil" style={{ width: "20px", height: "20px", borderRadius: "4px" }} />
@@ -148,9 +219,9 @@ export default function IndexPopup() {
           
           <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 12px", borderRadius: "99px", backgroundColor: colors.hover, border: `1px solid ${colors.border}`, width: "fit-content", marginBottom: "16px" }}>
               <div style={{ width: "20px", height: "20px", borderRadius: "50%", backgroundColor: theme === 'dark' ? "rgba(139, 92, 246, 0.15)" : "rgba(139, 92, 246, 0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ fontSize: "10px", fontWeight: "bold", color: "#8b5cf6" }}>A</span>
+                  <span style={{ fontSize: "10px", fontWeight: "bold", color: "#8b5cf6", textTransform: "uppercase" }}>{agentName ? agentName[0] : "A"}</span>
               </div>
-              <span style={{ fontSize: "12px", fontWeight: "600" }}>Active Agent</span>
+              <span style={{ fontSize: "12px", fontWeight: "600", textTransform: "capitalize" }}>{agentName || "Active Agent"}</span>
               <span style={{ width: "1px", height: "12px", backgroundColor: colors.border }}></span>
               <code style={{ fontSize: "11px", color: colors.textMuted, fontFamily: "monospace" }}>
                  {mainPubkey ? `${mainPubkey.slice(0, 4)}...${mainPubkey.slice(-4)}` : "Not connected"}
@@ -159,7 +230,7 @@ export default function IndexPopup() {
 
           <div style={{ marginBottom: "8px" }}>
              <p style={{ margin: "0 0 4px 0", fontSize: "14px", color: colors.textMuted, fontWeight: "500" }}>Account Value</p>
-             <h1 style={{ margin: 0, fontSize: "36px", fontWeight: "900", letterSpacing: "-0.02em" }}>{isConnected ? "0.0000 SOL" : "—"}</h1>
+             <h1 style={{ margin: 0, fontSize: "36px", fontWeight: "900", letterSpacing: "-0.02em" }}>{portfolio ? `${portfolio.sol.toFixed(4)} SOL` : (isConnected ? "0.0000 SOL" : "—")}</h1>
           </div>
       </div>
   );
@@ -167,7 +238,8 @@ export default function IndexPopup() {
   // Default popup view replacing WalletView
   if (!requestObj) {
       return (
-        <div style={{ width: "400px", minHeight: "600px", fontFamily: "sans-serif", backgroundColor: colors.bg, color: colors.text, padding: "0", display: "flex", flexDirection: "column", transition: "all 0.2s" }}>
+        <div style={{ width: "400px", minHeight: "600px", boxSizing: "border-box", fontFamily: "sans-serif", backgroundColor: colors.bg, color: colors.text, padding: "0", display: "flex", flexDirection: "column", transition: "all 0.2s", overflow: "hidden", position: "relative" }}>
+           {renderNotConnected()}
            {renderHeader()}
            
            <div style={{ flex: 1, display: "flex", flexDirection: "column", position: "relative" }}>
@@ -207,16 +279,56 @@ export default function IndexPopup() {
                                    </div>
                                 </div>
                                 <div style={{ textAlign: "right" }}>
-                                   <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "600" }}>0.00 SOL</h3>
+                                   <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "600" }}>{portfolio ? portfolio.sol.toFixed(4) : "0.00"} SOL</h3>
                                    <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: colors.textMuted }}>Devnet</p>
                                 </div>
                             </div>
+                            
+                            {/* Tokens Map */}
+                            {portfolio?.tokens?.map?.((token: any, i: number) => (
+                                <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px", margin: "8px -8px 0 -8px", borderRadius: "8px", cursor: "pointer", transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.backgroundColor = colors.hover} onMouseOut={e => e.currentTarget.style.backgroundColor = "transparent"}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                       <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "linear-gradient(to bottom right, #4b5563, #374151)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "12px" }}>
+                                          SPL
+                                       </div>
+                                       <div>
+                                          <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "600", maxWidth: "120px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{token.mint.slice(0, 8)}...</h3>
+                                          <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: colors.textMuted, textTransform: "uppercase" }}>Token</p>
+                                       </div>
+                                    </div>
+                                    <div style={{ textAlign: "right" }}>
+                                       <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "600" }}>{token.balance} Tkns</h3>
+                                    </div>
+                                </div>
+                            ))}
                        </div>
                    )}
 
                    {activeTab === 'transactions' && (
-                       <div style={{ textAlign: "center", padding: "32px 0", color: colors.textMuted, fontSize: "14px" }}>
-                           No recent activity bounds.
+                       <div>
+                        {transactions.length === 0 ? (
+                          <div style={{ textAlign: "center", padding: "32px 0", color: colors.textMuted, fontSize: "14px" }}>
+                              No recent activity found.
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
+                              {transactions.map((tx: any, i: number) => (
+                                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px", borderRadius: "8px", backgroundColor: colors.btnBg, border: `1px solid ${colors.border}` }}>
+                                       <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                                           <span style={{ fontSize: "13px", fontWeight: "600", color: colors.text }}>
+                                               {tx.status === 'confirmed' ? 'Confirmed' : (tx.err ? 'Failed' : 'Pending')}
+                                           </span>
+                                           <span style={{ fontSize: "11px", color: colors.textMuted }}>
+                                               {tx.blockTime ? new Date(tx.blockTime).toLocaleString() : ''}
+                                           </span>
+                                       </div>
+                                       <code style={{ fontSize: "11px", color: colors.textMuted }}>
+                                           {tx.signature.slice(0, 8)}...{tx.signature.slice(-8)}
+                                       </code>
+                                  </div>
+                              ))}
+                          </div>
+                        )}
                        </div>
                    )}
                </div>
@@ -231,7 +343,7 @@ export default function IndexPopup() {
       const isApproved = sim?.status === "approved";
 
       return (
-         <div style={{ width: "400px", minHeight: "650px", fontFamily: "sans-serif", backgroundColor: colors.bg, color: colors.text, display: "flex", flexDirection: "column", transition: "all 0.2s" }}>
+         <div style={{ padding: 0, margin: 0, width: "100%", height: "100vh", boxSizing: "border-box", fontFamily: "sans-serif", backgroundColor: colors.bg, color: colors.text, display: "flex", flexDirection: "column", transition: "all 0.2s", overflow: "hidden" }}>
             <div style={{ padding: "20px", borderBottom: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                  <div>
                     <h2 style={{ fontSize: "18px", margin: "0", fontWeight: "bold" }}>Transaction Details</h2>
