@@ -22,8 +22,9 @@ export function AgentManager({ agents, refreshAgents }: AgentManagerProps) {
 
     const filteredAgents = useMemo(() => {
         return agents.filter(agent => {
-            const matchesSearch = agent.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                               agent.id.toLowerCase().includes(searchTerm.toLowerCase());
+            const term = searchTerm.toLowerCase();
+            const matchesSearch = (agent.name ?? '').toLowerCase().includes(term) || 
+                               (agent.id ?? '').toLowerCase().includes(term);
             const matchesStatus = statusFilter === 'all' || agent.status === statusFilter;
             return matchesSearch && matchesStatus;
         });
