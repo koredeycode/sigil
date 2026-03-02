@@ -71,13 +71,49 @@ export function setupSocket(io: SocketIOServer): void {
     });
 
     // Chat messages from clients
-    socket.on('chat:message', (data: { agent: string; content: string }) => {
-      socket.broadcast.emit('chat:message', {
-        agent: data.agent,
+    socket.on('chat:message', async (data: { agentId: string; content: string }) => {
+      const agent = getAgent(data.agentId);
+      if (!agent) return;
+
+      // Broadcast user message to UI immediately
+      agentManager.emit('chat:message', {
+        agent: agent.name,
         role: 'user',
         content: data.content,
         timestamp: new Date().toISOString(),
       });
+
+      try {
+        const { insertChat } = await import('../lib/Database.js');
+        
+        // Save user message to DB
+        insertChat(agent.id, 'user', data.content);
+
+        // Invoke Agent
+        const { response, toolResults } = await agentManager.invoke(agent.id, data.content, {
+          includeHistory: true,
+        });
+
+        // Save assistant message to DB with stringified tool results
+        insertChat(agent.id, 'assistant', response, JSON.stringify(toolResults));
+
+        // Broadcast assistant response and tools to UI
+        agentManager.emit('chat:message', {
+          agent: agent.name,
+          role: 'assistant',
+          content: response,
+          tools: toolResults,
+          timestamp: new Date().toISOString(),
+        });
+
+      } catch (error) {
+        console.error(`[Socket.IO] Chat Error:`, error);
+        agentManager.emit('agent:error', {
+          agent: agent.name,
+          error: `Chat failed: ${error instanceof Error ? error.message : String(error)}`,
+          timestamp: new Date().toISOString(),
+        });
+      }
     });
 
     // Subscribe to wallet updates for a specific agent

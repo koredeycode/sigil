@@ -28,6 +28,7 @@ export function getDatabase(): DatabaseSync {
 
   initializeTables(db);
   // migrateProviders(db);
+  migrateChats(db);
   seedDefaults(db);
 
   return db;
@@ -99,6 +100,7 @@ function initializeTables(db: DatabaseSync): void {
       agent_id    TEXT NOT NULL,
       role        TEXT NOT NULL CHECK(role IN ('user', 'assistant', 'system')),
       content     TEXT NOT NULL,
+      tools       TEXT,
       timestamp   DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (agent_id) REFERENCES agents(id)
     );
@@ -125,6 +127,13 @@ function initializeTables(db: DatabaseSync): void {
 //   try { db.exec('ALTER TABLE providers ADD COLUMN base_url TEXT'); } catch {}
 //   try { db.exec("ALTER TABLE providers ADD COLUMN compat TEXT DEFAULT 'openai'"); } catch {}
 // }
+
+/**
+ * Add tools column to chats table
+ */
+function migrateChats(db: DatabaseSync): void {
+  try { db.exec('ALTER TABLE chats ADD COLUMN tools TEXT'); } catch {}
+}
 
 /**
  * Seed default config values if they don't already exist.
@@ -220,11 +229,11 @@ export function getAgentLogs(agentId: string, limit = 50) {
 }
 
 // Chats
-export function insertChat(agentId: string, role: 'user' | 'assistant' | 'system', content: string) {
+export function insertChat(agentId: string, role: 'user' | 'assistant' | 'system', content: string, tools?: string) {
   const db = getDatabase();
   return db.prepare(
-    'INSERT INTO chats (agent_id, role, content) VALUES (?, ?, ?)'
-  ).run(agentId, role, content);
+    'INSERT INTO chats (agent_id, role, content, tools) VALUES (?, ?, ?, ?)'
+  ).run(agentId, role, content, tools ?? null);
 }
 
 export function getAgentChats(agentId: string, limit = 100) {
@@ -356,6 +365,7 @@ export interface ChatRow {
   agent_id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  tools: string | null;
   timestamp: string;
 }
 

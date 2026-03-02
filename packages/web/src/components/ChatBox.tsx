@@ -1,14 +1,16 @@
-import { Check, Copy, Send } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Copy, Send, Terminal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Agent } from '../hooks/useAgents';
+import { useSocket } from '../hooks/useSocket';
 import { ApiClient } from '../lib/api';
 
 interface ChatMessage {
     id: number | string;
     role: 'user' | 'assistant' | 'system';
     content: string;
+    tools?: string | Array<{ tool: string; result: string }>;
 }
 
 interface ChatBoxProps {
@@ -21,8 +23,42 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    const { socket } = useSocket();
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const ToolResult = ({ tools }: { tools: string | Array<{ tool: string; result: string }> }) => {
+        const [expanded, setExpanded] = useState(false);
+        const parsedTools = typeof tools === 'string' ? JSON.parse(tools) : tools;
+        
+        if (!parsedTools || !Array.isArray(parsedTools) || parsedTools.length === 0) return null;
+
+        return (
+            <div className="mt-3 border border-border/50 rounded-md bg-background/30 overflow-hidden text-xs">
+                <button 
+                    onClick={() => setExpanded(!expanded)}
+                    className="flex w-full items-center justify-between p-2 hover:bg-background/50 transition-colors"
+                >
+                    <div className="flex items-center gap-2 text-muted-foreground font-mono">
+                        <Terminal className="w-3.5 h-3.5" />
+                        <span>{parsedTools.length} tool{parsedTools.length > 1 ? 's' : ''} executed</span>
+                    </div>
+                    {expanded ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
+                </button>
+                {expanded && (
+                    <div className="p-2 pt-0 max-h-60 overflow-y-auto space-y-2 border-t border-border/50 font-mono">
+                        {parsedTools.map((t, i) => (
+                            <div key={i} className="flex flex-col gap-1">
+                                <span className="text-primary font-semibold">{t.tool}</span>
+                                <span className="text-muted-foreground whitespace-pre-wrap break-all">{t.result}</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
     };
 
     const CopyButton = ({ text }: { text: string }) => {
@@ -62,45 +98,47 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
         fetchHistory();
     }, [activeAgent]);
 
+    // WebSocket listener for incoming messages
+    useEffect(() => {
+        if (!socket || !activeAgent) return;
+
+        const handleMessage = (data: any) => {
+            if (data.agent === activeAgent.name) {
+                setMessages(prev => {
+                    // Check to avoid duplicates just in case
+                    const exists = prev.some(m => m.id === data.timestamp || (m.role === data.role && m.content === data.content && Date.now() - Number(m.id) < 1000));
+                    if (exists && data.role === 'user') return prev;
+                    
+                    return [...prev, {
+                        id: data.timestamp || Date.now(),
+                        role: data.role,
+                        content: data.content,
+                        tools: data.tools
+                    }];
+                });
+                if (data.role === 'assistant') {
+                    setSending(false);
+                }
+            }
+        };
+
+        socket.on('chat:message', handleMessage);
+
+        return () => {
+            socket.off('chat:message', handleMessage);
+        };
+    }, [socket, activeAgent]);
+
     useEffect(() => {
         scrollToBottom();
     }, [messages, sending]);
 
-    const handleSend = async () => {
-        if (!input.trim() || !activeAgent) return;
-        const token = localStorage.getItem('sigil_token');
-        if (!token) return;
-
-        const userMsg: ChatMessage = {
-            id: Date.now(),
-            role: 'user',
-            content: input.trim()
-        };
-
-        setMessages(prev => [...prev, userMsg]);
+    const handleSend = () => {
+        if (!input.trim() || !activeAgent || !socket) return;
+        
+        socket.emit('chat:message', { agentId: activeAgent.id, content: input.trim() });
         setInput('');
         setSending(true);
-
-        try {
-            const client = new ApiClient(token);
-            const res = await client.sendChat(activeAgent.id, userMsg.content);
-            
-            const assistMsg: ChatMessage = {
-                id: Date.now() + 1,
-                role: 'assistant',
-                content: res.data?.response || 'No response.'
-            };
-            setMessages(prev => [...prev, assistMsg]);
-        } catch (e) {
-            console.error(e);
-            setMessages(prev => [...prev, {
-                id: Date.now() + 2,
-                role: 'system',
-                content: 'Error communicating with agent.'
-            }]);
-        } finally {
-            setSending(false);
-        }
     };
 
     if (!activeAgent) return <div className="flex-1 flex items-center justify-center text-muted-foreground p-4">Select an agent</div>;
@@ -160,6 +198,9 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
                                         </ReactMarkdown>
                                     ) : (
                                         <div className="whitespace-pre-wrap">{msg.content || "No message content"}</div>
+                                    )}
+                                    {msg.tools && msg.role === 'assistant' && (
+                                        <ToolResult tools={msg.tools} />
                                     )}
                                 </div>
                             </div>

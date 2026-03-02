@@ -48,7 +48,7 @@ chatRouter.post('/', async (req, res) => {
     });
 
     // Save assistant message to DB
-    insertChat(agent.id, 'assistant', response);
+    insertChat(agent.id, 'assistant', response, JSON.stringify(toolResults));
 
     // Emit agent response
     agentManager.emit('chat:message', {
