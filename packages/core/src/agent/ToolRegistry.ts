@@ -1,14 +1,14 @@
 import { createSolanaTools } from 'solana-agent-kit';
-import { createLegacyTools } from './LegacyTools.js';
+import { createCustomTools } from './CustomTools.js';
 import { ESSENTIAL_TOOL_NAMES, clearAgentKit, getSolanaAgentKit } from './SolanaAgentKitTools.js';
 
 /**
  * TOOL REGISTRY MODE
  * 'curated' - Efficient subset of solana-agent-kit tools (default)
  * 'full'    - All 100+ solana-agent-kit tools (vulnerable to token limits)
- * 'legacy'  - Original custom-built tools (DynamicStructuredTool)
+ * 'legacy'  - Custom built tools (CustomTools)
  */
-const TOOL_REGISTRY_MODE: 'curated' | 'full' | 'legacy' = 'curated';
+const TOOL_REGISTRY_MODE: 'curated' | 'full' | 'legacy' = 'legacy';
 
 /**
  * Main entry point for creating tools.
@@ -22,8 +22,8 @@ export async function createTools(agentName: string, agentId?: string) {
       const agent = getAgent(agentName);
       agentId = agent?.id;
     }
-    console.log(`[ToolRegistry] Using LEGACY toolset for ${agentName}`);
-    return createLegacyTools(agentId || 'unknown', agentName);
+    console.log(`[ToolRegistry] Using CUSTOM toolset for ${agentName}`);
+    return createCustomTools(agentId || 'unknown', agentName);
   }
 
   const kit = await getSolanaAgentKit(agentName);

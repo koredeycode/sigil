@@ -1,10 +1,21 @@
 import { clsx } from 'clsx';
 import { AlertCircle, RefreshCw, Terminal } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { Agent } from '../hooks/useAgents';
+import { useSocket } from '../hooks/useSocket';
 import { ApiClient } from '../lib/api';
 
-export function LogsPage({ activeAgent, agents, onSelectAgent }: { activeAgent: Agent | null, agents: Agent[], onSelectAgent: (id: string) => void }) {
+export function LogsPage({ agents }: { agents: Agent[] }) {
+    const [searchParams] = useSearchParams();
+    const agentIdParam = searchParams.get('agent');
+    const navigate = useNavigate();
+
+    // The active agent context
+    const activeAgent = agents.find(a => a.id === agentIdParam) || null;
+
+    const { socket } = useSocket();
+    const endRef = useRef<HTMLDivElement>(null);
     const [logs, setLogs] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -33,6 +44,42 @@ export function LogsPage({ activeAgent, agents, onSelectAgent }: { activeAgent: 
         fetchLogs();
     }, [activeAgent?.id]);
 
+    useEffect(() => {
+        if (!socket || !activeAgent) return;
+
+        const handleLog = (data: Record<string, any>) => {
+            // Note: Background emits `agent: string (name)` not ID conventionally.
+            if (data.agent === activeAgent.name || data.agentId === activeAgent.id) {
+                setLogs(prev => [...prev, {
+                    id: Date.now() + Math.random(),
+                    action: data.type === 'thought' ? 'agent_invoke' :
+                            data.type === 'action' ? `tool:${data.tool?.name || data.toolName || 'unknown'}` :
+                            data.type === 'error' ? 'agent_error' : 'info',
+                    result: data.content || data.result || '',
+                    thought: data.type === 'thought' ? (data.content || data.thought) : null,
+                    timestamp: data.timestamp || new Date().toISOString()
+                }]);
+                
+                // Optional: Scroll to bottom slightly after state settles
+                setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+            }
+        };
+
+        socket.on('agent:thought', (data) => handleLog({ ...data, type: 'thought' }));
+        socket.on('agent:action', (data) => handleLog({ ...data, type: 'action' }));
+        socket.on('agent:error', (data) => handleLog({ ...data, type: 'error' }));
+
+        return () => {
+            socket.off('agent:thought');
+            socket.off('agent:action');
+            socket.off('agent:error');
+        };
+    }, [socket, activeAgent]);
+
+    const handleSelectAgent = (id: string) => {
+        navigate(`/logs?agent=${id}`);
+    };
+
     return (
         <div className="flex flex-col h-full space-y-6 overflow-hidden">
             <header className="flex flex-col space-y-2 shrink-0 pr-2">
@@ -45,7 +92,7 @@ export function LogsPage({ activeAgent, agents, onSelectAgent }: { activeAgent: 
                 <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">Target Agent:</label>
                 <select 
                     value={activeAgent?.id || ''} 
-                    onChange={(e) => onSelectAgent(e.target.value)}
+                    onChange={(e) => handleSelectAgent(e.target.value)}
                     className="flex-1 max-w-sm bg-background border border-input text-foreground text-sm rounded-md focus:ring-primary focus:border-primary block p-2"
                 >
                     <option value="" disabled>Select an agent</option>
@@ -175,6 +222,7 @@ export function LogsPage({ activeAgent, agents, onSelectAgent }: { activeAgent: 
                             })}
                         </div>
                     </div>
+                    <div ref={endRef} />
                 </div>
             )}
         </div>

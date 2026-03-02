@@ -1,16 +1,16 @@
 import { clsx } from 'clsx';
-import { AlertCircle, Bot, Plus, Search } from 'lucide-react';
+import { AlertCircle, Bot, MessageSquare, Plus, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Agent } from '../hooks/useAgents';
 import { ApiClient } from '../lib/api';
 
 interface AgentManagerProps {
     agents: Agent[];
     refreshAgents: () => void;
-    onSelectAgent?: (id: string) => void;
 }
-
-export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentManagerProps) {
+export function AgentManager({ agents, refreshAgents }: AgentManagerProps) {
+    const navigate = useNavigate();
     const [name, setName] = useState('');
     const [loopInterval, setLoopInterval] = useState(60);
     const [privateKey, setPrivateKey] = useState('');
@@ -131,7 +131,7 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                                     <tr 
                                         key={agent.id} 
                                         className="hover:bg-secondary/20 transition-colors cursor-pointer"
-                                        onClick={() => onSelectAgent?.(agent.id)}
+                                        onClick={() => navigate(`/agents/${agent.id}`)}
                                     >
                                         <td className="px-6 py-4 font-medium">{agent.name}</td>
                                         <td className="px-6 py-4">
@@ -153,7 +153,14 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                                         </td>
                                         <td className="px-6 py-4 text-right space-x-2">
                                             <button 
-                                                onClick={(e) => { e.stopPropagation(); onSelectAgent?.(agent.id); }}
+                                                onClick={(e) => { e.stopPropagation(); navigate(`/?agent=${agent.id}`); }}
+                                                className="text-xs px-2 py-1 bg-green-500/10 text-green-600 hover:bg-green-500/20 rounded font-medium transition-colors inline-flex items-center gap-1"
+                                                title="Chat with Agent"
+                                            >
+                                                <MessageSquare className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button 
+                                                onClick={(e) => { e.stopPropagation(); navigate(`/agents/${agent.id}`); }}
                                                 className="text-xs px-2 py-1 bg-primary/10 text-primary hover:bg-primary/20 rounded font-medium transition-colors"
                                             >
                                                 Details

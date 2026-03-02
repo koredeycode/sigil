@@ -1,9 +1,16 @@
 import { AlertCircle, Clock, Plus, Power, PowerOff, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { Agent } from '../hooks/useAgents';
 import { ApiClient } from '../lib/api';
 
-export function CronsPage({ activeAgent, agents, onSelectAgent }: { activeAgent: Agent | null, agents: Agent[], onSelectAgent: (id: string) => void }) {
+export function CronsPage({ agents, onSelectAgent }: { agents: Agent[], onSelectAgent: (id: string) => void }) {
+    const [searchParams] = useSearchParams();
+    const agentIdParam = searchParams.get('agent');
+    const navigate = useNavigate();
+
+    const activeAgent = agents.find(a => a.id === agentIdParam) || null;
+
     const [crons, setCrons] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -106,7 +113,10 @@ export function CronsPage({ activeAgent, agents, onSelectAgent }: { activeAgent:
                 <label className="text-sm font-medium text-muted-foreground whitespace-nowrap">Target Agent:</label>
                 <select 
                     value={activeAgent?.id || ''} 
-                    onChange={(e) => onSelectAgent(e.target.value)}
+                    onChange={(e) => {
+                        onSelectAgent(e.target.value);
+                        navigate(`/crons?agent=${e.target.value}`);
+                    }}
                     className="flex-1 max-w-sm bg-background border border-input text-foreground text-sm rounded-md focus:ring-primary focus:border-primary block p-2"
                 >
                     <option value="" disabled>Select an agent to view crons</option>

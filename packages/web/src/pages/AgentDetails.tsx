@@ -1,11 +1,15 @@
 import { AlertCircle, Check, Copy, Pause, Play, Settings, Terminal, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { ApiClient } from '../lib/api';
 
 import type { Agent } from '../hooks/useAgents';
 
-export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
+export function AgentDetails({ agents }: { agents: Agent[] }) {
+    const { id } = useParams<{ id: string }>();
+    const activeAgent = agents.find(a => a.id === id) || null;
+
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [editName, setEditName] = useState('');
     const [editInterval, setEditInterval] = useState(60);

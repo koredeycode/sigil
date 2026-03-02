@@ -1,11 +1,11 @@
 import { clsx } from 'clsx';
-import { Activity, Bot, Clock, ExternalLink, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
+import { Activity, Brain, Clock, ExternalLink, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
-import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Route, Routes, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { twMerge } from 'tailwind-merge';
 import { ChatBox } from './components/ChatBox';
-import { LogTerminal } from './components/LogTerminal';
+
 import { WalletView } from './components/WalletView';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
 import type { Agent } from './hooks/useAgents';
@@ -74,8 +74,17 @@ const Login = ({ onLogin }: { onLogin: (token: string) => void }) => {
 };
 
 
-const DashboardContent = ({ activeAgent }: { activeAgent: Agent | null }) => {
-    const [isLogsOpen, setIsLogsOpen] = useState(false);
+const DashboardContent = ({ agents }: { agents: Agent[] }) => {
+    const [searchParams] = useSearchParams();
+    const agentIdParam = searchParams.get('agent');
+    
+    // Explicitly fallback to "sigil" as the main agent if no agent is specified
+    const activeAgent = agents.find(a => a.id === agentIdParam) 
+        || agents.find(a => a.name === 'sigil') 
+        || agents[0] 
+        || null;
+
+    const navigate = useNavigate();
     const { primaryProvider } = useProviders();
 
     const { defaultLayout, onLayoutChanged } = useDefaultLayout({
@@ -116,7 +125,7 @@ const DashboardContent = ({ activeAgent }: { activeAgent: Agent | null }) => {
                     </div>
                     {primaryProvider && (
                         <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary text-xs font-medium text-muted-foreground border border-border">
-                            <Bot className="w-3.5 h-3.5" />
+                            <Brain className="w-3.5 h-3.5" />
                             <span>{primaryProvider.name}</span>
                             <span className="opacity-50">·</span>
                             <span className="font-mono">{primaryProvider.model}</span>
@@ -125,16 +134,11 @@ const DashboardContent = ({ activeAgent }: { activeAgent: Agent | null }) => {
                 </div>
                 
                 <button
-                    onClick={() => setIsLogsOpen(!isLogsOpen)}
-                    className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border",
-                        isLogsOpen 
-                            ? "bg-primary text-primary-foreground border-primary hover:bg-primary/90" 
-                            : "bg-background text-foreground border-border hover:bg-secondary"
-                    )}
+                    onClick={() => navigate(`/logs?agent=${activeAgent.id}`)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors border bg-background text-foreground border-border hover:bg-secondary"
                 >
                     <Terminal className="w-4 h-4" />
-                    {isLogsOpen ? 'Close Logs' : 'View Logs'}
+                    View Logs
                 </button>
             </header>
 
@@ -168,43 +172,13 @@ const DashboardContent = ({ activeAgent }: { activeAgent: Agent | null }) => {
                 </Panel>
                 
             </Group>
-            
-            {/* Log Drawer Overlay */}
-            <div className={cn(
-                "fixed top-0 right-0 bottom-0 w-[500px] xl:w-[600px] max-w-full bg-card text-foreground border-l border-border shadow-2xl flex flex-col z-50 transition-transform duration-300 ease-in-out",
-                isLogsOpen ? "translate-x-0" : "translate-x-full"
-            )}>
-                <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0 bg-secondary/30">
-                    <div className="flex items-center gap-2">
-                        <Terminal className="w-4 h-4 text-muted-foreground" />
-                        <h3 className="font-medium text-sm">Live Logs for <span className="text-primary font-bold">{activeAgent.name}</span></h3>
-                    </div>
-                    <button
-                        onClick={() => setIsLogsOpen(false)}
-                        className="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <span className="sr-only">Close Logs</span>
-                        ×
-                    </button>
-                </div>
-                <LogTerminal activeAgent={activeAgent} />
-            </div>
-            
-            {/* Overlay backdrop when logs are open (optional, helps focus) */}
-            {isLogsOpen && (
-                <div 
-                    className="fixed inset-0 bg-black/50 z-40 transition-opacity" 
-                    onClick={() => setIsLogsOpen(false)}
-                />
-            )}
         </div>
     );
 };
 
 const Dashboard = () => {
-    const { agents, activeAgent, setActiveAgentId } = useAgents();
+    const { agents, setActiveAgentId } = useAgents();
     const location = useLocation();
-    const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
     const isDarkMode = theme === 'dark';
 
@@ -334,23 +308,19 @@ const Dashboard = () => {
             {/* Main Content */}
             <main className="flex-1 overflow-hidden p-6 bg-background">
                 <Routes>
-                    <Route path="/" element={<DashboardContent activeAgent={activeAgent} />} />
-                    <Route path="/agents/:id" element={<AgentDetails activeAgent={activeAgent} />} />
+                    <Route path="/" element={<DashboardContent agents={agents} />} />
+                    <Route path="/agents/:id" element={<AgentDetails agents={agents} />} />
                     <Route 
                         path="/agents" 
                         element={
                             <AgentManager 
                                 agents={agents} 
                                 refreshAgents={refreshAgents} 
-                                onSelectAgent={(id) => { 
-                                    setActiveAgentId(id); 
-                                    navigate(`/agents/${id}`); 
-                                }} 
                             />
                         } 
                     />
-                    <Route path="/crons" element={<CronsPage activeAgent={activeAgent} agents={agents} onSelectAgent={setActiveAgentId} />} />
-                    <Route path="/logs" element={<LogsPage activeAgent={activeAgent} agents={agents} onSelectAgent={setActiveAgentId} />} />
+                    <Route path="/crons" element={<CronsPage agents={agents} onSelectAgent={setActiveAgentId} />} />
+                    <Route path="/logs" element={<LogsPage agents={agents} />} />
                     <Route path="/settings" element={<SettingsPage />} />
                 </Routes>
             </main>
