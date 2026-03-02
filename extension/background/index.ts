@@ -45,50 +45,34 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const transactionMessage = params.transactionMessage;
     const origin = sender.origin || sender.tab?.url || "Unknown dApp";
 
-    // 1. Immediately send to simulation endpoint
-    fetch(`${SIGIL_SERVER_URL}/api/extension/simulate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ transactionMessage, origin }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Sigil Simulation failed.");
-        return res.json();
-      })
-      .then((simulationData) => {
-         // 2. Store simulation data and open popup
-         chrome.storage.local.set({ 
-            [`request_${requestId}`]: { 
-                type: "signTransaction", 
-                origin, 
-                transactionMessage,
-                simulationData 
-            }
-         }, () => {
-            chrome.windows.create({
-               url: `popup.html?request=${requestId}`,
-               type: "popup",
-               width: 360,
-               height: 650
-            });
-         });
+    // 1. Store transaction data and open popup immediately
+    chrome.storage.local.set({ 
+       [`request_${requestId}`]: { 
+           type: "signTransaction", 
+           origin, 
+           transactionMessage 
+       }
+    }, () => {
+       chrome.windows.create({
+          url: `popup.html?request=${requestId}`,
+          type: "popup",
+          width: 360,
+          height: 650
+       });
+    });
 
-         // 3. Wait for popup user approval/rejection
-         const listener = (msg: any) => {
-            if (msg.type === "resolve_request" && msg.requestId === requestId) {
-               chrome.runtime.onMessage.removeListener(listener);
-               if (msg.error) {
-                   sendResponse({ error: msg.error });
-               } else {
-                   sendResponse({ result: msg.data });
-               }
-            }
-         };
-         chrome.runtime.onMessage.addListener(listener);
-      })
-      .catch((err) => {
-        sendResponse({ error: err.message });
-      });
+    // 2. Wait for popup user approval/rejection
+    const listener = (msg: any) => {
+       if (msg.type === "resolve_request" && msg.requestId === requestId) {
+          chrome.runtime.onMessage.removeListener(listener);
+          if (msg.error) {
+              sendResponse({ error: msg.error });
+          } else {
+              sendResponse({ result: msg.data });
+          }
+       }
+    };
+    chrome.runtime.onMessage.addListener(listener);
 
     return true;
   }

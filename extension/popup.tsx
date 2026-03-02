@@ -15,6 +15,9 @@ export default function IndexPopup() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'transactions'>('portfolio');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [isSigning, setIsSigning] = useState(false);
+  const [simulationData, setSimulationData] = useState<any>(null);
+  const [isSimulating, setIsSimulating] = useState(false);
 
   useEffect(() => {
     // Determine initial theme
@@ -74,6 +77,34 @@ export default function IndexPopup() {
     }
   }, []);
 
+  useEffect(() => {
+      if (!requestObj) return;
+
+      if (requestObj.type === 'signTransaction' && requestObj.simulationData) {
+          setSimulationData(requestObj.simulationData);
+      }
+
+      // If it's a signTransaction and we have the message but no sim data, fetch it
+      if (requestObj.type === 'signTransaction' && !requestObj.simulationData && requestObj.transactionMessage) {
+          setIsSimulating(true);
+          fetch(`http://127.0.0.1:7445/api/extension/simulate`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ transactionMessage: requestObj.transactionMessage, origin: requestObj.origin })
+          })
+          .then(res => res.json())
+          .then(data => {
+              setSimulationData(data);
+          })
+          .catch(err => {
+              setSimulationData({ error: err.message, status: 'rejected' });
+          })
+          .finally(() => {
+              setIsSimulating(false);
+          });
+      }
+  }, [requestObj]);
+
   const checkConnection = async () => {
     try {
       const res = await fetch(`${SIGIL_SERVER_URL}/api/status`);
@@ -129,11 +160,25 @@ export default function IndexPopup() {
   const resolveRequest = async (data: any, error?: string) => {
     if (!requestId) return;
     
-    if (requestObj?.type === 'signTransaction' && !error) {
+    if (requestObj?.type === 'signTransaction' && !error && data?.approved) {
          try {
-             data = { signedTransaction: requestObj.transactionMessage };
+             setIsSigning(true);
+             const res = await fetch(`http://127.0.0.1:7445/api/extension/sign`, {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json' },
+                 body: JSON.stringify({ transactionMessage: requestObj.transactionMessage })
+             });
+             
+             if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.message || "Failed to sign transaction.");
+             }
+             const json = await res.json();
+             data = { signedTransaction: json.data.signedTransaction };
          } catch(e: any) {
              error = e.message;
+         } finally {
+             setIsSigning(false);
          }
     }
 
@@ -339,7 +384,7 @@ export default function IndexPopup() {
 
   // Sign Transaction view perfectly matches Transaction Detail Modal inside the Wallet View envelope
   if (requestObj?.type === "signTransaction") {
-      const sim = requestObj.simulationData;
+      const sim = simulationData || requestObj.simulationData;
       const isApproved = sim?.status === "approved";
 
       return (
@@ -356,58 +401,70 @@ export default function IndexPopup() {
                  </div>
             </div>
             
-            <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
-                {/* Agent Analysis Grid Match */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px", marginBottom: "20px" }}>
-                    <div style={{ padding: "12px", backgroundColor: isApproved ? "rgba(16, 185, 129, 0.05)" : "rgba(239, 68, 68, 0.05)", border: `1px solid ${isApproved ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)"}`, borderRadius: "8px" }}>
-                        <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: colors.textMuted, textTransform: "uppercase", fontWeight: "500" }}>Analysis Status</p>
-                        <span style={{ fontSize: "14px", fontWeight: "600", color: isApproved ? "#10b981" : "#ef4444" }}>
-                            {isApproved ? "Confirmed Safe" : "Action Required / Warning"}
-                        </span>
-                        
-                        <p style={{ margin: "8px 0 0 0", fontSize: "13px", color: theme === 'dark' ? "#d4d4d8" : "#3f3f46", lineHeight: "1.5" }}>
-                            {sim?.analysis || "The agent could not analyze this transaction."}
-                        </p>
+            <div style={{ flex: 1, padding: "20px", overflowY: "auto", display: "flex", flexDirection: "column" }}>
+                {isSimulating ? (
+                    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ width: "40px", height: "40px", border: `3px solid ${colors.border}`, borderTopColor: "#8b5cf6", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+                        <p style={{ marginTop: "16px", color: colors.textMuted, fontSize: "14px", fontWeight: "500" }}>Agent is analyzing transaction...</p>
+                        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
                     </div>
-                    {sim?.error && (
-                         <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px" }}>
-                            <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#fca5a5", textTransform: "uppercase", fontWeight: "500" }}>Error</p>
-                            <code style={{ fontSize: "12px", color: "#fpt8b4", fontFamily: "monospace" }}>{sim.error}</code>
+                ) : (
+                    <>
+                        {/* Agent Analysis Grid Match */}
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px", marginBottom: "20px" }}>
+                            <div style={{ padding: "12px", backgroundColor: isApproved ? "rgba(16, 185, 129, 0.05)" : "rgba(239, 68, 68, 0.05)", border: `1px solid ${isApproved ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)"}`, borderRadius: "8px" }}>
+                                <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: colors.textMuted, textTransform: "uppercase", fontWeight: "500" }}>Analysis Status</p>
+                                <span style={{ fontSize: "14px", fontWeight: "600", color: isApproved ? "#10b981" : "#ef4444" }}>
+                                    {isApproved ? "Confirmed Safe" : "Action Required / Warning"}
+                                </span>
+                                
+                                <p style={{ margin: "8px 0 0 0", fontSize: "13px", color: theme === 'dark' ? "#d4d4d8" : "#3f3f46", lineHeight: "1.5" }}>
+                                    {sim?.analysis || "The agent could not analyze this transaction."}
+                                </p>
+                            </div>
+                            {sim?.error && (
+                                 <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px" }}>
+                                    <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#fca5a5", textTransform: "uppercase", fontWeight: "500" }}>Error</p>
+                                    <code style={{ fontSize: "12px", color: "#fca5a5", fontFamily: "monospace" }}>{sim.error}</code>
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
 
-                {/* Instructions / Raw Data section equivalent */}
-                <div>
-                     <h3 style={{ fontSize: "14px", fontWeight: "600", color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>
-                         Raw Payload
-                     </h3>
-                     <div style={{ padding: "12px", backgroundColor: colors.btnBg, borderRadius: "8px", border: `1px solid ${colors.border}` }}>
-                          <details>
-                              <summary style={{ fontSize: "12px", fontWeight: "500", color: colors.textMuted, cursor: "pointer", userSelect: "none" }}>
-                                 View Developer Details
-                              </summary>
-                              <div style={{ marginTop: "8px", paddingLeft: "8px", borderLeft: `2px solid ${colors.border}` }}>
-                                  <pre style={{ fontSize: "10px", fontFamily: "monospace", color: colors.textMuted, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
-                                      {typeof requestObj.transactionMessage === 'string' ? requestObj.transactionMessage : JSON.stringify(requestObj.transactionMessage, null, 2)}
-                                  </pre>
-                              </div>
-                          </details>
-                     </div>
-                </div>
+                        {/* Instructions / Raw Data section equivalent */}
+                        <div>
+                             <h3 style={{ fontSize: "14px", fontWeight: "600", color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "8px" }}>
+                                 Raw Payload
+                             </h3>
+                             <div style={{ padding: "12px", backgroundColor: colors.btnBg, borderRadius: "8px", border: `1px solid ${colors.border}` }}>
+                                  <details>
+                                      <summary style={{ fontSize: "12px", fontWeight: "500", color: colors.textMuted, cursor: "pointer", userSelect: "none" }}>
+                                         View Developer Details
+                                      </summary>
+                                      <div style={{ marginTop: "8px", paddingLeft: "8px", borderLeft: `2px solid ${colors.border}` }}>
+                                          <pre style={{ fontSize: "10px", fontFamily: "monospace", color: colors.textMuted, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                                              {typeof requestObj.transactionMessage === 'string' ? requestObj.transactionMessage : JSON.stringify(requestObj.transactionMessage, null, 2)}
+                                          </pre>
+                                      </div>
+                                  </details>
+                             </div>
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Sticky Action Footer */}
             <div style={{ padding: "16px 20px", borderTop: `1px solid ${colors.border}`, backgroundColor: colors.bg, display: "flex", gap: "12px", zIndex: 10 }}>
                 <button 
                   onClick={() => resolveRequest(null, "User rejected the transaction.")}
-                  style={{ flex: 1, padding: "12px", borderRadius: "8px", border: `1px solid ${colors.border}`, backgroundColor: colors.cardBg, color: colors.text, cursor: "pointer", fontWeight: "bold", transition: "background 0.2s" }}>
+                  disabled={isSigning || isSimulating}
+                  style={{ flex: 1, padding: "12px", borderRadius: "8px", border: `1px solid ${colors.border}`, backgroundColor: colors.cardBg, color: colors.text, cursor: (isSigning || isSimulating) ? "not-allowed" : "pointer", fontWeight: "bold", transition: "background 0.2s", opacity: (isSigning || isSimulating) ? 0.5 : 1 }}>
                     Reject
                 </button>
                 <button 
                   onClick={() => resolveRequest({ approved: true })}
-                  style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "none", backgroundColor: isApproved ? "#3b82f6" : "#ef4444", color: "#fff", cursor: "pointer", fontWeight: "bold", transition: "opacity 0.2s" }}>
-                   {isApproved ? "Sign Transaction" : "Sign Anyway"}
+                  disabled={isSigning || isSimulating}
+                  style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "none", backgroundColor: isSimulating ? colors.border : (isApproved ? "#3b82f6" : "#ef4444"), color: (isSimulating && theme === 'light') ? "#000" : "#fff", cursor: (isSigning || isSimulating) ? "not-allowed" : "pointer", fontWeight: "bold", transition: "opacity 0.2s", opacity: (isSigning || isSimulating) ? 0.7 : 1 }}>
+                   {isSigning ? "Signing..." : (isApproved ? "Sign Transaction" : "Sign Anyway")}
                 </button>
             </div>
          </div>

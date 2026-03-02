@@ -10,6 +10,7 @@
     "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
+    "@solana/web3.js": "^1.98.4",
     "fumadocs-core": "16.6.3",
     "fumadocs-mdx": "14.2.7",
     "fumadocs-ui": "16.6.3",

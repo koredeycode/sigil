@@ -1,6 +1,7 @@
 packages:
   - packages/*
   - site
+  - extension
 
 onlyBuiltDependencies:
   - better-sqlite3
