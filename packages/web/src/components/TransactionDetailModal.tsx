@@ -40,9 +40,9 @@ export function TransactionDetailModal({ agentId, signature, onClose }: Transact
     }, [agentId, signature]);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+        <div className="absolute inset-0 z-40 flex flex-col bg-card rounded-xl" onClick={onClose}>
             <div
-                className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden"
+                className="flex flex-col h-full w-full max-h-full overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -122,22 +122,56 @@ export function TransactionDetailModal({ agentId, signature, onClose }: Transact
                                 <div className="space-y-2">
                                     {detail.instructions.map((ix, i) => (
                                         <div key={i} className="p-3 bg-secondary/20 rounded-lg border border-border/50">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-[10px] font-medium text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
-                                                    #{i + 1}
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-xs font-semibold text-muted-foreground bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                                                    Instruction {i + 1}
                                                 </span>
                                                 {ix.program && (
-                                                    <span className="text-xs font-medium text-primary">{ix.program}</span>
+                                                    <span className="text-xs font-medium text-foreground">{ix.program}</span>
                                                 )}
                                             </div>
-                                            <code className="text-[11px] font-mono text-muted-foreground break-all">
-                                                {ix.programId}
-                                            </code>
-                                            {ix.parsed && (
-                                                <pre className="mt-2 text-[11px] font-mono text-muted-foreground bg-background/50 rounded p-2 overflow-x-auto">
-                                                    {JSON.stringify(ix.parsed, null, 2)}
-                                                </pre>
+                                            
+                                            {/* Human Readable Interpretation */}
+                                            {ix.program === 'system' && ix.parsed?.type === 'transfer' && (
+                                                <div className="mb-3 p-3 bg-background rounded border border-border/50">
+                                                    <p className="text-sm font-medium">Transfer SOL</p>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Amount: <span className="font-mono text-foreground font-semibold">{(ix.parsed.info.lamports / 1e9).toFixed(4)} SOL</span>
+                                                    </p>
+                                                    <p className="text-[10px] text-muted-foreground font-mono mt-1 break-all">
+                                                        To: {ix.parsed.info.destination}
+                                                    </p>
+                                                </div>
                                             )}
+                                            
+                                            {ix.program === 'spl-token' && ix.parsed?.type === 'transfer' && (
+                                                <div className="mb-3 p-3 bg-background rounded border border-border/50">
+                                                    <p className="text-sm font-medium">Transfer Token</p>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        Amount: <span className="font-mono text-foreground font-semibold">{ix.parsed.info.amount}</span>
+                                                    </p>
+                                                    <p className="text-[10px] text-muted-foreground font-mono mt-1 break-all">
+                                                        To: {ix.parsed.info.destination}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {/* Advanced Raw Data Collapsible */}
+                                            <details className="mt-2 group">
+                                                <summary className="text-[11px] font-medium text-muted-foreground cursor-pointer hover:text-primary transition-colors select-none">
+                                                    Developer Details
+                                                </summary>
+                                                <div className="mt-2 pl-2 border-l-2 border-muted">
+                                                    <code className="text-[10px] font-mono text-muted-foreground break-all block mb-2">
+                                                        Program ID: {ix.programId}
+                                                    </code>
+                                                    {ix.parsed && (
+                                                        <pre className="text-[10px] font-mono text-muted-foreground bg-background/50 rounded p-2 overflow-x-auto">
+                                                            {JSON.stringify(ix.parsed, null, 2)}
+                                                        </pre>
+                                                    )}
+                                                </div>
+                                            </details>
                                         </div>
                                     ))}
                                 </div>

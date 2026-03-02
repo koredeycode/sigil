@@ -13,13 +13,13 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <div className="flex flex-col items-center max-w-4xl w-full text-center mb-20 relative">
-        <div className="relative mb-12 animate-in fade-in zoom-in duration-1000">
+        <div className="relative mb-8 animate-in fade-in zoom-in duration-1000">
            <Image 
-             src="/mascot.png" 
-             alt="Sigil Mascot" 
-             width={240} 
-             height={240} 
-             className="drop-shadow-[0_0_50px_rgba(var(--primary-rgb),0.3)] hover:scale-105 transition-transform duration-700"
+             src="/logo.png" 
+             alt="Sigil Logo" 
+             width={180} 
+             height={180} 
+             className="drop-shadow-xl hover:scale-105 transition-transform duration-700 object-contain"
              priority
            />
         </div>
@@ -129,21 +129,21 @@ export default function HomePage() {
 
 function PillarCard({ title, description }: { title: string, description: string }) {
   return (
-    <div className="p-8 rounded-3xl border border-white/5 bg-white/[0.01] backdrop-blur-sm hover:bg-white/[0.03] transition-all flex flex-col gap-3 text-left">
+    <div className="p-8 rounded-3xl border border-border bg-card shadow-sm hover:shadow-md transition-all flex flex-col gap-3 text-left">
       <h3 className="text-primary font-bold text-sm uppercase tracking-widest">{title}</h3>
-      <p className="text-sm text-muted-foreground/70 leading-relaxed">{description}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
     </div>
   );
 }
 
 function ArchCard({ title, subtitle, description }: { title: string, subtitle: string, description: string }) {
   return (
-    <div className="p-10 rounded-[2.5rem] border border-white/5 bg-gradient-to-b from-white/[0.03] to-transparent flex flex-col gap-4 text-center">
+    <div className="p-10 rounded-[2.5rem] border border-border bg-gradient-to-b from-secondary/50 to-transparent flex flex-col gap-4 text-center">
       <div>
         <h3 className="text-2xl font-bold tracking-tight">{title}</h3>
-        <p className="text-[10px] text-primary/60 font-mono uppercase tracking-[0.2em] mt-1">{subtitle}</p>
+        <p className="text-[10px] text-primary font-mono uppercase tracking-[0.2em] mt-1">{subtitle}</p>
       </div>
-      <p className="text-sm text-muted-foreground/50 leading-relaxed">{description}</p>
+      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -152,9 +152,9 @@ function SimpleCard({ href, icon, title, description }: { href: string, icon: Re
   return (
     <Link 
       href={href}
-      className="p-6 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm hover:bg-white/[0.05] hover:border-primary/20 transition-all group flex flex-col gap-4 text-left shadow-lg"
+      className="p-6 rounded-2xl border border-border bg-card hover:border-primary/50 transition-all group flex flex-col gap-4 text-left shadow-sm hover:shadow-md"
     >
-      <div className="p-2 rounded-lg bg-secondary/50 w-fit group-hover:bg-primary/10 transition-colors">
+      <div className="p-2 rounded-lg bg-secondary w-fit group-hover:bg-primary/10 transition-colors">
         {icon}
       </div>
       <div>

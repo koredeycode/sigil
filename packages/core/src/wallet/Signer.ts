@@ -33,7 +33,7 @@ export async function signAndSubmit(
   // Safety check: ensure the key is loaded (not wiped by kill)
   if (!isKeyLoaded(agentName)) {
     throw new Error(
-      `Agent "${agentName}" is killed — private key wiped from memory. Cannot sign.`
+      `Agent "${agentName}" is inactive (keys wiped) — private key not in memory. Cannot sign.`
     );
   }
 
@@ -88,7 +88,7 @@ export async function requestAirdrop(
   lamports: number
 ): Promise<SignResult> {
   if (!isKeyLoaded(agentName)) {
-    throw new Error(`Agent "${agentName}" is killed — cannot request airdrop.`);
+    throw new Error(`Agent "${agentName}" is inactive (keys wiped) — cannot request airdrop.`);
   }
 
   const dbResult = insertTransaction(

@@ -43,7 +43,7 @@ function initializeTables(db: DatabaseSync): void {
       id          TEXT PRIMARY KEY,
       name        TEXT UNIQUE NOT NULL,
       pubkey      TEXT NOT NULL,
-      status      TEXT DEFAULT 'paused' CHECK(status IN ('running', 'paused', 'killed')),
+      status      TEXT DEFAULT 'paused' CHECK(status IN ('running', 'paused')),
       loop_interval INTEGER DEFAULT 60000,
       prompt      TEXT,
       created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -180,7 +180,7 @@ export function getAllAgents() {
   return db.prepare('SELECT * FROM agents').all() as unknown as AgentRow[];
 }
 
-export function updateAgentStatus(id: string, status: 'running' | 'paused' | 'killed') {
+export function updateAgentStatus(id: string, status: 'running' | 'paused') {
   const db = getDatabase();
   return db.prepare('UPDATE agents SET status = ? WHERE id = ?').run(status, id);
 }
@@ -336,7 +336,7 @@ export interface AgentRow {
   id: string;
   name: string;
   pubkey: string;
-  status: 'running' | 'paused' | 'killed';
+  status: 'running' | 'paused';
   loop_interval: number;
   prompt: string | null;
   created_at: string;

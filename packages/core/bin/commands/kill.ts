@@ -22,7 +22,7 @@ export function registerKillCommand(program: Command) {
         }
 
         agentManager.kill(_agent);
-        clack.log.success(`Agent "${_agent}" killed. Key wiped from memory.`);
+        clack.log.success(`Agent "${_agent}" paused. Key wiped from memory.`);
       } else {
         // Global kill — confirm with warning
         clack.log.warning('This will activate the global kill switch and halt ALL agents.');

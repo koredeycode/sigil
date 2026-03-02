@@ -18,7 +18,7 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState<'all' | 'running' | 'paused' | 'killed'>('all');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'running' | 'paused'>('all');
 
     const filteredAgents = useMemo(() => {
         return agents.filter(agent => {
@@ -99,7 +99,7 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                            />
                        </div>
                        <div className="flex bg-background border border-border p-1 rounded-lg gap-1">
-                           {(['all', 'running', 'paused', 'killed'] as const).map(status => (
+                           {(['all', 'running', 'paused'] as const).map(status => (
                                <button
                                    key={status}
                                    onClick={() => setStatusFilter(status)}
@@ -139,13 +139,11 @@ export function AgentManager({ agents, refreshAgents, onSelectAgent }: AgentMana
                                                 "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium",
                                                 agent.status === 'running' && "bg-green-500/10 text-green-500",
                                                 agent.status === 'paused' && "bg-orange-500/10 text-orange-500",
-                                                agent.status === 'killed' && "bg-red-500/10 text-red-500",
                                             )}>
                                                 <span className={clsx(
                                                     "w-1.5 h-1.5 rounded-full",
                                                     agent.status === 'running' && "bg-green-500",
                                                     agent.status === 'paused' && "bg-orange-500",
-                                                    agent.status === 'killed' && "bg-red-500",
                                                 )} />
                                                 {agent.status}
                                             </span>

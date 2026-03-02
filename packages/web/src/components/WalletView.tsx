@@ -107,31 +107,6 @@ export function WalletView({ activeAgent }: { activeAgent: Agent | null }) {
                             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                         </button>
                     </div>
-                    {/* Tab Switcher */}
-                    <div className="flex space-x-1 p-1 bg-secondary rounded-lg">
-                        <button
-                            onClick={() => setActiveTab('portfolio')}
-                            className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                                activeTab === 'portfolio'
-                                    ? 'bg-background text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                            }`}
-                        >
-                            <Coins className="w-3.5 h-3.5" />
-                            Assets
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('transactions')}
-                            className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                                activeTab === 'transactions'
-                                    ? 'bg-background text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                            }`}
-                        >
-                            <Activity className="w-3.5 h-3.5" />
-                            Activity
-                        </button>
-                    </div>
                 </div>
                 {activeAgent && (
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-secondary/40 border border-border/60 w-fit">
@@ -171,94 +146,124 @@ export function WalletView({ activeAgent }: { activeAgent: Agent | null }) {
                 </div>
             </div>
 
-            {/* Content Area */}
-            <div className="flex-1 min-h-0 overflow-y-auto pt-4 relative">
-                <div className={`h-full flex flex-col ${activeTab === 'portfolio' ? 'block' : 'hidden'}`}>
-                    
-                    <div className="px-6 flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Balances</h3>
-                        <div className="flex bg-secondary/50 rounded-md p-0.5">
-                            <button 
-                                onClick={() => setShowChart(false)}
-                                className={`p-1.5 rounded transition-colors ${!showChart ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                            >
-                                <ArrowRightLeft className="w-4 h-4" />
-                            </button>
-                            <button 
-                                onClick={() => setShowChart(true)}
-                                className={`p-1.5 rounded transition-colors ${showChart ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                            >
-                                <PieChartIcon className="w-4 h-4" />
-                            </button>
-                        </div>
+            {/* Lower Section (Relative for Modal) */}
+            <div className="relative flex-1 flex flex-col min-h-0 border-t border-border/40 pt-3">
+                {/* Tab Switcher */}
+                <div className="px-6 pb-2">
+                    <div className="flex p-0.5 bg-secondary/50 rounded-lg">
+                        <button
+                            onClick={() => setActiveTab('portfolio')}
+                            className={`flex-1 flex justify-center items-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                                activeTab === 'portfolio'
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                        >
+                            <Coins className="w-3.5 h-3.5" />
+                            Assets
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('transactions')}
+                            className={`flex-1 flex justify-center items-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                                activeTab === 'transactions'
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                        >
+                            <Activity className="w-3.5 h-3.5" />
+                            Activity
+                        </button>
                     </div>
+                </div>
 
-                    <div className="px-6 space-y-4 pb-6 mt-2">
-                        {showChart ? (
-                            <div className="mt-4 border border-border rounded-xl overflow-hidden">
-                                <PortfolioChart activeAgent={activeAgent} />
+                {/* Content Area */}
+                <div className="flex-1 min-h-0 overflow-y-auto">
+                    <div className={`h-full flex flex-col ${activeTab === 'portfolio' ? 'block' : 'hidden'}`}>
+                        <div className="px-6 flex items-center justify-between mb-2 mt-2">
+                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Balances</h3>
+                            <div className="flex bg-secondary/50 rounded-md p-0.5">
+                                <button 
+                                    onClick={() => setShowChart(false)}
+                                    className={`p-1.5 rounded transition-colors ${!showChart ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                                >
+                                    <ArrowRightLeft className="w-4 h-4" />
+                                </button>
+                                <button 
+                                    onClick={() => setShowChart(true)}
+                                    className={`p-1.5 rounded transition-colors ${showChart ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                                >
+                                    <PieChartIcon className="w-4 h-4" />
+                                </button>
                             </div>
-                        ) : loading && !wallet ? (
-                            <div className="flex flex-col items-center justify-center py-12 gap-3">
-                                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                                <p className="text-sm text-muted-foreground">Fetching from devnet...</p>
-                            </div>
-                        ) : (
-                            <>
-                                {/* SOL Balance */}
-                                <div className="flex items-center justify-between hover:bg-secondary/40 p-2 -mx-2 rounded-lg transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs bg-gradient-to-br from-purple-500 to-blue-500">
-                                            S
-                                        </div>
-                                        <div className="space-y-0.5">
-                                            <h3 className="font-semibold leading-none">Solana</h3>
-                                            <p className="text-xs text-muted-foreground uppercase">SOL</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right space-y-0.5">
-                                        <h3 className="font-semibold leading-none">{wallet?.sol.toFixed(4) ?? '0'} SOL</h3>
-                                        <p className="text-xs text-muted-foreground">Devnet</p>
-                                    </div>
+                        </div>
+
+                        <div className="px-6 space-y-4 pb-6 mt-2">
+                            {showChart ? (
+                                <div className="mt-4 border border-border rounded-xl overflow-hidden">
+                                    <PortfolioChart activeAgent={activeAgent} />
                                 </div>
-
-                                {/* SPL Token Accounts */}
-                                {wallet?.tokens?.map((token, idx) => (
-                                    <div key={token.address} className="flex items-center justify-between hover:bg-secondary/40 p-2 -mx-2 rounded-lg cursor-pointer transition-colors">
+                            ) : loading && !wallet ? (
+                                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                                    <p className="text-sm text-muted-foreground">Fetching from devnet...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* SOL Balance */}
+                                    <div className="flex items-center justify-between hover:bg-secondary/40 p-2 -mx-2 rounded-lg transition-colors">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs ${tokenColors[idx % tokenColors.length]}`}>
-                                                {token.mint.slice(0, 2).toUpperCase()}
+                                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs bg-gradient-to-br from-purple-500 to-blue-500">
+                                                S
                                             </div>
                                             <div className="space-y-0.5">
-                                                <h3 className="font-semibold leading-none font-mono text-sm">
-                                                    {token.mint.slice(0, 4)}...{token.mint.slice(-4)}
-                                                </h3>
-                                                <p className="text-xs text-muted-foreground">SPL Token</p>
+                                                <h3 className="font-semibold leading-none">Solana</h3>
+                                                <p className="text-xs text-muted-foreground uppercase">SOL</p>
                                             </div>
                                         </div>
                                         <div className="text-right space-y-0.5">
-                                            <h3 className="font-semibold leading-none">{token.balance}</h3>
-                                            <p className="text-xs text-muted-foreground">Decimals: {token.decimals}</p>
+                                            <h3 className="font-semibold leading-none">{wallet?.sol.toFixed(4) ?? '0'} SOL</h3>
+                                            <p className="text-xs text-muted-foreground">Devnet</p>
                                         </div>
                                     </div>
-                                ))}
 
-                                {wallet?.tokens?.length === 0 && (
-                                    <p className="text-sm text-muted-foreground text-center py-4">No SPL token accounts</p>
-                                )}
-                            </>
-                        )}
+                                    {/* SPL Token Accounts */}
+                                    {wallet?.tokens?.map((token, idx) => (
+                                        <div key={token.address} className="flex items-center justify-between hover:bg-secondary/40 p-2 -mx-2 rounded-lg cursor-pointer transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs ${tokenColors[idx % tokenColors.length]}`}>
+                                                    {token.mint.slice(0, 2).toUpperCase()}
+                                                </div>
+                                                <div className="space-y-0.5">
+                                                    <h3 className="font-semibold leading-none font-mono text-sm">
+                                                        {token.mint.slice(0, 4)}...{token.mint.slice(-4)}
+                                                    </h3>
+                                                    <p className="text-xs text-muted-foreground">SPL Token</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right space-y-0.5">
+                                                <h3 className="font-semibold leading-none">{token.balance}</h3>
+                                                <p className="text-xs text-muted-foreground">Decimals: {token.decimals}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {wallet?.tokens?.length === 0 && (
+                                        <p className="text-sm text-muted-foreground text-center py-4">No SPL token accounts</p>
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </div>
-                </div>
 
-                <div className={`h-full ${activeTab === 'transactions' ? 'flex flex-col' : 'hidden'}`}>
-                    <TransactionLedger activeAgent={activeAgent} />
+                    <div className={`h-full ${activeTab === 'transactions' ? 'flex flex-col' : 'hidden'}`}>
+                        <TransactionLedger activeAgent={activeAgent} />
+                    </div>
+                    
+                    {/* Fade out gradient at bottom of assets list */}
+                    {activeTab === 'portfolio' && (
+                        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+                    )}
                 </div>
-                
-                {/* Fade out gradient at bottom of assets list */}
-                {activeTab === 'portfolio' && (
-                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none" />
-                )}
             </div>
         </div>
     );

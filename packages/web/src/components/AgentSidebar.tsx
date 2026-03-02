@@ -34,7 +34,6 @@ export function AgentSidebar({ agents, activeAgentId, onSelectAgent }: AgentSide
                                 "absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-card",
                                 agent.status === 'running' && "bg-green-500",
                                 agent.status === 'paused' && "bg-orange-500",
-                                agent.status === 'killed' && "bg-red-500",
                                 agent.status === 'running' && "animate-pulse"
                             )} />
                         </div>

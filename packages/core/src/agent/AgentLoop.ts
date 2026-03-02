@@ -135,7 +135,8 @@ export async function invokeSolanaAgent(
     }
 
     // Log the interaction
-    insertLog(agentId, 'agent_invoke', response, message);
+    const isCron = message.startsWith('[CRON JOB]');
+    insertLog(agentId, isCron ? 'cron_invoke' : 'agent_invoke', response, message);
 
     // Emit events
     if (toolResults.length > 0) {
@@ -181,12 +182,16 @@ export async function runAutonomousCycle(agentId: string, agentName: string): Pr
   console.info(`[AgentLoop:${agentName}] Running autonomous cycle`);
 
   const agent = getAgent(agentId);
-  if (!agent || agent.status === 'killed') {
-    insertLog(agentId, 'cycle_skip', 'Agent is killed or not found');
+  if (!agent || agent.status !== 'running') {
+    insertLog(agentId, 'cycle_skip', 'Agent is paused or not found');
     return;
   }
 
-  const agentPrompt = agent.prompt || 'No active instructions.';
+  const agentPrompt = (agent.prompt || '').trim();
+  if (!agentPrompt) {
+    insertLog(agentId, 'cycle_skip', 'No active instructions');
+    return;
+  }
 
   const message = `[AUTONOMOUS CYCLE]\nEvaluate the following instructions against your current wallet state and take any necessary actions:\n\n---\n${agentPrompt}\n---\n\nIf the condition for an action is met, execute it now. If not, briefly explain why.`;
 

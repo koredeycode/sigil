@@ -1,4 +1,4 @@
-import { AlertCircle, Check, Copy, Pause, Play, Settings, Square, Terminal, X } from 'lucide-react';
+import { AlertCircle, Check, Copy, Pause, Play, Settings, Terminal, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { ApiClient } from '../lib/api';
@@ -55,7 +55,6 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
 
     const isRunning = activeAgent.status === 'running';
     const isPaused = activeAgent.status === 'paused';
-    const isKilled = activeAgent.status === 'killed';
 
     const openEditProfile = () => {
         setEditName(activeAgent.name);
@@ -139,8 +138,7 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
                                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</label>
                                 <div className="font-medium flex items-center gap-2">
                                     <span className={`w-2 h-2 rounded-full ${
-                                        activeAgent.status === 'running' ? 'bg-green-500' :
-                                        activeAgent.status === 'paused' ? 'bg-orange-500' : 'bg-red-500'
+                                        activeAgent.status === 'running' ? 'bg-green-500' : 'bg-orange-500'
                                     }`} />
                                     {activeAgent.status}
                                 </div>
@@ -163,9 +161,9 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
                         <div className="pt-4 border-t border-border flex items-center gap-3">
                             <button
                                 onClick={() => handleControl('start')}
-                                disabled={isRunning || isKilled}
+                                disabled={isRunning}
                                 className={`flex-1 flex justify-center items-center gap-2 py-2 px-4 rounded-md font-medium transition-colors ${
-                                    isRunning || isKilled 
+                                    isRunning 
                                         ? 'bg-secondary/50 text-muted-foreground cursor-not-allowed' 
                                         : 'bg-green-500/10 text-green-600 hover:bg-green-500/20'
                                 }`}
@@ -174,25 +172,14 @@ export function AgentDetails({ activeAgent }: { activeAgent: Agent | null }) {
                             </button>
                             <button
                                 onClick={() => handleControl('pause')}
-                                disabled={isPaused || isKilled}
+                                disabled={isPaused}
                                 className={`flex-1 flex justify-center items-center gap-2 py-2 px-4 rounded-md font-medium transition-colors ${
-                                    isPaused || isKilled 
+                                    isPaused 
                                         ? 'bg-secondary/50 text-muted-foreground cursor-not-allowed' 
                                         : 'bg-orange-500/10 text-orange-600 hover:bg-orange-500/20'
                                 }`}
                             >
                                 <Pause className="w-4 h-4" /> Pause
-                            </button>
-                            <button
-                                onClick={() => handleControl('kill')}
-                                disabled={isKilled}
-                                className={`flex-1 flex justify-center items-center gap-2 py-2 px-4 rounded-md font-medium transition-colors ${
-                                    isKilled 
-                                        ? 'bg-secondary/50 text-muted-foreground cursor-not-allowed' 
-                                        : 'bg-red-500/10 text-red-600 hover:bg-red-500/20'
-                                }`}
-                            >
-                                <Square className="w-4 h-4 fill-current" /> Kill
                             </button>
                         </div>
                     </div>

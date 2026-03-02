@@ -93,8 +93,8 @@ export function TransactionLedger({ activeAgent }: TransactionLedgerProps) {
     }
 
     return (
-        <>
-            <div className="overflow-x-auto">
+        <div className="flex flex-col h-full min-h-0">
+            <div className="flex-1 overflow-auto">
                 <table className="w-full text-sm text-left">
                     <thead className="text-xs text-muted-foreground uppercase bg-secondary/30">
                         <tr>
@@ -168,6 +168,6 @@ export function TransactionLedger({ activeAgent }: TransactionLedgerProps) {
                     onClose={() => setSelectedTx(null)}
                 />
             )}
-        </>
+        </div>
     );
 }

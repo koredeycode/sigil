@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { Activity, Bot, Clock, ExternalLink, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users, Wallet } from 'lucide-react';
+import { Activity, Bot, Clock, ExternalLink, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
@@ -111,7 +111,6 @@ const DashboardContent = ({ activeAgent }: { activeAgent: Agent | null }) => {
                         "px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide",
                         activeAgent.status === 'running' && "bg-green-500/15 text-green-500",
                         activeAgent.status === 'paused' && "bg-orange-500/15 text-orange-500",
-                        activeAgent.status === 'killed' && "bg-red-500/15 text-red-500",
                     )}>
                         {activeAgent.status}
                     </div>
@@ -230,7 +229,7 @@ const Dashboard = () => {
             <aside className="w-64 bg-card border-r border-border flex flex-col">
                 <div className="p-6">
                     <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
-                        <Wallet className="w-6 h-6 text-primary" />
+                        <img src="/logo.png" alt="Sigil Logo" className="w-6 h-6 object-contain" />
                         Sigil
                     </h2>
                 </div>

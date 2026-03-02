@@ -4,7 +4,7 @@ export interface Agent {
   id: string;
   name: string;
   pubkey: string;
-  status: 'running' | 'paused' | 'killed';
+  status: 'running' | 'paused';
   loop_interval: number;
   prompt: string | null;
   created_at: string;

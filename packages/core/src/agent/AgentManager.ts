@@ -1,13 +1,13 @@
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import {
-    AgentRow,
-    createAgent as dbCreateAgent,
-    deleteAgent as dbDeleteAgent,
-    getAgent,
-    getAllAgents,
-    updateAgentProfile,
-    updateAgentStatus,
+  AgentRow,
+  createAgent as dbCreateAgent,
+  deleteAgent as dbDeleteAgent,
+  getAgent,
+  getAllAgents,
+  updateAgentProfile,
+  updateAgentStatus,
 } from '../lib/Database.js';
 import { createWallet, deleteWallet, getKeypair, importWallet, renameWallet, wipeFromMemory } from '../wallet/Wallet.js';
 import { invalidateAgentGraph, invokeSolanaAgent } from './AgentLoop.js';
@@ -162,8 +162,8 @@ export class AgentManager extends EventEmitter {
     clearAgentKit(agent.name);
     invalidateAgentGraph(agent.id);
 
-    updateAgentStatus(agent.id, 'killed');
-    this.emit('agent:status', { agent: agent.name, status: 'killed' });
+    updateAgentStatus(agent.id, 'paused');
+    this.emit('agent:status', { agent: agent.name, status: 'paused' });
   }
 
   /**
@@ -229,10 +229,17 @@ export class AgentManager extends EventEmitter {
   }
 
   /**
-   * Graceful shutdown.
+   * Graceful shutdown. Drops active memory, but leaves database statuses intact for next process boot.
    */
   shutdown(): void {
-    this.killAll();
+    const agents = getAllAgents();
+    for (const agent of agents) {
+      if (agent.status === 'running') {
+        wipeFromMemory(agent.name);
+        clearAgentKit(agent.name);
+        invalidateAgentGraph(agent.id);
+      }
+    }
   }
 }
 

@@ -10,7 +10,12 @@ export const gitConfig = {
 export function baseOptions(): BaseLayoutProps {
   return {
     nav: {
-      title: 'Sigil',
+      title: (
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="Sigil Logo" className="w-6 h-6 object-contain" />
+          <span className="font-bold">Sigil</span>
+        </div>
+      ),
     },
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
   };
