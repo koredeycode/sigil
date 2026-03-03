@@ -1,5 +1,5 @@
 import { CommandBox } from '@/components/CommandBox';
-import { Terminal } from '@/components/Terminal';
+import { TriHeadShowcase } from '@/components/TriHeadShowcase';
 import { ArrowRight, Cpu, Github, Globe, Layers, Shield, Terminal as TerminalIcon, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
@@ -43,23 +43,7 @@ const features = [
   },
 ];
 
-const heads = [
-  {
-    title: 'CLI',
-    subtitle: 'Headless',
-    description: 'Scripting, automation, and cron-based operation from any terminal.',
-  },
-  {
-    title: 'TUI',
-    subtitle: 'Interactive',
-    description: 'Full-screen terminal dashboard for live monitoring and agent interaction.',
-  },
-  {
-    title: 'Dashboard',
-    subtitle: 'Visual',
-    description: 'Local web interface for chat, analytics, and directive management.',
-  },
-];
+
 
 export default function HomePage() {
   return (
@@ -114,10 +98,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Terminal Demo */}
-      <section className="mx-auto max-w-6xl px-6 pb-24 sm:pb-32 flex justify-center">
-        <Terminal />
-      </section>
+      {/* Tri-Head Showcase */}
+      <TriHeadShowcase />
 
       {/* Features */}
       <section className="border-t border-border">
@@ -139,30 +121,6 @@ export default function HomePage() {
                 </div>
                 <h3 className="font-semibold text-lg">{feature.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Architecture */}
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
-              The Tri-Head Architecture
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Three interfaces, one brain. Real-time sync across every surface.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {heads.map((head) => (
-              <div key={head.title} className="relative p-8 rounded-xl border border-border bg-card text-center">
-                <span className="text-xs font-mono text-primary uppercase tracking-wider">{head.subtitle}</span>
-                <h3 className="text-2xl font-bold mt-2 mb-3">{head.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{head.description}</p>
               </div>
             ))}
           </div>

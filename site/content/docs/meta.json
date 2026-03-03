@@ -2,23 +2,14 @@
   "title": "Documentation",
   "pages": [
     "index",
-    "---Getting Started---",
     "getting-started",
-    "---Architecture---",
     "architecture",
-    "---Core Concepts---",
     "concepts",
-    "---Directives---",
     "directives",
-    "---Guardrails---",
     "guardrails",
-    "---Tools---",
     "tools",
-    "---Multi-Agent---",
     "multi-agent",
-    "---Integrations---",
     "extension",
-    "---Reference---",
     "cli"
   ]
 }
