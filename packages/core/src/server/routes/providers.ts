@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { invalidateAllAgentGraphs } from '../../agent/AgentLoop.js';
 import { encryptApiKey } from '../../lib/Auth.js';
 import {
     addProvider,
@@ -31,6 +32,10 @@ providersRouter.post('/', (req, res) => {
     }
     const encryptedKey = apiKey ? encryptApiKey(apiKey) : null;
     const result = addProvider(name, encryptedKey, model, isPrimary ?? false, baseUrl, compat);
+
+    // If this new provider is set as primary, flush cached graphs so the new model is used
+    if (isPrimary) invalidateAllAgentGraphs();
+
     res.status(201).json({ message: 'Provider created successfully', data: {
       id: Number(result.lastInsertRowid),
       name,
@@ -54,6 +59,7 @@ providersRouter.post('/primary', (req, res) => {
     }
 
     setPrimaryProvider(Number(id));
+    invalidateAllAgentGraphs();
     res.json({ message: 'Primary provider set successfully', data: { id } });
   } catch (error) {
     res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });

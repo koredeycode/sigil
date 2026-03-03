@@ -52,6 +52,13 @@ export function invalidateAgentGraph(agentId: string): void {
 }
 
 /**
+ * Invalidate ALL cached agent graphs (call when global config like the LLM provider changes).
+ */
+export function invalidateAllAgentGraphs(): void {
+  agentGraphCache.clear();
+}
+
+/**
  * Invoke the Solana agent with a message.
  * Uses LangGraph's ReAct agent with persistent memory via SqliteSaver.
  * 
