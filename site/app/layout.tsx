@@ -1,5 +1,4 @@
 import { Footer } from '@/components/Footer';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import { ThemeProvider } from 'next-themes';
 import { JetBrains_Mono, Outfit } from 'next/font/google';
@@ -22,7 +21,6 @@ export default function Layout({ children }: { children: ReactNode }) {
       <body className="flex flex-col min-h-screen font-sans">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <RootProvider>
-            <ThemeToggle />
             {children}
             <Footer />
           </RootProvider>

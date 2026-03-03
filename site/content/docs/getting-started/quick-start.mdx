@@ -1,40 +1,87 @@
 ---
 title: Quick Start
-description: Get Sigil up and running in less than 2 minutes.
+description: Get your first Sigil agent running in under two minutes.
 ---
 
-# Quick Start
+This guide walks you through creating and running your first autonomous agent.
 
-Sigil is the easiest way to build autonomous agents on Solana.
-
-## Installation
-
-Install the CLI globally:
-
-```bash
-npm i -g sigil
-```
-
-## Initialization
-
-Create a new workspace:
+## 1. Initialize Your Workspace
 
 ```bash
 sigil init
 ```
 
-## Creating Your First Agent
+The wizard will prompt you to:
+- Choose an LLM provider (e.g., OpenAI, Anthropic, Ollama)
+- Enter your API key
+- Select a default model
 
-Create a simple trading agent:
+Once complete, Sigil creates a local SQLite database at `~/.sigil/sigil.db` and generates a session token for API authentication.
 
-```bash
-sigil agent create --name "jarvis"
-```
-
-## Running the Agent
-
-Start the agent:
+## 2. Create an Agent
 
 ```bash
-sigil agent start jarvis
+sigil agent create --name "alpha"
 ```
+
+This generates:
+- A new **Ed25519 keypair** stored securely in your OS Keychain
+- An isolated entry in the SQLite database for this agent's data
+- A Solana Devnet wallet address
+
+## 3. Start the Agent
+
+```bash
+sigil agent start "alpha"
+```
+
+The agent begins its reasoning loop:
+
+1. **Fetch** — Reads SOL balance, SPL token holdings, and recent transactions
+2. **Evaluate** — Loads your directives and passes context to the LLM
+3. **Validate** — Proposed actions are checked against Guardrails
+4. **Execute** — Approved transactions are signed and submitted to Devnet
+5. **Log** — Reasoning traces are saved to the local database
+
+## 4. Add a Directive
+
+Give your agent a rule to follow:
+
+```bash
+sigil directive add --agent "alpha" \
+  --condition "If my SOL balance is below 1" \
+  --action "Request an airdrop"
+```
+
+The agent will evaluate this directive on every loop cycle and act when the condition is met.
+
+## 5. Monitor Activity
+
+View real-time logs:
+
+```bash
+sigil logs alpha --follow
+```
+
+Or launch the interactive terminal dashboard:
+
+```bash
+sigil tui
+```
+
+Or start the web dashboard:
+
+```bash
+sigil start
+```
+
+Then open `http://localhost:74446` in your browser.
+
+## Next Steps
+
+<Cards>
+  <Card title="Configuration" href="/docs/getting-started/configuration" />
+  <Card title="Agent Loop" href="/docs/concepts/agent-loop" />
+  <Card title="Directives" href="/docs/directives/engine" />
+  <Card title="CLI Reference" href="/docs/cli/reference" />
+</Cards>

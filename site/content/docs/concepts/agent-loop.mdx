@@ -1,22 +1,83 @@
 ---
-title: "Concept: Agent Loop"
+title: Agent Loop
+description: How each Sigil agent reasons, validates, and executes on a continuous loop.
 ---
 
-# The Agent Loop
+Every Sigil agent runs an independent, continuous loop powered by [LangGraph](https://github.com/langchain-ai/langgraphjs). Each cycle follows a strict graph of nodes with conditional edges.
 
-Each agent in Sigil runs its own independent `setInterval` process. By default, this loop triggers every 60 seconds, but it can be configured per agent.
+## The Loop Cycle
 
-## The Cycle
+```text
+┌──────────────────────────────────────────────────────────┐
+│                                                          │
+│  gather_context ──▶ agent_reasoning ──┬──▶ (no action)  │
+│        ▲                              │      loop back   │
+│        │                              │                  │
+│        │                    (tool call proposed)          │
+│        │                              │                  │
+│        │                              ▼                  │
+│        │                  guardrail_validation            │
+│        │                       │           │             │
+│        │                   passed        failed          │
+│        │                       │           │             │
+│        │                       ▼        (log + skip)     │
+│        │                  execute_tool                    │
+│        │                       │                         │
+│        └───────────────────────┘                         │
+└──────────────────────────────────────────────────────────┘
+```
 
-Each cycle of the loop follows a structured graph:
+## Node Details
 
-1.  **Fetch Data:** The agent queries its SOL balance, SPL token holdings, and recent transaction history.
-2.  **Read Directives:** Any natural language rules defined by the user are loaded.
-3.  **LLM Decide:** The primary LLM provider evaluates the current state against the directives to decide if any action is needed.
-4.  **Guardrail Check:** If an action is proposed (e.g., a transfer), it is passed through a hard-coded safety layer.
-5.  **Execute:** If cleared, the transaction is built, signed, and submitted to Solana Devnet.
-6.  **Log:** The reasoning process ("Thoughts") and transaction outcome are logged to the local database.
+### 1. Gather Context
 
-## LangGraph Powering the Loop
+The agent fetches its current state from Solana Devnet:
+- SOL balance
+- SPL token holdings and associated accounts
+- Recent transaction history
+- Active directives from the database
 
-The agent loop is modeled as a **LangGraph** state graph. Each step is a node with conditional edges, enabling complex branching, retries, and multi-step reasoning within a single cycle.
+### 2. Agent Reasoning
+
+The gathered context is sent to the configured LLM alongside the agent's directives. The model evaluates whether any action is needed.
+
+If the model determines no action is required, the loop sleeps until the next cycle (default: 60 seconds).
+
+If an action is needed, the model generates a **tool call** — a structured intent like `transfer_sol({ to: "...", amount: 0.5 })`.
+
+### 3. Guardrail Validation
+
+Every proposed tool call passes through the Guardrails layer before execution. This layer is **hard-coded** and operates independently of the LLM.
+
+Checks include:
+- Per-trade value limits
+- Daily volume caps
+- Slippage tolerance for swaps
+- Recipient allowlists
+- Cool-down period enforcement
+
+If validation fails, the action is logged with a reason and skipped.
+
+### 4. Execute Tool
+
+Approved actions are routed to the Wallet Layer for execution:
+1. Key is retrieved from the OS Keychain via `keytar`
+2. Transaction is built using `@solana/web3.js`
+3. Transaction is signed with the agent's keypair
+4. Signed transaction is submitted to Solana Devnet
+5. Result (signature or error) is logged to the database
+
+### 5. Loop Back
+
+After execution (or skip), the agent returns to the `gather_context` node and the cycle repeats.
+
+## Configuration
+
+| Setting | Default | CLI Command |
+|---|---|---|
+| Loop interval | 60 seconds | `sigil config set --loop-interval <seconds>` |
+| Max retries | 3 | Configurable per agent |
+
+## Key Principle
+
+The agent loop is **stateless between cycles**. Each iteration starts fresh by gathering the latest on-chain data. This prevents stale state issues and ensures the agent always reasons about current reality.

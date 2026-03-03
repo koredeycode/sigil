@@ -1,24 +1,55 @@
 ---
-title: "Tool Registry: DeFi"
+title: DeFi Tools
+description: On-chain trading, liquidity pools, and portfolio management on Solana Devnet.
 ---
 
-# DeFi & Protocol Interaction
+Sigil agents can interact with real on-chain DeFi protocols on Solana Devnet, enabling autonomous trading, liquidity provision, and portfolio rebalancing.
 
-Sigil agents can interact with real on-chain protocols on Solana Devnet. This enables complex autonomous trading and liquidity management.
+## Protocol: SPL Token Swap
 
-## Protocol Integration: SPL Token Swap
+Sigil uses the **SPL Token Swap** reference program for on-chain DeFi operations.
 
-Sigil utilizes the **SPL Token Swap** reference program to execute on-chain DeFi operations.
+### Trading Tools
 
-### Tools
-*   `create_liquidity_pool` — Create a pool with two tokens and initial reserves.
-*   `swap_tokens` — Execute a token swap through an on-chain pool (Token A → Token B).
-*   `get_pool_info` — Fetch pool reserves, swap fees, and token pair details.
+| Tool | Description |
+|---|---|
+| `swap_tokens` | Execute a token swap through an on-chain pool |
+| `create_liquidity_pool` | Create a pool with two tokens and initial reserves |
+| `get_pool_info` | Fetch pool reserves, fees, and token pair details |
 
-## Portfolio Tools
-*   `get_portfolio_snapshot` — Full breakdown of holdings with percentages.
-*   `check_allocation_drift` — Compare current holdings to target ratios.
-*   `rebalance_portfolio` — Execute swaps to restore desired allocation ratios.
+### Portfolio Tools
 
-## Trustless Execution
-All DeFi operations are subject to **Slippage Guardrails**, preventing agents from executing trades with unfavorable pricing.
+| Tool | Description |
+|---|---|
+| `get_portfolio_snapshot` | Full breakdown of holdings with value percentages |
+| `check_allocation_drift` | Compare holdings to target allocation ratios |
+| `rebalance_portfolio` | Execute swaps to restore target allocation |
+
+## Example Directives
+
+```text
+"Swap 50% of my USDC to SOL if SOL drops below $20"
+"Rebalance my portfolio if any token drifts more than 5% from target"
+"Create a liquidity pool with 100 DEMO and 10 SOL"
+"Check portfolio allocation every 5 minutes"
+```
+
+## Slippage Protection
+
+All swap operations are subject to **slippage guardrails**:
+
+- Default maximum slippage: **1%**
+- If market conditions would cause price deviation beyond the cap, the swap is **blocked**
+- The agent logs the block reason and retries on the next loop cycle
+
+## Portfolio Rebalancing
+
+The rebalancing workflow:
+
+1. `get_portfolio_snapshot` — Agent reads current holdings and percentages
+2. `check_allocation_drift` — Compares against target ratios (e.g., 60% SOL / 40% USDC)
+3. `rebalance_portfolio` — If drift exceeds threshold, executes the minimal swaps needed
+
+Each swap in the rebalance is individually validated by the Guardrails layer.
+
+See [Safety & Guardrails](/docs/guardrails/safety) for configuration options.

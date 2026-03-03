@@ -1,0 +1,77 @@
+---
+title: Configuration
+description: Configure LLM providers, agent settings, and system preferences.
+---
+
+After running `sigil init`, your workspace is stored at `~/.sigil/`. This page covers the key configuration options.
+
+## Database
+
+All configuration is stored in a local SQLite database at `~/.sigil/sigil.db`. The database contains these tables:
+
+| Table | Purpose |
+|---|---|
+| `config` | Global settings (loop interval, kill switch state) |
+| `providers` | LLM provider credentials and model selection |
+| `agents` | Agent metadata, status, and wallet references |
+| `directives` | Natural language rules per agent |
+| `transactions` | Transaction history and signatures |
+| `logs` | Agent reasoning traces and events |
+
+## LLM Providers
+
+Sigil supports any LLM provider that exposes a chat completions API. Add a provider with:
+
+```bash
+sigil provider add openai
+```
+
+You'll be prompted for your API key and preferred model. To switch providers:
+
+```bash
+sigil provider set-primary anthropic
+```
+
+List configured providers:
+
+```bash
+sigil provider list
+```
+
+### Supported Providers
+
+OpenAI, Anthropic, Google Gemini, Groq, Fireworks, Together, Mistral, xAI, Cerebras, and **Ollama** (local models, no API key needed).
+
+## Agent Settings
+
+### Loop Interval
+
+Control how often agents check their directives (default: 60 seconds):
+
+```bash
+sigil config set --loop-interval 30
+```
+
+### Session Token
+
+The API server requires a bearer token for authentication. To rotate:
+
+```bash
+sigil auth rotate
+```
+
+## Ports
+
+| Service | Port | Purpose |
+|---|---|---|
+| API Server | `74445` | REST API + WebSocket |
+| Web Dashboard | `74446` | React UI |
+
+> The port `74445` spells **SIGIL** on a phone keypad (S=7, I=4, G=4, I=4, L=5).
+
+## Next Steps
+
+<Cards>
+  <Card title="Agent Loop" href="/docs/concepts/agent-loop" />
+  <Card title="Safety Guardrails" href="/docs/guardrails/safety" />
+</Cards>

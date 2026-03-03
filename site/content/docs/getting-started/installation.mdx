@@ -1,0 +1,67 @@
+---
+title: Installation
+description: System requirements and installation methods for Sigil.
+---
+
+## Prerequisites
+
+Before installing Sigil, ensure you have:
+
+- **Node.js** 18 or later — [Download](https://nodejs.org/)
+- **pnpm** (recommended) or npm — `npm i -g pnpm`
+- A supported operating system: **macOS**, **Linux**, or **Windows**
+
+Sigil uses your OS Keychain for key storage, which requires:
+
+| OS | Keychain Backend |
+|---|---|
+| macOS | Keychain Access |
+| Linux | libsecret (GNOME Keyring / KWallet) |
+| Windows | Credential Manager |
+
+On Linux, you may need to install `libsecret` if it's not already available:
+
+```bash
+# Debian / Ubuntu
+sudo apt install libsecret-1-dev
+
+# Fedora
+sudo dnf install libsecret-devel
+```
+
+## Install via npm
+
+Install the Sigil CLI globally:
+
+```bash
+npm i -g sigil
+```
+
+Or with pnpm:
+
+```bash
+pnpm add -g sigil
+```
+
+## Verify Installation
+
+```bash
+sigil --version
+```
+
+You should see the installed version number printed to the terminal.
+
+## Next Step
+
+Run the initialization wizard to set up your workspace:
+
+```bash
+sigil init
+```
+
+This will walk you through:
+1. Configuring your first LLM provider
+2. Generating your first agent wallet
+3. Setting up the local database
+
+See [Quick Start](/docs/getting-started/quick-start) for the full walkthrough.

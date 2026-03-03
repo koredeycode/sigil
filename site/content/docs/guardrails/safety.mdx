@@ -1,22 +1,73 @@
 ---
-title: Safety Guardrails
+title: Safety & Guardrails
+description: Hard-coded safety checks that operate independently of the LLM.
 ---
 
-# Safety & Guardrails
-
-Sigil operates with a "Safety-First" architecture. Guardrails are hard-coded checks that operate **independently of the LLM**. This ensures that even if a model produces a malicious or erroneous intent, it cannot be executed.
+Guardrails are **hard-coded safety checks** that validate every proposed action before it reaches the Wallet Layer. They operate **independently of the LLM** — even a compromised or hallucinating model cannot bypass them.
 
 ## Transaction Guardrails
 
-The following limits are enforced by the sign-off layer:
+| Guardrail | Default | Description |
+|---|---|---|
+| Per-trade limit | 5% of portfolio | Maximum value of any single trade |
+| Daily volume cap | Configurable | Total trading volume in a 24-hour window |
+| Slippage cap | 1% | Maximum price deviation for swaps |
+| Recipient allowlist | Disabled | Restrict transfers to known addresses |
+| Cool-down period | Configurable | Minimum wait between consecutive trades |
+| Airdrop rate limit | 1 per hour | Prevents spamming the Devnet faucet |
 
-*   **Per-Trade Limit**: Hard cap on the percentage of portfolio value per trade (default 5%).
-*   **Daily Volume Limit**: Maximum total trading volume permitted within a 24h window.
-*   **Slippage Cap**: Maximum allowed price deviation for swaps (default 1%).
-*   **Recipient Allowlist**: Optional restriction to only allow transfers to known addresses.
-*   **Cool-Down Period**: Minimum wait time between trades to prevent runaway panic loops.
+## How Validation Works
+
+When the Agent Layer proposes a tool call, the Guardrails engine:
+
+1. **Parses the intent** — Extracts the action type, amount, and target
+2. **Loads limits** — Reads the current guardrail configuration from SQLite
+3. **Evaluates rules** — Checks the intent against all applicable limits
+4. **Returns a verdict** — Either `passed` or `failed` with a reason
+
+```text
+Agent proposes: transfer_sol({ to: "7xK...", amount: 5.0 })
+
+Guardrail check:
+  ✓ Per-trade limit: 5.0 SOL = 3.2% of portfolio (limit: 5%) → PASS
+  ✓ Daily volume: 12.3 SOL today (limit: 50 SOL) → PASS
+  ✓ Cool-down: Last trade 45 min ago (limit: 15 min) → PASS
+  ✗ Recipient: 7xK... not on allowlist → FAIL
+
+Result: BLOCKED — "Recipient not on allowlist"
+```
+
+If **any** check fails, the entire action is blocked and the reason is logged.
 
 ## Emergency Controls
 
-*   **Global Kill Switch**: A single command (`sigil kill`) that wipes the session and halts all signing capabilities across all running agents.
-*   **Key Isolation**: Keys are only decrypted at the moment of signing and are never accessible to the reasoning layer.
+### Kill Switch
+
+The Kill Switch is the ultimate safety mechanism:
+
+```bash
+sigil kill
+```
+
+This immediately:
+1. Sets `config.kill_switch = true` in SQLite
+2. Broadcasts `system:killed` to all connected clients
+3. Drops all Keypair references from application memory
+4. Blocks all future signing until manually restarted
+
+### Per-Agent Kill
+
+```bash
+sigil kill alpha
+```
+
+Kills a specific agent without affecting others.
+
+## Key Principle
+
+Guardrails are not configurable by the LLM. They exist in a separate code path that the reasoning layer cannot modify. This means safety limits hold even if:
+
+- The model is jailbroken
+- The model hallucinates incorrect parameters
+- A malicious directive is injected
+- The model ignores directive constraints

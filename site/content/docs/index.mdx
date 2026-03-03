@@ -1,25 +1,45 @@
 ---
 title: Introduction
-description: Sigil is the local-first autonomous wallet interface for Solana.
+description: Sigil is a local-first platform for building autonomous AI agents on Solana.
 ---
 
-# Sigil
+**Sigil** is a developer-first platform for creating autonomous AI agents that manage Solana wallets on your behalf. Every agent runs locally on your machine, stores keys in your OS Keychain, and enforces hard-coded safety guardrails on every transaction.
 
-**Sigil** is a developer-first, autonomous wallet interface that lives on your local machine. It allows users to spawn **multiple independent AI agents**, each with its own wallet, directives, and thought loop — all managed from a single system.
+## Why Sigil?
 
-Unlike traditional wallets that are "dead" until clicked, Sigil is **alive**. Each agent runs a continuous "Thought Loop," monitoring balances, executing conditional transfers, managing SPL tokens, and rebalancing holdings while you sleep — all while keeping private keys explicitly secured in your OS Keychain.
+Traditional wallets are passive — they wait for you to click. Sigil agents are **active**: they continuously reason about your portfolio, evaluate your directives, and execute transactions autonomously on Solana Devnet.
 
-## The Tri-Head Architecture
+| | Sigil | Traditional Wallets |
+|---|---|---|
+| **Operation** | Continuous agent loop | Click-to-transact |
+| **Key Storage** | OS Keychain (`keytar`) | Browser / cloud |
+| **Intelligence** | LLM-powered reasoning | None |
+| **Safety** | Hard-coded guardrails | Manual review |
+| **Data** | Local SQLite | Cloud-dependent |
 
-Sigil operates through three primary interfaces, all synchronized in real-time:
+## Key Features
 
-1.  **The TUI (Terminal UI):** A rich, interactive terminal dashboard built with Ink.
-2.  **The CLI:** For headless operation, scripting, and cron-based automation.
-3.  **The Dashboard (Web UI):** A local visual interface to chat with agents and manage directives.
+- **Provider Agnostic** — Use OpenAI, Anthropic, Google, Ollama, or any supported LLM
+- **Local Sovereignty** — Keys in Keychain, data in SQLite, nothing leaves your machine
+- **Guardrails-First** — Safety limits enforced independently of the LLM
+- **Multi-Agent** — Run dozens of isolated agents from a single machine
+- **Kill Switch** — One command halts all signing and wipes keys from memory
+- **Tri-Head Architecture** — CLI, TUI, and Web Dashboard synchronized in real-time
 
-## Core Value Pillars
+## Quick Start
 
-*   **Provider Agnostic:** Support for 10+ LLM providers.
-*   **Local Sovereignty:** SQLite database and Keychain storage. No cloud dependencies.
-*   **Synchronized State:** Real-time event stream via WebSockets.
-*   **Guardrails-First:** Hard-coded safety layers independent of the LLM.
+```bash
+npm i -g sigil
+sigil init
+sigil agent create --name "alpha"
+sigil agent start "alpha"
+```
+
+## Next Steps
+
+<Cards>
+  <Card title="Installation" href="/docs/getting-started/installation" />
+  <Card title="Quick Start" href="/docs/getting-started/quick-start" />
+  <Card title="Architecture" href="/docs/architecture/tri-head" />
+  <Card title="CLI Reference" href="/docs/cli/reference" />
+</Cards>

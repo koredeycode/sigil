@@ -1,171 +1,202 @@
 import { CommandBox } from '@/components/CommandBox';
 import { Terminal } from '@/components/Terminal';
-import { BookOpen, ChevronRight, Github } from 'lucide-react';
+import { ArrowRight, Cpu, Github, Globe, Layers, Shield, Terminal as TerminalIcon, Zap } from 'lucide-react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
+export const metadata: Metadata = {
+  title: 'Sigil — Autonomous AI Agents for Solana',
+  description: 'Spawn independent AI agents that monitor, trade, and rebalance your Solana portfolio. Local-first, keys in your OS Keychain.',
+};
+
+const features = [
+  {
+    icon: Shield,
+    title: 'Local Sovereignty',
+    description: 'Keys stay in your OS Keychain. Data stays in SQLite. Nothing leaves your machine.',
+  },
+  {
+    icon: Cpu,
+    title: 'Provider Agnostic',
+    description: 'Bring any LLM. OpenAI, Anthropic, Ollama — swap with a single command.',
+  },
+  {
+    icon: Layers,
+    title: 'Guardrails-First',
+    description: 'Hard-coded safety layers enforce limits independent of the LLM. No exceptions.',
+  },
+  {
+    icon: Zap,
+    title: 'Kill Switch',
+    description: 'One command halts all signing and wipes keys from memory. Instantly.',
+  },
+  {
+    icon: TerminalIcon,
+    title: 'Tri-Head Sync',
+    description: 'CLI, TUI, and Web Dashboard synchronized in real-time via WebSockets.',
+  },
+  {
+    icon: Globe,
+    title: 'Devnet-Native',
+    description: 'Built for Solana Devnet. Real transactions, real protocols, zero mainnet risk.',
+  },
+];
+
+const heads = [
+  {
+    title: 'CLI',
+    subtitle: 'Headless',
+    description: 'Scripting, automation, and cron-based operation from any terminal.',
+  },
+  {
+    title: 'TUI',
+    subtitle: 'Interactive',
+    description: 'Full-screen terminal dashboard for live monitoring and agent interaction.',
+  },
+  {
+    title: 'Dashboard',
+    subtitle: 'Visual',
+    description: 'Local web interface for chat, analytics, and directive management.',
+  },
+];
+
 export default function HomePage() {
   return (
-    <div className="flex flex-col items-center min-h-screen pt-16 pb-24 px-4 overflow-hidden selection:bg-primary selection:text-primary-foreground">
-      {/* Background Ambience */}
-      <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_50%_0%,rgba(var(--primary-rgb),0.08),transparent_50%)] pointer-events-none" />
-      {/* The following line was removed: <div className="fixed inset-0 -z-20 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none" /> */}
+    <div className="flex-1">
+      {/* Hero */}
+      <section className="relative overflow-hidden">
+        <div className="mx-auto max-w-6xl px-6 pt-20 pb-24 sm:pt-28 sm:pb-32">
+          <div className="flex flex-col items-center text-center">
+            <Image
+              src="/logo.png"
+              alt="Sigil"
+              width={72}
+              height={72}
+              className="mb-8 object-contain"
+              priority
+            />
 
-      {/* Hero Section */}
-      <div className="flex flex-col items-center max-w-4xl w-full text-center mb-20 relative">
-        <div className="relative mb-8 animate-in fade-in zoom-in duration-1000">
-           <Image 
-             src="/logo.png" 
-             alt="Sigil Logo" 
-             width={180} 
-             height={180} 
-             className="drop-shadow-xl hover:scale-105 transition-transform duration-700 object-contain"
-             priority
-           />
-        </div>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold mb-8">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+              </span>
+              Local-First Autonomous Agent
+            </div>
 
-        <h1 className="text-8xl sm:text-[13rem] font-black tracking-tighter mb-6 leading-none bg-clip-text text-transparent bg-gradient-to-b from-foreground via-foreground/90 to-foreground/20 select-none drop-shadow-2xl">
-          SIGIL
-        </h1>
-        
-        <div className="flex flex-col items-center gap-6 mb-12">
-          <div className="px-4 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-[10px] font-black uppercase tracking-[0.4em] flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-            </span>
-            Local-First Autonomous Agent
+            <h1 className="text-5xl sm:text-7xl font-bold tracking-tight mb-6 leading-[1.1]">
+              The wallet that&apos;s<br />
+              actually <span className="text-primary">alive</span>.
+            </h1>
+
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed">
+              Spawn independent AI agents on Solana. They monitor, trade, and rebalance
+              your portfolio while you sleep — with keys that never leave your machine.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
+              <CommandBox command="npm i -g sigil" className="w-72" />
+              <Link
+                href="/docs"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-opacity"
+              >
+                Read the docs
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
-          
-          <p className="max-w-2xl text-xl sm:text-2xl text-muted-foreground/50 leading-tight font-medium tracking-tight animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
-            The wallet that's actually <span className="text-foreground">alive</span>. 
-            Spawn independent agents to monitor, trade, and <br className="hidden sm:block" /> rebalance while you sleep.
-          </p>
         </div>
 
-        <div className="flex flex-col items-center gap-6 w-full mb-12">
-          <CommandBox command="npm i -g sigil" className="max-w-sm w-full" />
+        {/* Gradient ambient */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/5 rounded-full blur-[120px]" />
         </div>
-      </div>
+      </section>
 
-      {/* Main Content Flow */}
-      <div className="flex flex-col items-center gap-12 max-w-4xl w-full">
+      {/* Terminal Demo */}
+      <section className="mx-auto max-w-6xl px-6 pb-24 sm:pb-32 flex justify-center">
         <Terminal />
+      </section>
 
-        <div className="flex flex-wrap justify-center gap-4 w-full px-4">
-           <SimpleCard 
-             href="/docs"
-             icon={<BookOpen className="w-5 h-5 text-primary" />}
-             title="Documentation"
-             description="Master the Tri-Head architecture."
-           />
-           <SimpleCard 
-             href="https://github.com/koredeycode/sigil"
-             icon={<Github className="w-5 h-5 text-primary" />}
-             title="GitHub"
-             description="Source, issues, and discussions."
-           />
-        </div>
+      {/* Features */}
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
+              Built for safety and autonomy
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              Every design decision prioritizes security without sacrificing capability.
+            </p>
+          </div>
 
-        {/* Core Value Pillars */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full px-4 mt-12">
-          <PillarCard 
-            title="Provider Agnostic" 
-            description="Bring Your Own Brain. Support for 10+ LLM providers including OpenAI, Anthropic, and local Ollama." 
-          />
-          <PillarCard 
-            title="Local Sovereignty" 
-            description="Your keys, your data. SQLite and OS Keychain storage ensure no sensitive data ever leaves your device." 
-          />
-          <PillarCard 
-            title="Guardrails-First" 
-            description="Independent safety layers enforce transaction limits and slippage caps regardless of model output." 
-          />
-          <PillarCard 
-            title="Tri-Head Sync" 
-            description="Seamless real-time state synchronization across TUI, CLI, and Web Dashboard via WebSockets." 
-          />
-          <PillarCard 
-            title="Kill Switch" 
-            description="A hard-coded safety override instantly halts all signing capabilities across all running agents." 
-          />
-          <PillarCard 
-            title="Devnet-Native" 
-            description="Built for Solana Devnet. Real transactions, real protocols, zero mainnet risk during development." 
-          />
-        </div>
-
-        {/* Tri-Head Architecture Section */}
-        <div className="w-full px-4 mt-24">
-          <h2 className="text-4xl font-bold tracking-tighter mb-12 text-center uppercase">The Tri-Head Architecture</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <ArchCard 
-              title="Interactive TUI" 
-              subtitle="Built with Ink" 
-              description="A full-screen terminal dashboard for live portfolio monitoring and agent interaction." 
-            />
-            <ArchCard 
-              title="Headless CLI" 
-              subtitle="Automation First" 
-              description="Powerful command-line interface for scripting, onboarding, and background operations." 
-            />
-            <ArchCard 
-              title="Web Dashboard" 
-              subtitle="Modern Visuals" 
-              description="A local visual interface for chat, analytics, and complex directive management." 
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature) => (
+              <div key={feature.title} className="flex flex-col gap-3 p-6 rounded-xl border border-border bg-card hover:shadow-sm transition-shadow">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <feature.icon className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="font-semibold text-lg">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{feature.description}</p>
+              </div>
+            ))}
           </div>
         </div>
+      </section>
 
-        <div className="mt-24 text-center">
-          <p className="text-xs text-muted-foreground uppercase tracking-widest opacity-50">
-            Built for the decentralized web • 2026
-          </p>
+      {/* Architecture */}
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
+              The Tri-Head Architecture
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              Three interfaces, one brain. Real-time sync across every surface.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {heads.map((head) => (
+              <div key={head.title} className="relative p-8 rounded-xl border border-border bg-card text-center">
+                <span className="text-xs font-mono text-primary uppercase tracking-wider">{head.subtitle}</span>
+                <h3 className="text-2xl font-bold mt-2 mb-3">{head.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{head.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      </section>
 
-function PillarCard({ title, description }: { title: string, description: string }) {
-  return (
-    <div className="p-8 rounded-3xl border border-border bg-card shadow-sm hover:shadow-md transition-all flex flex-col gap-3 text-left">
-      <h3 className="text-primary font-bold text-sm uppercase tracking-widest">{title}</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
-    </div>
-  );
-}
+      {/* CTA */}
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-6xl px-6 py-24 sm:py-32">
+          <div className="rounded-2xl border border-border bg-card p-12 sm:p-16 text-center relative overflow-hidden">
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-4">
+              Ready to get started?
+            </h2>
+            <p className="text-lg text-muted-foreground mb-10 max-w-lg mx-auto">
+              Install Sigil and deploy your first autonomous agent in under two minutes.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <CommandBox command="npm i -g sigil" className="max-w-sm w-full" />
+              <Link
+                href="https://github.com/koredeycode/sigil"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-border text-sm font-semibold hover:bg-secondary transition-colors"
+              >
+                <Github className="w-4 h-4" />
+                View on GitHub
+              </Link>
+            </div>
 
-function ArchCard({ title, subtitle, description }: { title: string, subtitle: string, description: string }) {
-  return (
-    <div className="p-10 rounded-[2.5rem] border border-border bg-gradient-to-b from-secondary/50 to-transparent flex flex-col gap-4 text-center">
-      <div>
-        <h3 className="text-2xl font-bold tracking-tight">{title}</h3>
-        <p className="text-[10px] text-primary font-mono uppercase tracking-[0.2em] mt-1">{subtitle}</p>
-      </div>
-      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+            {/* Decorative glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary/5 rounded-full blur-[120px] -z-10" />
+          </div>
+        </div>
+      </section>
     </div>
-  );
-}
-
-function SimpleCard({ href, icon, title, description }: { href: string, icon: React.ReactNode, title: string, description: string }) {
-  return (
-    <Link 
-      href={href}
-      className="p-6 rounded-2xl border border-border bg-card hover:border-primary/50 transition-all group flex flex-col gap-4 text-left shadow-sm hover:shadow-md"
-    >
-      <div className="p-2 rounded-lg bg-secondary w-fit group-hover:bg-primary/10 transition-colors">
-        {icon}
-      </div>
-      <div>
-        <h3 className="font-bold text-lg flex items-center gap-2 group-hover:text-primary transition-colors">
-          {title}
-          <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-        </h3>
-        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-          {description}
-        </p>
-      </div>
-    </Link>
   );
 }

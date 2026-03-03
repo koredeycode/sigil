@@ -22,19 +22,19 @@ export function CommandBox({ command, className = "" }: CommandBoxProps) {
   };
 
   return (
-    <div 
+    <button
       onClick={handleCopy}
-      className={`flex items-center gap-3 px-6 py-4 rounded-xl bg-black/[0.05] dark:bg-white/[0.05] border border-black/5 dark:border-white/5 backdrop-blur-md font-mono text-sm hover:bg-black/10 dark:hover:bg-white/10 transition-all cursor-pointer group shadow-lg ${className}`}
+      className={`flex items-center gap-3 px-5 py-3.5 rounded-xl border border-border bg-secondary/50 font-mono text-sm hover:bg-secondary transition-colors cursor-pointer group ${className}`}
     >
-      <span className="text-primary/50">$</span>
-      <span className="flex-1 text-left text-foreground/80 dark:text-primary/80 truncate">
+      <span className="text-muted-foreground select-none">$</span>
+      <span className="flex-1 text-left text-foreground/90 truncate">
         {command}
       </span>
       {copied ? (
-        <Check className="w-4 h-4 text-green-500 animate-in zoom-in duration-300" />
+        <Check className="w-4 h-4 text-primary shrink-0" />
       ) : (
-        <Copy className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+        <Copy className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
       )}
-    </div>
+    </button>
   );
 }

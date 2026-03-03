@@ -1,23 +1,77 @@
 ---
 title: Tri-Head Architecture
-description: Learn about the internal reasoning and execution model of Sigil.
+description: How Sigil's three interfaces share a single brain.
 ---
 
-# Tri-Head Architecture
+Sigil operates through three synchronized interfaces — the **CLI**, **TUI**, and **Web Dashboard** — all connected to a shared core backend via WebSockets. We call this the **Tri-Head Architecture**.
 
-Sigil agents operate using three distinct logical "heads" that work in parallel to ensure intelligent, safe, and efficient execution.
+## System Overview
 
-## 1. The Reasoning Head
+```text
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+│     CLI     │  │     TUI     │  │  Dashboard  │
+│  (commander)│  │    (Ink)    │  │(React/Vite) │
+└──────┬──────┘  └──────┬──────┘  └──────┬──────┘
+       │                │                │
+       └────────────────┼────────────────┘
+                        │
+              ┌─────────┴─────────┐
+              │    Core Backend   │
+              │  Express + Socket │
+              │    Port 74445     │
+              └─────────┬─────────┘
+                        │
+           ┌────────────┼────────────┐
+           │            │            │
+     ┌─────┴─────┐ ┌───┴───┐ ┌─────┴─────┐
+     │   Agent   │ │  DB   │ │  Wallet   │
+     │ (LangGraph│ │(SQLite│ │ (keytar)  │
+     │  + LLM)  │ │       │ │           │
+     └───────────┘ └───────┘ └───────────┘
+```
 
-Responsible for high-level goal translation. It takes natural language directives and decomposes them into a sequence of actionable steps.
+## The Three Heads
 
-## 2. The Execution Head
+### CLI — Headless Automation
 
-The engine that actually interacts with the world. It maps steps from the Reasoning Head to specific tool calls, such as:
-- `solana:transfer`
-- `jupiter:swap`
-- `serum:limitOrder`
+The CLI (`sigil <command>`) is designed for scripting and background operation. It communicates with the core server via REST API calls to `localhost:74445`.
 
-## 3. The Guardrail Head
+Use cases:
+- Cron jobs and scheduled operations
+- CI/CD pipeline integration
+- Scriptable agent management
+- Quick one-off commands
 
-A security-first monitor that evaluates every proposed action against predefined safety policies. If an action violates a policy (e.g., "Max trade size: 10 SOL"), the Guardrail Head vetoes it immediately.
+### TUI — Interactive Terminal
+
+The TUI is a full-screen terminal dashboard built with [Ink](https://github.com/vadimdemedes/ink) (React for CLI). It connects to the core over WebSocket for real-time updates.
+
+Features:
+- Live agent status and heartbeats
+- Real-time log streaming
+- Agent switching with keyboard navigation
+- Directive management
+
+### Web Dashboard — Visual Interface
+
+The Dashboard is a React application served locally on port `74446`. It provides a graphical interface for users who prefer a browser-based experience.
+
+Features:
+- Chat interface for agent interaction
+- Transaction history and analytics
+- Directive creation and management
+- Provider configuration
+
+## Real-Time Synchronization
+
+All three interfaces receive the same WebSocket events from the core:
+
+| Event | Payload |
+|---|---|
+| `agent:thought` | `{ agentId, text, timestamp }` |
+| `agent:action_pending` | `{ agentId, toolName, params }` |
+| `agent:guardrail_status` | `{ agentId, status, reason? }` |
+| `agent:transaction_success` | `{ agentId, signature, amount, token }` |
+| `system:killed` | `{}` (broadcast to all) |
+
+This means starting an agent from the CLI is immediately reflected in both the TUI and Dashboard — no refresh needed.

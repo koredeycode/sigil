@@ -1,29 +1,111 @@
 ---
 title: Multi-Agent Management
+description: Run dozens of isolated autonomous agents from a single machine.
 ---
 
-# Multi-Agent Management
-
-Sigil is designed for **parallel autonomy**. You can spawn and manage dozens of independent agents from a single machine.
+Sigil is designed for **parallel autonomy**. You can create and manage multiple independent agents, each with its own wallet, directives, and reasoning loop.
 
 ## Isolation by Design
 
-Every agent you create is a completely isolated entity:
+Every agent is a completely isolated entity:
 
-*   **Isolated Wallet**: Each agent has its own unique keypair generated on initialization.
-*   **Isolated Directives**: Rules defined for "Agent A" never interfere with "Agent B."
-*   **Isolated Logs**: Reasoning traces and transaction history are stored separately.
+| Resource | Isolation |
+|---|---|
+| **Wallet** | Each agent has its own unique Ed25519 keypair |
+| **Directives** | Rules for Agent A never affect Agent B |
+| **Logs** | Reasoning traces are stored separately per agent |
+| **Guardrails** | Each agent has independent safety limits |
+| **Loop** | Each agent runs its own `setInterval` cycle |
 
-## Concurrent Loops
+## Agent Management
 
-Agents run as concurrent background processes within the Sigil core. You can observe all of them simultaneously:
+### Create an Agent
 
-*   **TUI**: Switch between agents using arrow keys.
-*   **Web Dashboard**: View a grid of all active agents and their heartbeats.
-*   **CLI**: Use `sigil logs --all` to view a merged stream of activity.
+```bash
+sigil agent create --name "treasury"
+sigil agent create --name "minter"
+sigil agent create --name "watcher"
+```
 
-## Common Use Cases
+### List All Agents
 
-1.  **Treasury & Minter**: One agent manages liquidity pools while another handles token minting.
-2.  **Arb & Rebalance**: One agent monitors price discrepancies while another maintains target portfolio weights.
-3.  **The Watcher**: An agent dedicated entirely to closing empty accounts and reclaiming rent.
+```bash
+sigil agent list
+```
+
+### Start / Pause / Destroy
+
+```bash
+sigil agent start treasury
+sigil agent pause treasury
+sigil agent destroy treasury
+```
+
+### Agent Info
+
+```bash
+sigil agent info treasury
+```
+
+Shows the agent's wallet address, status, directive count, and last activity.
+
+## Monitoring Multiple Agents
+
+### TUI
+
+Switch between agents using arrow keys in the terminal dashboard:
+
+```bash
+sigil tui
+```
+
+### Web Dashboard
+
+The Dashboard displays a grid of all active agents with real-time heartbeats, status indicators, and log streams:
+
+```bash
+sigil start
+# Open http://localhost:74446
+```
+
+### CLI
+
+View a merged log stream from all agents:
+
+```bash
+sigil logs --all --follow
+```
+
+## Common Patterns
+
+### Treasury + Minter
+
+- **Treasury** — Manages SOL holdings and liquidity pools
+- **Minter** — Handles token creation and distribution
+
+### Arb + Rebalancer
+
+- **Arb** — Monitors price discrepancies across pools
+- **Rebalancer** — Maintains target portfolio weights
+
+### The Watcher
+
+A dedicated agent with a single directive:
+
+```text
+"Close any token account with zero balance and reclaim rent"
+```
+
+This agent runs passively, cleaning up dust accounts across all wallets.
+
+## WebSocket Scoping
+
+All WebSocket events are scoped to individual agents:
+
+```text
+Namespace: /agent/<agentId>
+
+Events are never broadcast globally (except system:killed).
+```
+
+This ensures that UI clients only receive events for agents they are actively monitoring.

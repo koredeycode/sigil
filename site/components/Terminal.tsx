@@ -2,75 +2,64 @@
 
 import { useEffect, useState } from 'react';
 
-const commands = [
-  'sigil init',
-  'sigil agent create --name "alpha"',
-  'sigil agent start "alpha"',
-  'sigil log alpha'
+const lines = [
+  { prompt: true, text: 'sigil init' },
+  { prompt: false, text: '✓ Workspace initialized', color: 'text-primary' },
+  { prompt: true, text: 'sigil agent create --name "alpha"' },
+  { prompt: false, text: '✓ Agent "alpha" created — wallet generated', color: 'text-primary' },
+  { prompt: true, text: 'sigil agent start "alpha"' },
+  { prompt: false, text: '● Agent "alpha" is now running', color: 'text-yellow-500 dark:text-yellow-400' },
+  { prompt: false, text: '[thought] Checking SOL balance...', color: 'text-muted-foreground' },
+  { prompt: false, text: '[action] Requesting 1 SOL airdrop', color: 'text-blue-500 dark:text-blue-400' },
+  { prompt: false, text: '✓ Transaction confirmed: 4sK...mR9', color: 'text-primary' },
 ];
 
 export function Terminal() {
-  const [text, setText] = useState('');
-  const [commandIndex, setCommandIndex] = useState(0);
-  const [charIndex, setCharIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [visibleLines, setVisibleLines] = useState(0);
 
   useEffect(() => {
+    if (visibleLines >= lines.length) return;
+
+    const delay = lines[visibleLines]?.prompt ? 800 : 400;
     const timeout = setTimeout(() => {
-      const currentCommand = commands[commandIndex];
-      
-      if (!isDeleting) {
-        setText(currentCommand.substring(0, charIndex + 1));
-        setCharIndex(prev => prev + 1);
-        
-        if (charIndex + 1 === currentCommand.length) {
-          setTimeout(() => setIsDeleting(true), 2000);
-        }
-      } else {
-        setText(currentCommand.substring(0, charIndex - 1));
-        setCharIndex(prev => prev - 1);
-        
-        if (charIndex === 1) {
-          setIsDeleting(false);
-          setCommandIndex(prev => (prev + 1) % commands.length);
-          setCharIndex(0);
-        }
-      }
-    }, isDeleting ? 50 : 100);
+      setVisibleLines((prev) => prev + 1);
+    }, delay);
 
     return () => clearTimeout(timeout);
-  }, [charIndex, commandIndex, isDeleting]);
+  }, [visibleLines]);
 
   return (
-    <div className="w-full max-w-2xl bg-black/80 backdrop-blur-md rounded-lg border border-white/10 overflow-hidden shadow-2xl font-mono text-xs sm:text-sm">
-      <div className="bg-white/5 px-4 py-2 border-b border-white/10 flex items-center justify-between">
+    <div className="w-full max-w-2xl rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+      {/* Title Bar */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-secondary/50">
         <div className="flex gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
-          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
-          <div className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
+          <div className="w-3 h-3 rounded-full bg-red-400/60" />
+          <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
+          <div className="w-3 h-3 rounded-full bg-green-400/60" />
         </div>
-        <div className="text-white/30 text-[10px] uppercase tracking-wider">sigil terminal</div>
+        <span className="text-xs text-muted-foreground font-mono ml-2">terminal</span>
       </div>
-      <div className="p-4 min-h-[160px] flex flex-col justify-start">
-        <div className="flex gap-2">
-          <span className="text-primary font-bold">➜</span>
-          <span className="text-white/50">~</span>
-          <span className="text-white">
-            {text}
-            <span className="inline-block w-2 h-4 bg-primary ml-1 animate-pulse align-middle" />
-          </span>
-        </div>
-        <div className="mt-4 text-white/40 space-y-1">
-          {commandIndex === 0 && charIndex > 8 && <div className="animate-in fade-in slide-in-from-top-1">Initializing Sigil workspace...</div>}
-          {commandIndex === 1 && charIndex > 20 && <div className="animate-in fade-in slide-in-from-top-1 text-green-400">Agent "alpha" created successfully.</div>}
-          {commandIndex === 2 && charIndex > 18 && <div className="animate-in fade-in slide-in-from-top-1 text-yellow-400">Agent "alpha" starting...</div>}
-          {commandIndex === 3 && charIndex > 14 && (
-            <div className="animate-in fade-in slide-in-from-top-1">
-              <div className="text-blue-400">[info] Socket connected</div>
-              <div className="text-pink-400">[thought] Analyzing Solana market data...</div>
-            </div>
-          )}
-        </div>
+
+      {/* Output */}
+      <div className="p-5 font-mono text-sm leading-relaxed min-h-[220px]">
+        {lines.slice(0, visibleLines).map((line, i) => (
+          <div key={i} className="flex gap-2 animate-in fade-in slide-in-from-bottom-1 duration-300">
+            {line.prompt ? (
+              <>
+                <span className="text-primary select-none">❯</span>
+                <span className="text-foreground">{line.text}</span>
+              </>
+            ) : (
+              <span className={`ml-5 ${line.color || 'text-muted-foreground'}`}>{line.text}</span>
+            )}
+          </div>
+        ))}
+        {visibleLines < lines.length && (
+          <div className="flex gap-2 mt-0.5">
+            <span className="text-primary select-none">❯</span>
+            <span className="w-2 h-5 bg-primary/70 animate-pulse" />
+          </div>
+        )}
       </div>
     </div>
   );

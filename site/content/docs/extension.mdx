@@ -1,47 +1,81 @@
 ---
-title: "Browser Extension"
-description: "Connecting Sigil to Solana dApps securely."
+title: Browser Extension
+description: Connect Sigil to Solana dApps for AI-powered transaction analysis.
 ---
 
-# The Sigil Browser Extension
+The Sigil Browser Extension bridges web applications (dApps) with your local AI agent. It injects a `window.sigil` Solana Wallet Adapter into web pages, so dApps can request signatures just like they would from Phantom or Solflare.
 
-The Sigil Browser Extension acts as a bridge between standard web applications (dApps) and your local AI Agent. 
-It injects the `window.sigil` provider into standard web pages, which acts as a Solana Wallet Adapter.
+The difference: every signature request passes through your agent's **Guardrails** and **LLM analysis** before you approve it.
 
-When a dApp requests a signature, the Extension intercepts the transaction and forwards it to your local Sigil instance. Sigil decodes the transaction, passes it through your configured **Guardrails**, and uses its LLM reasoning capabilities to assess the risk of the transaction, presenting a detailed analysis back to you before you approve the action.
+## How It Works
 
-## Installation Guide (Developer Mode)
+```text
+dApp calls window.sigil.signTransaction(tx)
+         │
+         ▼
+  Extension intercepts
+         │
+         ▼
+  Forwards to localhost:74445/api/extension/simulate
+         │
+         ▼
+  Agent decodes + analyzes transaction
+         │
+         ├─ Guardrail failure → Blocked immediately
+         │
+         └─ Guardrail pass → LLM generates risk analysis
+                │
+                ▼
+         Popup shows analysis to user
+                │
+                ├─ User approves → Key retrieved, tx signed, returned to dApp
+                │
+                └─ User rejects → Transaction cancelled
+```
 
-Because the extension is still in development, it is not yet available on the Chrome Web Store. You must install it locally.
+## Key Features
 
-### 1. Download the Extension
+- **AI Risk Analysis** — Every transaction is analyzed by your configured LLM before approval
+- **Guardrail Enforcement** — Hard-coded limits block dangerous transactions before they reach you
+- **Local Signing** — Keys are retrieved from the OS Keychain at signing time and immediately dropped
+- **Wallet Adapter Compatible** — Works with any dApp that supports the Solana Wallet Adapter standard
 
-[Download the latest Extension build (`.zip`)](/sigil-extension.zip)
+## Installation (Developer Mode)
 
-*(Note: We will host the zip file here shortly. If you are building from source, see below).*
+The extension is currently in development and not yet on the Chrome Web Store.
 
-### 2. Install in Chrome or Brave
+### 1. Get the Extension
 
-1. Open a new tab and navigate to `chrome://extensions/`
-2. At the top right, toggle **Developer mode** ON.
-3. Click **Load unpacked** in the top left corner.
-4. Select the unzipped directory containing the `manifest.json` file.
-5. The Sigil Extension will now appear in your list of extensions.
+Download the [latest build](/sigil-extension.zip) or build from source:
 
-### 3. Connect!
+```bash
+cd packages/extension
+pnpm install
+pnpm build
+```
 
-With the extension installed and your local `sigil` daemon running (e.g. `sigil start`), you can now connect to dApps.
+### 2. Load in Chrome or Brave
+
+1. Navigate to `chrome://extensions/`
+2. Enable **Developer mode** (top right)
+3. Click **Load unpacked**
+4. Select the directory containing `manifest.json`
+
+### 3. Connect
+
+With the extension installed and `sigil start` running locally, navigate to any Solana dApp. The extension will inject `window.sigil` as an available wallet.
 
 <div className="my-8 flex justify-center">
-  <a href="/test-dapp" className="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center gap-2">
-    Try the Test dApp 
+  <a href="/test-dapp" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity">
+    Try the Test dApp →
   </a>
 </div>
 
-## How it works
+## Security Model
 
-1. **dApp Request**: A dApp (like Jupiter or MagicEden) calls `window.sigil.signTransaction(tx)`.
-2. **Simulation**: The extension grabs this Transaction buffer and sends it to `localhost:74445/api/extension/simulate`.
-3. **Agent Analysis**: Your active Sigil agent breaks down the instructions. If it triggers an immediate Kill Switch or Guardrail failure, it's blocked instantly. 
-4. **LLM Evaluation**: If Guardrails pass but the size/risk requires confirmation, the LLM generates a human-readable threat analysis.
-5. **Approval**: You review the result. Once you click Approve, Sigil decrypts your local key using `keytar`, signs the transaction, and returns the signed buffer to the dApp. Private keys NEVER leave your OS Keychain.
+The extension follows the same Wallet Isolation principle as the core:
+
+- The extension **never** handles private keys
+- Key retrieval happens in the core backend via `keytar`
+- The signed transaction buffer is returned to the dApp — not the key
+- If Guardrails fail, the transaction is blocked before reaching the LLM

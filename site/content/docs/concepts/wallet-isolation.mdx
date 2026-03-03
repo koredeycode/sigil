@@ -1,30 +1,83 @@
 ---
-title: "Concept: Wallet Isolation"
+title: Wallet Isolation
+description: How Sigil separates agent reasoning from key management and transaction signing.
 ---
 
-# Agent ↔ Wallet Isolation
+Sigil enforces strict separation between the agent's "brain" and its ability to sign transactions. This is the foundation of Sigil's security model.
 
-Sigil enforces a strict separation of responsibilities between the "Brain" and the "Signer."
+## The Three Layers
 
 ```text
-┌─────────────────────────────────────────┐
-│           Agent Layer (Brain)           │
-│  LLM Reasoning · Directive Engine · Loop  │
-│  "Decides WHAT to do"                  │
-├─────────────────────────────────────────┤
-│         Guardrails Layer (Gate)         │
-│  Per-trade limits · Allowlists · Caps  │
-│  "Validates WHETHER it's allowed"      │
-├─────────────────────────────────────────┤
-│         Wallet Layer (Signer)           │
-│  Key Storage · Tx Building · Signing   │
-│  "Executes HOW to do it"               │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│           Agent Layer (Brain)               │
+│  LLM Reasoning · Directive Engine · Loop    │
+│  "Decides WHAT to do"                       │
+│                                             │
+│  ✗ Cannot import keytar                     │
+│  ✗ Cannot access private keys               │
+│  ✗ Cannot call signTransaction              │
+├─────────────────────────────────────────────┤
+│         Guardrails Layer (Gate)             │
+│  Per-trade limits · Allowlists · Caps       │
+│  "Validates WHETHER it's allowed"           │
+│                                             │
+│  ✗ Cannot access private keys               │
+│  ✓ Can block any action                     │
+├─────────────────────────────────────────────┤
+│         Wallet Layer (Signer)               │
+│  Key Storage · Tx Building · Signing        │
+│  "Executes HOW to do it"                    │
+│                                             │
+│  ✓ Only layer with keytar access            │
+│  ✓ Only layer that can sign                 │
+└─────────────────────────────────────────────┘
 ```
 
-## Key Principles
+## Implementation Rules
 
-*   **No Direct Key Access:** The Agent Layer produces *intents* (e.g., "transfer 1 SOL"), but it never handles private keys directly.
-*   **Encrypted Storage:** Private keys are stored using `keytar` in your operating system's Keychain/Credential Vault.
-*   **Deterministic Signatures:** The Signer only executes transactions that have been explicitly validated by the Guardrails layer.
-*   **Zero Cloud:** Keys are never sent to a server or stored in a way that is accessible outside of your local machine.
+These rules are enforced at the code level — they are not guidelines, they are hard boundaries:
+
+1. **The Agent Layer** (`/core/src/agent/`) produces **intents** (tool calls). It cannot import `keytar` or access `@solana/web3.js` Keypair objects.
+
+2. **The Guardrails Layer** (`/core/src/lib/Guardrails.ts`) evaluates intents against the directive database. It returns `passed` or `failed`. It has no access to keys.
+
+3. **The Wallet Layer** (`/core/src/wallet/`) is the **only** module permitted to:
+   - Import and call `keytar`
+   - Retrieve private keys from the OS Keychain
+   - Build, sign, and submit transactions
+
+## Key Storage
+
+Private keys are stored using [keytar](https://github.com/nicholasbraun/keytar), which delegates to the operating system's native credential store:
+
+| OS | Backend |
+|---|---|
+| macOS | Keychain Access |
+| Linux | libsecret (GNOME Keyring / KWallet) |
+| Windows | Credential Manager |
+
+Keys are **never** stored in:
+- Environment variables
+- Configuration files
+- The SQLite database
+- Application code or memory (except during active signing)
+
+## Kill Switch Behavior
+
+When `sigil kill` is invoked:
+
+1. `config.kill_switch = true` is set in SQLite
+2. `system:killed` is broadcast over WebSocket to all clients
+3. All held Keypair references are **dropped from application memory**
+4. No further signing is possible until the user explicitly restarts
+
+> **Killed ≠ Paused.** Pausing stops the loop but keeps the key in memory for instant resume. Killing is a hard security halt — the key must be re-retrieved from the Keychain on restart.
+
+## Why This Matters
+
+Even if a compromised LLM generates a malicious tool call, the architecture ensures:
+
+- The Guardrails layer blocks actions that violate safety limits
+- The Wallet layer only executes validated intents
+- The Kill Switch provides an emergency override at any time
+- Private keys are never exposed to the reasoning layer

@@ -1,37 +1,59 @@
 ---
 title: Introducing Sigil
-description: The next generation of autonomous AI agents on Solana.
+description: Meet the autonomous wallet that never sleeps — built for Solana, running on your machine.
 author: Yusuf Akorede
 date: 2026-02-21
 ---
 
 # Introducing Sigil
 
-We are thrilled to unveil **Sigil**, an open-source framework for building, managing, and scaling autonomous AI agents on the Solana blockchain.
+We're excited to introduce **Sigil** — an open-source platform for building, managing, and running autonomous AI agents on the Solana blockchain — entirely from your local machine.
 
-## Why Sigil?
+## The Problem
 
-The transition from "copilots" to "autonomous agents" requires more than just better prompts. It requires a robust architecture that handles:
+Today's wallets are passive. They sit idle until you click a button. If you want to monitor token prices, rebalance a portfolio, or execute conditional trades, you need to be glued to your screen.
 
-1. **Reasoning**: Thinking through complex, multi-step tasks.
-2. **Tool Execution**: Interacting with real-world APIs and on-chain protocols.
-3. **Safety**: Enforcing strict guardrails to prevent unintended actions.
+Sigil changes that. Instead of reacting to the market, your agents **act on your behalf**, continuously running a reasoning loop that evaluates your directives against real-time on-chain data.
 
-Sigil solves this with our **Tri-Head Architecture**, separating these concerns into specialized modules that work in harmony.
+## How It Works
+
+At its core, Sigil runs a **LangGraph-powered agent loop**. Each cycle:
+
+1. Fetches your balances, token holdings, and market data from Solana Devnet
+2. Loads your natural-language directives (e.g., *"Airdrop 1 SOL if my balance drops below 0.5"*)
+3. Sends the context to your LLM provider for reasoning
+4. Validates any proposed actions through a hard-coded **Guardrails layer**
+5. Signs and submits approved transactions using keys stored in your OS Keychain
+
+The LLM never sees your private key. The Guardrails layer operates independently of the model. If a transaction violates your limits, it gets blocked — no matter what the model says.
 
 ## The Tri-Head Architecture
 
-- **Reasoning Head**: Maps natural language directives to high-level plans.
-- **Execution Head**: Handles the underlying tool calls, from swapping tokens to querying databases.
-- **Guardrail Head**: Monitors every action against valid safety policies.
+Sigil gives you three ways to interact with your agents:
 
-## Getting Started
+- **CLI** — Headless commands for scripting, cron jobs, and CI/CD pipelines
+- **TUI** — A real-time terminal dashboard built with Ink for live monitoring
+- **Web Dashboard** — A local React app for chat, analytics, and visual directive management
 
-You can start building with Sigil today:
+All three interfaces connect to the same core over WebSockets. Every thought, action, and transaction syncs in real-time.
+
+## What Makes Sigil Different
+
+| Feature | Sigil | Traditional Wallets |
+|---|---|---|
+| Agent autonomy | Continuous reasoning loop | Click-to-transact |
+| Key storage | OS Keychain (`keytar`) | Browser extension / cloud |
+| LLM provider | Your choice (OpenAI, Anthropic, Ollama) | N/A |
+| Safety | Hard-coded guardrails | Manual review |
+| Data storage | Local SQLite | Cloud-dependent |
+
+## Get Started
 
 ```bash
 npm i -g sigil
 sigil init
 ```
 
-Stay tuned for more deep dives into our Directive Engine and Multi-Agent Mesh!
+That's it. The `sigil init` wizard walks you through provider setup, wallet generation, and creating your first agent.
+
+Read the [documentation](/docs) for a complete guide, or explore the [GitHub repository](https://github.com/koredeycode/sigil) to start contributing.
