@@ -227,7 +227,7 @@ export function AgentDetails({ agents }: { agents: Agent[] }) {
             {/* Edit Profile Modal */}
             {isEditingProfile && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <div className="w-full max-w-md bg-card border border-border rounded-xl shadow-lg overflow-hidden flex flex-col">
+                    <div className="w-full max-w-2xl bg-card border border-border rounded-xl shadow-lg overflow-hidden flex flex-col">
                         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                             <h3 className="text-lg font-semibold">Edit Agent Profile</h3>
                             <button onClick={() => setIsEditingProfile(false)} className="text-muted-foreground hover:text-foreground">
@@ -266,7 +266,7 @@ export function AgentDetails({ agents }: { agents: Agent[] }) {
                                     value={editPrompt}
                                     onChange={(e) => setEditPrompt(e.target.value)}
                                     placeholder="Describe the agent's goals and instructions..."
-                                    className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary min-h-[100px] resize-y font-mono text-sm"
+                                    className="w-full px-3 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary min-h-[200px] resize-y font-mono text-sm"
                                 />
                             </div>
                         </div>

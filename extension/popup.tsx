@@ -44,6 +44,8 @@ export default function IndexPopup() {
   const [portfolio, setPortfolio] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'transactions'>('portfolio');
+  const [isPortfolioLoading, setIsPortfolioLoading] = useState(true);
+  const [isTransactionsLoading, setIsTransactionsLoading] = useState(true);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isSigning, setIsSigning] = useState(false);
   const [simulationData, setSimulationData] = useState<any>(null);
@@ -208,22 +210,24 @@ export default function IndexPopup() {
         } catch (e) {}
 
         try {
+            setIsPortfolioLoading(true);
             const portRes = await authFetch(`${SIGIL_SERVER_URL}/api/extension/portfolio`);
             if (portRes.status === 401) { setAuthToken(null); return; }
             if (portRes.ok) {
                 const pData = await portRes.json();
                 setPortfolio(pData.data);
             }
-        } catch(e) {}
+        } catch(e) {} finally { setIsPortfolioLoading(false); }
 
         try {
+            setIsTransactionsLoading(true);
             const txRes = await authFetch(`${SIGIL_SERVER_URL}/api/extension/transactions`);
             if (txRes.status === 401) { setAuthToken(null); return; }
             if (txRes.ok) {
                 const txData = await txRes.json();
                 setTransactions(txData.data);
             }
-        } catch(e) {}
+        } catch(e) {} finally { setIsTransactionsLoading(false); }
       } else {
         setIsConnected(false);
       }
@@ -467,6 +471,24 @@ export default function IndexPopup() {
                                 <h3 style={{ fontSize: "14px", fontWeight: "600", color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>Balances</h3>
                             </div>
                             
+                            {isPortfolioLoading ? (
+                                <div style={{ display: "flex", flexDirection: "column", gap: "12px", paddingTop: "8px" }}>
+                                    {[1, 2].map(i => (
+                                        <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "8px" }}>
+                                            <div style={{ width: "40px", height: "40px", borderRadius: "50%", backgroundColor: colors.btnBg, animation: "pulse 1.5s ease-in-out infinite" }} />
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ width: "80px", height: "14px", borderRadius: "4px", backgroundColor: colors.btnBg, marginBottom: "6px", animation: "pulse 1.5s ease-in-out infinite" }} />
+                                                <div style={{ width: "40px", height: "10px", borderRadius: "4px", backgroundColor: colors.btnBg, animation: "pulse 1.5s ease-in-out infinite" }} />
+                                            </div>
+                                            <div>
+                                                <div style={{ width: "60px", height: "14px", borderRadius: "4px", backgroundColor: colors.btnBg, animation: "pulse 1.5s ease-in-out infinite" }} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+                                </div>
+                            ) : (
+                               <>
                             {/* SOL Card */}
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px", margin: "0 -8px", borderRadius: "8px", cursor: "pointer", transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.backgroundColor = colors.hover} onMouseOut={e => e.currentTarget.style.backgroundColor = "transparent"}>
                                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -501,12 +523,27 @@ export default function IndexPopup() {
                                     </div>
                                 </div>
                             ))}
+                               </>
+                            )}
                        </div>
                    )}
 
                    {activeTab === 'transactions' && (
                        <div>
-                        {transactions.length === 0 ? (
+                        {isTransactionsLoading ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
+                              {[1, 2, 3].map(i => (
+                                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px", borderRadius: "8px", backgroundColor: colors.btnBg, border: `1px solid ${colors.border}` }}>
+                                       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                                           <div style={{ width: "80px", height: "13px", borderRadius: "4px", backgroundColor: colors.hover, animation: "pulse 1.5s ease-in-out infinite" }} />
+                                           <div style={{ width: "120px", height: "11px", borderRadius: "4px", backgroundColor: colors.hover, animation: "pulse 1.5s ease-in-out infinite" }} />
+                                       </div>
+                                       <div style={{ width: "100px", height: "11px", borderRadius: "4px", backgroundColor: colors.hover, animation: "pulse 1.5s ease-in-out infinite" }} />
+                                  </div>
+                              ))}
+                              <style>{`@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
+                          </div>
+                        ) : transactions.length === 0 ? (
                           <div style={{ textAlign: "center", padding: "32px 0", color: colors.textMuted, fontSize: "14px" }}>
                               No recent activity found.
                           </div>

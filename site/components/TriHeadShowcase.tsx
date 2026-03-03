@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight, Globe, Monitor, TerminalSquare } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from './Terminal';
 
 const heads = [
@@ -31,17 +31,58 @@ const heads = [
   },
 ];
 
+const AUTO_SWITCH_INTERVAL = 5000;
+
 export function TriHeadShowcase() {
   const [active, setActive] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [progress, setProgress] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startAutoSwitch = useCallback(() => {
+    // Clear any existing timers
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (progressRef.current) clearInterval(progressRef.current);
+
+    // Reset progress
+    setProgress(0);
+
+    // Progress bar updates every 50ms
+    const progressStep = 50 / AUTO_SWITCH_INTERVAL;
+    progressRef.current = setInterval(() => {
+      setProgress(prev => Math.min(prev + progressStep, 1));
+    }, 50);
+
+    // Auto advance
+    intervalRef.current = setInterval(() => {
+      setActive(prev => (prev + 1) % heads.length);
+      setProgress(0);
+    }, AUTO_SWITCH_INTERVAL);
+  }, []);
+
+  useEffect(() => {
+    startAutoSwitch();
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (progressRef.current) clearInterval(progressRef.current);
+    };
+  }, [startAutoSwitch]);
+
+  const selectTab = useCallback((index: number) => {
+    setActive(index);
+    startAutoSwitch();
+  }, [startAutoSwitch]);
 
   const goNext = useCallback(() => {
     setActive((prev) => (prev + 1) % heads.length);
-  }, []);
+    startAutoSwitch();
+  }, [startAutoSwitch]);
 
   const goPrev = useCallback(() => {
     setActive((prev) => (prev - 1 + heads.length) % heads.length);
-  }, []);
+    startAutoSwitch();
+  }, [startAutoSwitch]);
 
   // Swipe handling
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -80,8 +121,8 @@ export function TriHeadShowcase() {
               return (
                 <button
                   key={head.id}
-                  onClick={() => setActive(i)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  onClick={() => selectTab(i)}
+                  className={`relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all overflow-hidden ${
                     active === i
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
@@ -89,6 +130,12 @@ export function TriHeadShowcase() {
                 >
                   <TabIcon className="w-4 h-4" />
                   {head.title}
+                  {active === i && (
+                    <span
+                      className="absolute bottom-0 left-0 h-0.5 bg-primary-foreground/40 transition-none"
+                      style={{ width: `${progress * 100}%` }}
+                    />
+                  )}
                 </button>
               );
             })}

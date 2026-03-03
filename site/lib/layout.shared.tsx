@@ -16,9 +16,7 @@ export function baseOptions(): BaseLayoutProps {
         </div>
       ),
     },
-    links: [
-      { text: 'Blog', url: '/blog' },
-    ],
+    links: [],
     githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
   };
 }

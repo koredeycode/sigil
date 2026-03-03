@@ -1,8 +1,19 @@
 import { CommandBox } from '@/components/CommandBox';
 import { blog } from '@/lib/source';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+
+export async function generateMetadata(props: { params: Promise<{ slug?: string[] }> }): Promise<Metadata> {
+  const params = await props.params;
+  if (!params.slug || params.slug.length === 0) {
+    return { title: 'Blog | Sigil' };
+  }
+  const page = blog.getPage(params.slug);
+  if (!page) return { title: 'Blog | Sigil' };
+  return { title: `${page.data.title} | Sigil Blog` };
+}
 
 export default async function BlogPage(props: { params: Promise<{ slug?: string[] }> }) {
   const params = await props.params;
