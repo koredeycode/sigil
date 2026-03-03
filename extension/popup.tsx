@@ -4,6 +4,36 @@ import { useEffect, useState } from "react";
 
 const SIGIL_SERVER_URL = "http://127.0.0.1:7445";
 
+/**
+ * Authenticated fetch wrapper. Reads the auth token from chrome.storage.local
+ * and attaches it as a Bearer header. If the response is 401, clears the stored
+ * token and returns the response so the caller can trigger re-auth.
+ */
+async function authFetch(url: string, opts: RequestInit = {}): Promise<Response> {
+  const token = await new Promise<string | null>((resolve) => {
+    chrome.storage.local.get(['sigil_auth_token'], (result) => {
+      resolve(result.sigil_auth_token || null);
+    });
+  });
+
+  const headers = new Headers(opts.headers || {});
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  if (!headers.has('Content-Type') && opts.body) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  const res = await fetch(url, { ...opts, headers });
+
+  if (res.status === 401) {
+    // Token is stale (server restarted) — clear it
+    chrome.storage.local.remove(['sigil_auth_token']);
+  }
+
+  return res;
+}
+
 export default function IndexPopup() {
   const [requestObj, setRequestObj] = useState<any>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
@@ -19,15 +49,29 @@ export default function IndexPopup() {
   const [simulationData, setSimulationData] = useState<any>(null);
   const [isSimulating, setIsSimulating] = useState(false);
 
+  // Auth token state
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [tokenInput, setTokenInput] = useState<string>("");
+  const [tokenError, setTokenError] = useState<string>("");
+  const [isValidatingToken, setIsValidatingToken] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Check for stored auth token on mount
   useEffect(() => {
-    // Determine initial theme
-    chrome.storage.local.get(['sigil_theme'], (result) => {
-       if (result.sigil_theme) {
-           setTheme(result.sigil_theme);
-       } else {
-           const isSysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-           setTheme(isSysDark ? 'dark' : 'light');
-       }
+    chrome.storage.local.get(['sigil_auth_token', 'sigil_theme'], (result) => {
+      // Theme
+      if (result.sigil_theme) {
+        setTheme(result.sigil_theme);
+      } else {
+        const isSysDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        setTheme(isSysDark ? 'dark' : 'light');
+      }
+
+      // Auth token
+      if (result.sigil_auth_token) {
+        setAuthToken(result.sigil_auth_token);
+      }
+      setAuthChecked(true);
     });
 
     // Listen for storage changes across different popup windows
@@ -35,10 +79,47 @@ export default function IndexPopup() {
        if (namespace === 'local' && changes.sigil_theme) {
            setTheme(changes.sigil_theme.newValue);
        }
+       if (namespace === 'local' && changes.sigil_auth_token) {
+           setAuthToken(changes.sigil_auth_token.newValue || null);
+       }
     };
     chrome.storage.onChanged.addListener(listener);
     return () => chrome.storage.onChanged.removeListener(listener);
   }, []);
+
+  // Handle token submission
+  const handleTokenSubmit = async () => {
+    if (!tokenInput.trim()) {
+      setTokenError('Please enter a token');
+      return;
+    }
+    setIsValidatingToken(true);
+    setTokenError('');
+
+    try {
+      const res = await fetch(`${SIGIL_SERVER_URL}/api/extension/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tokenInput.trim() }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setTokenError(data.message || 'Invalid token');
+        return;
+      }
+
+      // Store the validated token
+      chrome.storage.local.set({ sigil_auth_token: tokenInput.trim() }, () => {
+        setAuthToken(tokenInput.trim());
+        setTokenInput('');
+      });
+    } catch (err: any) {
+      setTokenError('Cannot reach Sigil server. Is it running?');
+    } finally {
+      setIsValidatingToken(false);
+    }
+  };
 
   const toggleTheme = () => {
       setTheme(t => {
@@ -87,14 +168,20 @@ export default function IndexPopup() {
       // If it's a signTransaction and we have the message but no sim data, fetch it
       if (requestObj.type === 'signTransaction' && !requestObj.simulationData && requestObj.transactionMessage) {
           setIsSimulating(true);
-          fetch(`http://127.0.0.1:7445/api/extension/simulate`, {
+          authFetch(`${SIGIL_SERVER_URL}/api/extension/simulate`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ transactionMessage: requestObj.transactionMessage, origin: requestObj.origin })
           })
-          .then(res => res.json())
+          .then(res => {
+              if (res.status === 401) {
+                  setAuthToken(null);
+                  setSimulationData({ error: 'Authentication required. Please re-enter your token.', status: 'rejected' });
+                  return null;
+              }
+              return res.json();
+          })
           .then(data => {
-              setSimulationData(data);
+              if (data) setSimulationData(data);
           })
           .catch(err => {
               setSimulationData({ error: err.message, status: 'rejected' });
@@ -111,7 +198,8 @@ export default function IndexPopup() {
       if (res.ok) {
         setIsConnected(true);
         try {
-            const extRes = await fetch(`${SIGIL_SERVER_URL}/api/extension/connect`, { method: "POST" });
+            const extRes = await authFetch(`${SIGIL_SERVER_URL}/api/extension/connect`, { method: "POST" });
+            if (extRes.status === 401) { setAuthToken(null); return; }
             if (extRes.ok) {
                 const data = await extRes.json();
                 setMainPubkey(data.data.publicKey);
@@ -120,7 +208,8 @@ export default function IndexPopup() {
         } catch (e) {}
 
         try {
-            const portRes = await fetch(`${SIGIL_SERVER_URL}/api/extension/portfolio`);
+            const portRes = await authFetch(`${SIGIL_SERVER_URL}/api/extension/portfolio`);
+            if (portRes.status === 401) { setAuthToken(null); return; }
             if (portRes.ok) {
                 const pData = await portRes.json();
                 setPortfolio(pData.data);
@@ -128,7 +217,8 @@ export default function IndexPopup() {
         } catch(e) {}
 
         try {
-            const txRes = await fetch(`${SIGIL_SERVER_URL}/api/extension/transactions`);
+            const txRes = await authFetch(`${SIGIL_SERVER_URL}/api/extension/transactions`);
+            if (txRes.status === 401) { setAuthToken(null); return; }
             if (txRes.ok) {
                 const txData = await txRes.json();
                 setTransactions(txData.data);
@@ -163,12 +253,15 @@ export default function IndexPopup() {
     if (requestObj?.type === 'signTransaction' && !error && data?.approved) {
          try {
              setIsSigning(true);
-             const res = await fetch(`http://127.0.0.1:7445/api/extension/sign`, {
+             const res = await authFetch(`${SIGIL_SERVER_URL}/api/extension/sign`, {
                  method: 'POST',
-                 headers: { 'Content-Type': 'application/json' },
                  body: JSON.stringify({ transactionMessage: requestObj.transactionMessage })
              });
              
+             if (res.status === 401) {
+                setAuthToken(null);
+                throw new Error("Authentication expired. Please re-enter your token.");
+             }
              if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.message || "Failed to sign transaction.");
@@ -192,6 +285,63 @@ export default function IndexPopup() {
     chrome.storage.local.remove([`request_${requestId}`]);
     window.close();
   };
+
+  // ─── Token Entry Screen ─────────────────────────────────────────────
+  // Show if auth check is done but no token is stored (and not in a dApp request flow)
+  if (authChecked && !authToken && !requestObj) {
+    return (
+      <div style={{ padding: "24px", boxSizing: "border-box", width: "400px", minHeight: "600px", fontFamily: "sans-serif", backgroundColor: colors.bg, color: colors.text, display: "flex", flexDirection: "column", transition: "all 0.2s" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+          <img src={iconBase64} alt="Sigil" style={{ width: "64px", height: "64px", borderRadius: "50%", marginBottom: "16px", objectFit: "cover" }} />
+          <h2 style={{ fontSize: "20px", margin: "0 0 8px 0" }}>Authenticate</h2>
+          <p style={{ color: colors.textMuted, fontSize: "14px", margin: "0 0 24px 0", lineHeight: "1.5" }}>
+            Enter the session token from your <code style={{ backgroundColor: colors.btnBg, padding: "2px 6px", borderRadius: "4px", fontSize: "13px" }}>sigil start</code> output to connect.
+          </p>
+
+          <input
+            type="password"
+            placeholder="sig_xxxxxxxxxxxxxxxx..."
+            value={tokenInput}
+            onChange={(e) => { setTokenInput(e.target.value); setTokenError(''); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleTokenSubmit(); }}
+            style={{
+              width: "100%", padding: "12px 16px", borderRadius: "8px", fontSize: "14px",
+              border: `1px solid ${tokenError ? 'rgba(239, 68, 68, 0.5)' : colors.border}`,
+              backgroundColor: colors.cardBg, color: colors.text, outline: "none",
+              fontFamily: "monospace", boxSizing: "border-box",
+              transition: "border-color 0.2s",
+            }}
+          />
+
+          {tokenError && (
+            <p style={{ color: "#ef4444", fontSize: "13px", margin: "8px 0 0 0", textAlign: "left", width: "100%" }}>
+              {tokenError}
+            </p>
+          )}
+
+          <button
+            onClick={handleTokenSubmit}
+            disabled={isValidatingToken || !tokenInput.trim()}
+            style={{
+              width: "100%", padding: "12px", marginTop: "16px", borderRadius: "8px", border: "none",
+              backgroundColor: theme === 'dark' ? "#fff" : "#000",
+              color: theme === 'dark' ? "#000" : "#fff",
+              cursor: (isValidatingToken || !tokenInput.trim()) ? "not-allowed" : "pointer",
+              fontWeight: "bold", fontSize: "14px",
+              opacity: (isValidatingToken || !tokenInput.trim()) ? 0.5 : 1,
+              transition: "opacity 0.2s",
+            }}
+          >
+            {isValidatingToken ? "Validating..." : "Connect"}
+          </button>
+        </div>
+
+        <p style={{ textAlign: "center", fontSize: "12px", color: colors.textMuted, margin: 0, lineHeight: "1.5" }}>
+          The token is shown when you run <code style={{ backgroundColor: colors.btnBg, padding: "2px 4px", borderRadius: "4px" }}>sigil start</code> in your terminal.
+        </p>
+      </div>
+    );
+  }
 
   if (requestObj?.type === "connect") {
       return (
@@ -221,7 +371,12 @@ export default function IndexPopup() {
                 <button 
                   onClick={async () => {
                       try {
-                          const extRes = await fetch(`${SIGIL_SERVER_URL}/api/extension/connect`, { method: "POST" });
+                          const extRes = await authFetch(`${SIGIL_SERVER_URL}/api/extension/connect`, { method: "POST" });
+                          if (extRes.status === 401) {
+                              setAuthToken(null);
+                              resolveRequest(null, "Authentication expired. Please re-enter your token.");
+                              return;
+                          }
                           const data = await extRes.json();
                           if (!extRes.ok) throw new Error(data.message || "Unknown server error");
                           if (!data.data || !data.data.publicKey) throw new Error("No public key returned by agent");

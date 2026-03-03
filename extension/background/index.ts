@@ -2,10 +2,82 @@ export { };
 
 const SIGIL_SERVER_URL = "http://127.0.0.1:7445";
 
+/**
+ * Read the stored auth token from chrome.storage.local.
+ */
+function getStoredToken(): Promise<string | null> {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['sigil_auth_token'], (result) => {
+      resolve(result.sigil_auth_token || null);
+    });
+  });
+}
+
+/**
+ * Build headers object with Authorization if a token is stored.
+ */
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const token = await getStoredToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 // Background service worker
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log("[Sigil Background] Received message:", request, "from sender:", sender);
   const { method, params } = request;
+
+  // ─── Token Management ────────────────────────────────────────────────
+
+  if (method === "get_token") {
+    getStoredToken().then((token) => {
+      sendResponse({ result: { token } });
+    });
+    return true;
+  }
+
+  if (method === "set_token") {
+    const token = params?.token;
+    if (!token) {
+      sendResponse({ error: "Token is required" });
+      return true;
+    }
+
+    // Validate the token against the server before storing
+    fetch(`${SIGIL_SERVER_URL}/api/extension/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    })
+      .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) {
+          sendResponse({ error: data.message || "Invalid token" });
+          return;
+        }
+        chrome.storage.local.set({ sigil_auth_token: token }, () => {
+          console.log("[Sigil Background] Auth token stored successfully.");
+          sendResponse({ result: { valid: true } });
+        });
+      })
+      .catch((err) => {
+        sendResponse({ error: "Failed to validate token: " + err.message });
+      });
+    return true;
+  }
+
+  if (method === "clear_token") {
+    chrome.storage.local.remove(['sigil_auth_token'], () => {
+      console.log("[Sigil Background] Auth token cleared.");
+      sendResponse({ result: { cleared: true } });
+    });
+    return true;
+  }
+
+  // ─── dApp Requests ───────────────────────────────────────────────────
 
   if (method === "connect") {
     const requestId = Date.now().toString();
@@ -79,10 +151,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   // Handle local state checks (for default popup viewing)
   if (method === "get_status") {
-      fetch(`${SIGIL_SERVER_URL}/api/status`)
-        .then(res => res.json())
-        .then(data => sendResponse({ result: data }))
-        .catch(err => sendResponse({ error: err.message }));
+      getAuthHeaders().then((headers) => {
+        fetch(`${SIGIL_SERVER_URL}/api/status`, { headers })
+          .then(res => res.json())
+          .then(data => sendResponse({ result: data }))
+          .catch(err => sendResponse({ error: err.message }));
+      });
       return true;
   }
 });

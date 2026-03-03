@@ -10,6 +10,7 @@ import { chatRouter } from './routes/chat.js';
 import { configRouter } from './routes/config.js';
 import { cronRouter } from './routes/cron.js';
 import { extensionRouter } from './routes/extension.js';
+import { extensionTokenRouter } from './routes/extensionToken.js';
 import { providersRouter } from './routes/providers.js';
 import { statusRouter } from './routes/status.js';
 import { transactionsRouter } from './routes/transactions.js';
@@ -52,7 +53,7 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
 
   // Public routes (no auth)
   app.use('/api/status', statusRouter);
-  app.use('/api/extension', extensionRouter);
+  app.use('/api/extension/token', extensionTokenRouter);
 
   // Auth-protected routes
   app.use('/api', authMiddleware);
@@ -63,6 +64,7 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
   app.use('/api/config', configRouter);
   app.use('/api/cron', cronRouter);
   app.use('/api/wallet', walletRouter);
+  app.use('/api/extension', extensionRouter);
 
   // Global error handler
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
