@@ -22,19 +22,34 @@ interface ProviderInfo {
   model: string;
 }
 
+// ── Outer Shell: handles splash + delegates to inner view ──────────────────
+
 export function Layout() {
+  const [showSplash, setShowSplash] = useState(true);
+  const handleSplashDone = useCallback(() => setShowSplash(false), []);
+
+  if (showSplash) {
+    return <Splash onDone={handleSplashDone} />;
+  }
+
+  return <LayoutInner />;
+}
+
+// ── Inner Layout: all the real work ────────────────────────────────────────
+
+function LayoutInner() {
   const { agents, activeAgent, nextAgent } = useAgents();
   const { exit } = useApp();
   const { apiPort, authToken } = useConfig();
   const { socket, connected } = useSocket();
   const { stdout } = useStdout();
 
-  const [showSplash, setShowSplash] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
   const [provider, setProvider] = useState<ProviderInfo | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('chat');
-  const [logsKey, setLogsKey] = useState(0);
+  // Bump this to force a full remount of the view (clears Static items)
+  const [viewKey, setViewKey] = useState(0);
 
   const termWidth = stdout?.columns ?? 80;
   const prevAgentRef = useRef<string | null>(null);
@@ -122,27 +137,24 @@ export function Layout() {
     setSending(true);
   }, [socket, activeAgent]);
 
-  const handleSplashDone = useCallback(() => setShowSplash(false), []);
-
-  // Keyboard shortcuts — only fires on modifier keys, not regular typing
+  // Keyboard shortcuts
   useInput((input, key) => {
     if (input === 'c' && key.ctrl) { exit(); return; }
     if (key.tab && !key.shift) {
+      process.stdout.write('\x1B[2J\x1B[H');
       setViewMode(prev => prev === 'chat' ? 'logs' : 'chat');
+      setViewKey(k => k + 1);
       return;
     }
     if (key.tab && key.shift) {
+      process.stdout.write('\x1B[2J\x1B[H');
       nextAgent();
       prevAgentRef.current = null;
       setMessages([]);
-      setLogsKey(k => k + 1);
+      setViewKey(k => k + 1);
       return;
     }
   });
-
-  if (showSplash) {
-    return <Splash onDone={handleSplashDone} />;
-  }
 
   if (!activeAgent) {
     return (
@@ -153,29 +165,30 @@ export function Layout() {
   }
 
   const agentIndex = agents.findIndex(a => a.id === activeAgent.id);
+  const statusColor = activeAgent.status === 'running' ? 'green' : 'yellow';
 
   /*
-   * Use Ink's <Static> for message history.
-   * Static renders items ONCE and never re-renders them — they stay on screen
-   * permanently, like real terminal output. This completely eliminates flicker
-   * for messages because Ink doesn't touch them.
+   * The entire view below uses a `key` that changes on agent/view switch.
+   * This forces React to unmount and remount, which:
+   * 1. Clears Static's internal item list (starts fresh)
+   * 2. Combined with clearScreen(), gives a clean slate
    *
-   * Only the area BELOW <Static> (input, status bar) is dynamic and re-rendered.
+   * During normal typing, nothing here changes, so Static items are untouched
+   * and only the tiny dynamic area (input + status) re-renders.
    */
 
   return (
-    <Box flexDirection="column" width="100%">
-      {/* Static message history — rendered ONCE per message, never re-rendered */}
+    <Box key={viewKey} flexDirection="column" width="100%">
+      {/* Messages via Static — each rendered once, never re-rendered */}
       {viewMode === 'chat' && (
         <Static items={messages}>
           {(msg) => <ChatView key={String(msg.id)} singleMessage={msg} />}
         </Static>
       )}
 
-      {/* Logs view (not static — it needs to scroll/update) */}
+      {/* Logs view */}
       {viewMode === 'logs' && (
         <LogsView
-          key={logsKey}
           agentId={activeAgent.id}
           agentName={activeAgent.name}
           maxLines={30}
@@ -199,11 +212,12 @@ export function Layout() {
           </>
         )}
         <Text dimColor>·</Text>
-        <Text dimColor>{connected ? '●' : '○'} {activeAgent.status}</Text>
+        <Text color={statusColor}>●</Text>
+        <Text dimColor> {activeAgent.status}</Text>
         {agents.length > 1 && (
           <>
-            <Text dimColor>·</Text>
-            <Text dimColor>{agentIndex + 1}/{agents.length}</Text>
+            <Text dimColor> ·</Text>
+            <Text dimColor> {agentIndex + 1}/{agents.length}</Text>
           </>
         )}
       </Box>
@@ -226,11 +240,18 @@ export function Layout() {
       </Box>
       <Box paddingX={2}>
         <Box flexGrow={1}>
-          <Text dimColor>
-            Tab: {viewMode === 'chat' ? 'logs' : 'chat'}
-            {agents.length > 1 ? '  |  Shift+Tab: switch agent' : ''}
-            {'  |  Ctrl+C: exit'}
-          </Text>
+          <Text color="cyan" bold>Tab</Text>
+          <Text dimColor>: {viewMode === 'chat' ? 'logs' : 'chat'}</Text>
+          {agents.length > 1 && (
+            <>
+              <Text dimColor>  |  </Text>
+              <Text color="cyan" bold>Shift+Tab</Text>
+              <Text dimColor>: switch agent</Text>
+            </>
+          )}
+          <Text dimColor>  |  </Text>
+          <Text color="red" bold>Ctrl+C</Text>
+          <Text dimColor>: exit</Text>
         </Box>
         {provider && <Text dimColor>{provider.name}</Text>}
       </Box>
