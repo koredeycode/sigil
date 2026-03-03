@@ -8,6 +8,10 @@ export interface Agent {
   id: string;
   name: string;
   status: 'running' | 'paused';
+  pubkey?: string;
+  loop_interval?: number;
+  prompt?: string;
+  created_at?: string;
 }
 
 export function useAgents() {

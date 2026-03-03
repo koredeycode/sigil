@@ -95,4 +95,16 @@ export class ApiClient {
   async getWallet(agentId: string): Promise<WalletResponse> {
     return this.fetch<WalletResponse>(`/wallet/${agentId}`);
   }
+
+  async getProviders(): Promise<any[]> {
+    return this.fetch<any[]>('/providers');
+  }
+
+  async getLogs(agentId: string, limit = 30): Promise<any[]> {
+    try {
+      return await this.fetch<any[]>(`/agents/${agentId}/logs?limit=${limit}`);
+    } catch {
+      return [];
+    }
+  }
 }
