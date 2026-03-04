@@ -1,9 +1,17 @@
 {
+  // Inherit base configuration from monorepo root
   "extends": "../../tsconfig.json",
+  
   "compilerOptions": {
+    // Output compiled files to dist/ directory
     "outDir": "dist",
+    
+    // Source files are in current directory (includes src/ and bin/)
     "rootDir": "."
   },
+  
+  // Include source code and CLI binary files
   "include": ["src/**/*", "bin/**/*"],
+  
   "exclude": ["node_modules", "dist"]
 }

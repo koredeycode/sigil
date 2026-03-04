@@ -1,16 +1,36 @@
 {
   "compilerOptions": {
+    // Target modern JavaScript features (ES2022)
     "target": "ES2022",
+
+    // Node16 enables native ESM support with .js extensions in imports
     "module": "Node16",
     "moduleResolution": "Node16",
+
     "lib": ["ES2022"],
+
+    // Enable all strict type-checking options for maximum safety
     "strict": true,
+
+    // Better interoperability between CommonJS and ES modules
     "esModuleInterop": true,
+
+    // Skip type checking of .d.ts files for faster compilation
     "skipLibCheck": true,
+
+    // Ensure consistent file name casing across platforms (Windows/Linux/Mac)
     "forceConsistentCasingInFileNames": true,
+
+    // Allow importing JSON files as modules
     "resolveJsonModule": true,
+
+    // Generate .d.ts declaration files for TypeScript consumers
     "declaration": true,
+
+    // Generate source maps for .d.ts files (better IDE navigation)
     "declarationMap": true,
+
+    // Generate .js.map files for debugging compiled code
     "sourceMap": true
   },
   "exclude": ["node_modules", "dist"]

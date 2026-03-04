@@ -1,6 +1,6 @@
 {
-  "name": "sigil",
-  "displayName": "Sigil",
+  "name": "sigil-wallet",
+  "displayName": "Sigil Wallet",
   "version": "0.1.0",
   "description": "A browser extension that interfaces with a local-first AI agent to sign and evaluate Solana transactions.",
   "author": "Yusuf Akorede <koredey4u@gmail.com>",

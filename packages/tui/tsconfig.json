@@ -1,10 +1,20 @@
 {
+  // Inherit base configuration from monorepo root
   "extends": "../../tsconfig.json",
+  
   "compilerOptions": {
+    // Output compiled files to dist/ directory
     "outDir": "dist",
+    
+    // Source files are in src/ directory
     "rootDir": "src",
+    
+    // Use React 19's automatic JSX runtime (no more need to import React)
     "jsx": "react-jsx"
   },
+  
+  // Include all TypeScript files in src/
   "include": ["src/**/*"],
+  
   "exclude": ["node_modules", "dist"]
 }
