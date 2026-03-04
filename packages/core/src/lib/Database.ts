@@ -170,6 +170,22 @@ export function closeDatabase(): void {
   }
 }
 
+/**
+ * Execute a synchronized SQLite transaction.
+ */
+export function transaction<T>(fn: () => T): T {
+  const db = getDatabase();
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    const result = fn();
+    db.exec('COMMIT');
+    return result;
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error;
+  }
+}
+
 // ─── Query Helpers ─────────────────────────────────────────────────────────
 
 // Agents
@@ -208,12 +224,14 @@ export function updateAgentPrompt(id: string, prompt: string) {
 }
 
 export function deleteAgent(id: string) {
-  const db = getDatabase();
-  db.prepare('DELETE FROM cron_jobs WHERE agent_id = ?').run(id);
-  db.prepare('DELETE FROM logs WHERE agent_id = ?').run(id);
-  db.prepare('DELETE FROM transactions WHERE agent_id = ?').run(id);
-  db.prepare('DELETE FROM chats WHERE agent_id = ?').run(id);
-  db.prepare('DELETE FROM agents WHERE id = ?').run(id);
+  return transaction(() => {
+    const db = getDatabase();
+    db.prepare('DELETE FROM cron_jobs WHERE agent_id = ?').run(id);
+    db.prepare('DELETE FROM logs WHERE agent_id = ?').run(id);
+    db.prepare('DELETE FROM transactions WHERE agent_id = ?').run(id);
+    db.prepare('DELETE FROM chats WHERE agent_id = ?').run(id);
+    db.prepare('DELETE FROM agents WHERE id = ?').run(id);
+  });
 }
 
 // Logs
@@ -300,9 +318,11 @@ export function getPrimaryProvider() {
 }
 
 export function setPrimaryProvider(id: number) {
-  const db = getDatabase();
-  db.prepare('UPDATE providers SET is_primary = 0').run();
-  db.prepare('UPDATE providers SET is_primary = 1 WHERE id = ?').run(id);
+  return transaction(() => {
+    const db = getDatabase();
+    db.prepare('UPDATE providers SET is_primary = 0').run();
+    db.prepare('UPDATE providers SET is_primary = 1 WHERE id = ?').run(id);
+  });
 }
 
 export function removeProvider(id: number) {
