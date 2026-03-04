@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { logger } from './Logger.js';
 
 const SIGIL_DIR = path.join(os.homedir(), '.sigil');
 const DB_PATH = path.join(SIGIL_DIR, 'sigil.db');
@@ -29,6 +30,7 @@ export function getDatabase(): DatabaseSync {
   initializeTables(db);
   // migrateProviders(db);
   migrateChats(db);
+  migrateTransactions(db);
   seedDefaults(db);
 
   return db;
@@ -84,7 +86,7 @@ function initializeTables(db: DatabaseSync): void {
       id          INTEGER PRIMARY KEY AUTOINCREMENT,
       agent_id    TEXT NOT NULL,
       timestamp   DATETIME DEFAULT CURRENT_TIMESTAMP,
-      type        TEXT NOT NULL CHECK(type IN ('transfer', 'mint', 'burn', 'airdrop', 'swap', 'create_token', 'close_account', 'create_pool')),
+      type        TEXT NOT NULL CHECK(type IN ('transfer', 'mint', 'burn', 'airdrop', 'swap', 'create_token', 'close_account', 'create_pool', 'stake', 'memo')),
       token       TEXT,
       amount      REAL,
       recipient   TEXT,
@@ -120,7 +122,45 @@ function initializeTables(db: DatabaseSync): void {
   `);
 }
 
-// Migration history: base_url and compat columns added in v0.1.0
+/**
+ * Update transactions table to include 'stake' and 'memo' types
+ */
+function migrateTransactions(db: DatabaseSync): void {
+  const tableInfo = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='transactions'").get() as { sql: string } | undefined;
+  if (!tableInfo) return;
+
+  if (!tableInfo.sql.includes("'stake'") || !tableInfo.sql.includes("'memo'")) {
+    logger.info('Migrating transactions table to support stake/memo types...');
+    db.exec(`
+      BEGIN TRANSACTION;
+      
+      -- 1. Create new table with updated constraints
+      CREATE TABLE transactions_new (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        agent_id    TEXT NOT NULL,
+        timestamp   DATETIME DEFAULT CURRENT_TIMESTAMP,
+        type        TEXT NOT NULL CHECK(type IN ('transfer', 'mint', 'burn', 'airdrop', 'swap', 'create_token', 'close_account', 'create_pool', 'stake', 'memo')),
+        token       TEXT,
+        amount      REAL,
+        recipient   TEXT,
+        signature   TEXT,
+        status      TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'confirmed', 'failed')),
+        fee         REAL,
+        FOREIGN KEY (agent_id) REFERENCES agents(id)
+      );
+
+      -- 2. Copy data
+      INSERT INTO transactions_new SELECT * FROM transactions;
+
+      -- 3. Swap tables
+      DROP TABLE transactions;
+      ALTER TABLE transactions_new RENAME TO transactions;
+
+      COMMIT;
+    `);
+    logger.info('Transactions table migration complete.');
+  }
+}
 
 /**
  * Add tools column to chats table
