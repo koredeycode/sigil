@@ -5,9 +5,15 @@ import { CONSTANTS } from '../lib/Constants.js';
 import { getAgent, getAgentChats, insertLog } from '../lib/Database.js';
 import { logger } from '../lib/Logger.js';
 import { LRUCache } from '../lib/LRUCache.js';
-import { agentManager } from './AgentManager.js';
 import { buildSystemPrompt, getPrimaryModel } from './LLMChain.js';
 import { createTools } from './ToolRegistry.js';
+import type { IAgentManager } from './types.js';
+
+let agentManager: IAgentManager | null = null;
+
+export function setAgentManager(manager: IAgentManager): void {
+  agentManager = manager;
+}
 
 // In-memory checkpointer — provides state within agent tool-call loops.
 // Cross-session chat persistence is handled by our existing SQLite database.
@@ -159,7 +165,7 @@ export async function invokeSolanaAgent(
     insertLog(agentId, isCron ? 'cron_invoke' : 'agent_invoke', response, message);
 
     // Emit events
-    if (toolResults.length > 0) {
+    if (toolResults.length > 0 && agentManager) {
       for (const tr of toolResults) {
         agentManager.emit('agent:action', {
           agent: agentName,
@@ -170,11 +176,13 @@ export async function invokeSolanaAgent(
       }
     }
 
-    agentManager.emit('agent:thought', {
-      agent: agentName,
-      thought: response,
-      timestamp: new Date().toISOString(),
-    });
+    if (agentManager) {
+      agentManager.emit('agent:thought', {
+        agent: agentName,
+        thought: response,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     console.info(`[AgentLoop:${agentName}] Response: ${response.substring(0, 200)}...`);
 
@@ -184,11 +192,13 @@ export async function invokeSolanaAgent(
     logger.error(`AgentLoop error for ${agentName}`, { error: errMsg });
     insertLog(agentId, 'agent_error', `Error: ${errMsg}`, message);
 
-    agentManager.emit('agent:error', {
-      agent: agentName,
-      error: errMsg,
-      timestamp: new Date().toISOString(),
-    });
+    if (agentManager) {
+      agentManager.emit('agent:error', {
+        agent: agentName,
+        error: errMsg,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     return { response: `Error: ${errMsg}`, toolResults: [] };
   }

@@ -120,13 +120,7 @@ function initializeTables(db: DatabaseSync): void {
   `);
 }
 
-/**
- * Add new columns to existing providers table (safe to re-run).
- */
-// function migrateProviders(db: DatabaseSync): void {
-//   try { db.exec('ALTER TABLE providers ADD COLUMN base_url TEXT'); } catch {}
-//   try { db.exec("ALTER TABLE providers ADD COLUMN compat TEXT DEFAULT 'openai'"); } catch {}
-// }
+// Migration history: base_url and compat columns added in v0.1.0
 
 /**
  * Add tools column to chats table

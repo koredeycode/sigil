@@ -2,16 +2,16 @@ import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import { setMainAgentId, setMainAgentName } from '../lib/Config.js';
 import {
-  AgentRow,
-  createAgent as dbCreateAgent,
-  deleteAgent as dbDeleteAgent,
-  getAgent,
-  getAllAgents,
-  updateAgentProfile,
-  updateAgentStatus,
+    AgentRow,
+    createAgent as dbCreateAgent,
+    deleteAgent as dbDeleteAgent,
+    getAgent,
+    getAllAgents,
+    updateAgentProfile,
+    updateAgentStatus,
 } from '../lib/Database.js';
 import { createWallet, deleteWallet, getKeypair, importWallet, renameWallet, wipeFromMemory } from '../wallet/Wallet.js';
-import { invalidateAgentGraph, invokeSolanaAgent } from './AgentLoop.js';
+import { invalidateAgentGraph, invokeSolanaAgent, setAgentManager } from './AgentLoop.js';
 import { clearAgentKit } from './ToolRegistry.js';
 
 const MAIN_AGENT_NAME = 'sigil';
@@ -24,6 +24,12 @@ const MAIN_AGENT_NAME = 'sigil';
  * Future sub-agents can be layered on top.
  */
 export class AgentManager extends EventEmitter {
+
+  constructor() {
+    super();
+    // Register this instance with AgentLoop to break circular dependency
+    setAgentManager(this);
+  }
 
   /**
    * Get the main agent, or null if not yet initialized.
