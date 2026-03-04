@@ -24,7 +24,17 @@ export const chatMessageSchema = z.object({
 });
 
 // config.ts
-export const updateConfigSchema = z.record(z.any()); // The route allows arbitrary key-value pairs
+export const updateConfigSchema = z.object({
+  kill_switch: z.union([z.boolean(), z.string()]).optional(),
+  per_trade_limit: z.number().min(0).max(100).optional(),
+  daily_volume_cap: z.number().nonnegative().optional(),
+  slippage_cap: z.number().min(0).max(100).optional(),
+  cooldown_period: z.number().int().nonnegative().optional(),
+  confirmation_threshold: z.number().nonnegative().optional(),
+  rpc_url: z.string().url().optional(),
+  main_agent_id: z.string().optional(),
+  main_agent_name: z.string().optional(),
+});
 
 // cron.ts
 export const createCronJobSchema = z.object({

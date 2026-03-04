@@ -10,12 +10,13 @@ export interface AIProvider {
     is_primary: number;
 }
 
-type SettingsTab = 'system' | 'appearance' | 'blockchain' | 'providers';
+type SettingsTab = 'system' | 'appearance' | 'blockchain' | 'guardrails' | 'providers';
 
 const TABS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
     { id: 'system', label: 'System Info', icon: <Monitor className="w-4 h-4" /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette className="w-4 h-4" /> },
     { id: 'blockchain', label: 'Blockchain', icon: <Globe className="w-4 h-4" /> },
+    { id: 'guardrails', label: 'Guardrails', icon: <Shield className="w-4 h-4" /> },
     { id: 'providers', label: 'Providers', icon: <Bot className="w-4 h-4" /> },
 ];
 
@@ -161,6 +162,188 @@ function BlockchainSettings() {
                         </div>
                     </div>
                 </div>
+            </section>
+        </div>
+    );
+}
+
+function GuardrailSettings() {
+    const [config, setConfig] = useState<any>({
+        kill_switch: false,
+        per_trade_limit: 5,
+        daily_volume_cap: 10,
+        slippage_cap: 1,
+        cooldown_period: 30,
+        confirmation_threshold: 50
+    });
+    const [, setIsSaving] = useState(false);
+    const [saved, setSaved] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    const fetchConfig = useCallback(async () => {
+        const token = localStorage.getItem('sigil_token');
+        if (!token) { setLoading(false); return; }
+        try {
+            const client = new ApiClient(token);
+            const res = await client.getConfig();
+            if (res.data) {
+                setConfig({
+                    kill_switch: res.data.kill_switch === 'true',
+                    per_trade_limit: parseFloat(res.data.per_trade_limit || '5'),
+                    daily_volume_cap: parseFloat(res.data.daily_volume_cap || '10'),
+                    slippage_cap: parseFloat(res.data.slippage_cap || '1'),
+                    cooldown_period: parseInt(res.data.cooldown_period || '30', 10),
+                    confirmation_threshold: parseFloat(res.data.confirmation_threshold || '50')
+                });
+            }
+        } catch (e) { console.error('Failed to load config:', e); }
+        finally { setLoading(false); }
+    }, []);
+
+    useEffect(() => {
+        fetchConfig();
+    }, [fetchConfig]);
+
+    const handleSave = async (updates: any) => {
+        const token = localStorage.getItem('sigil_token');
+        if (!token) return;
+        setIsSaving(true);
+        try {
+            const client = new ApiClient(token);
+            await client.setConfig(updates);
+            setConfig((prev: any) => ({ ...prev, ...updates }));
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2000);
+        } catch (e) { console.error('Failed to save guardrails:', e); }
+        finally { setIsSaving(false); }
+    };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center p-12">
+                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6 max-w-2xl">
+            <section className="space-y-4">
+                <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    Security Guardrails
+                </h2>
+                <div className="bg-card border border-border rounded-xl divide-y divide-border shadow-sm overflow-hidden">
+                    {/* KILL SWITCH */}
+                    <div className="p-4 flex items-center justify-between bg-red-500/5">
+                        <div className="space-y-0.5">
+                            <h3 className="font-semibold text-sm text-red-500">Global Kill Switch</h3>
+                            <p className="text-xs text-muted-foreground">Immediately halt all transaction signing across all agents.</p>
+                        </div>
+                        <button
+                            onClick={() => handleSave({ kill_switch: !config.kill_switch })}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${config.kill_switch ? 'bg-red-500' : 'bg-secondary'}`}
+                        >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.kill_switch ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                    </div>
+
+                    {/* PER TRADE LIMIT */}
+                    <div className="p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-0.5">
+                                <h3 className="font-medium text-sm">Per-Trade Limit</h3>
+                                <p className="text-xs text-muted-foreground">Maximum percentage of portfolio value per trade.</p>
+                            </div>
+                            <span className="text-sm font-mono font-bold text-primary">{config.per_trade_limit}%</span>
+                        </div>
+                        <input 
+                            type="range" min="0.1" max="100" step="0.1"
+                            value={config.per_trade_limit}
+                            onChange={(e) => setConfig({...config, per_trade_limit: parseFloat(e.target.value)})}
+                            onMouseUp={() => handleSave({ per_trade_limit: config.per_trade_limit })}
+                            className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                        />
+                    </div>
+
+                    {/* DAILY VOLUME CAP */}
+                    <div className="p-4 flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <h3 className="font-medium text-sm">Daily Volume Cap</h3>
+                            <p className="text-xs text-muted-foreground">Total SOL volume allowed per 24h window.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input 
+                                type="number" 
+                                value={config.daily_volume_cap}
+                                onChange={(e) => setConfig({...config, daily_volume_cap: parseFloat(e.target.value)})}
+                                onBlur={() => handleSave({ daily_volume_cap: config.daily_volume_cap })}
+                                className="w-20 px-2 py-1 bg-secondary border border-border rounded text-sm font-mono text-right"
+                            />
+                            <span className="text-xs text-muted-foreground font-bold">SOL</span>
+                        </div>
+                    </div>
+
+                    {/* SLIPPAGE CAP */}
+                    <div className="p-4 flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <h3 className="font-medium text-sm">Slippage Cap</h3>
+                            <p className="text-xs text-muted-foreground">Maximum slippage % allowed for DEX swaps.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                             <input 
+                                type="number" 
+                                value={config.slippage_cap}
+                                onChange={(e) => setConfig({...config, slippage_cap: parseFloat(e.target.value)})}
+                                onBlur={() => handleSave({ slippage_cap: config.slippage_cap })}
+                                className="w-20 px-2 py-1 bg-secondary border border-border rounded text-sm font-mono text-right"
+                            />
+                            <span className="text-xs text-muted-foreground font-bold">%</span>
+                        </div>
+                    </div>
+
+                    {/* COOLDOWN */}
+                    <div className="p-4 flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <h3 className="font-medium text-sm">Cooldown Period</h3>
+                            <p className="text-xs text-muted-foreground">Minimum seconds between transactions.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                             <input 
+                                type="number" 
+                                value={config.cooldown_period}
+                                onChange={(e) => setConfig({...config, cooldown_period: parseInt(e.target.value, 10)})}
+                                onBlur={() => handleSave({ cooldown_period: config.cooldown_period })}
+                                className="w-20 px-2 py-1 bg-secondary border border-border rounded text-sm font-mono text-right"
+                            />
+                            <span className="text-xs text-muted-foreground font-bold">SEC</span>
+                        </div>
+                    </div>
+
+                    {/* CONFIRMATION THRESHOLD */}
+                    <div className="p-4 flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <h3 className="font-medium text-sm">Confirmation Threshold</h3>
+                            <p className="text-xs text-muted-foreground">Trades above this SOL value require manual signing.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                             <input 
+                                type="number" 
+                                value={config.confirmation_threshold}
+                                onChange={(e) => setConfig({...config, confirmation_threshold: parseFloat(e.target.value)})}
+                                onBlur={() => handleSave({ confirmation_threshold: config.confirmation_threshold })}
+                                className="w-20 px-2 py-1 bg-secondary border border-border rounded text-sm font-mono text-right"
+                            />
+                            <span className="text-xs text-muted-foreground font-bold">SOL</span>
+                        </div>
+                    </div>
+                </div>
+
+                {saved && (
+                    <div className="flex items-center gap-2 text-green-500 text-xs font-bold animate-in fade-in slide-in-from-bottom-2">
+                        <Check className="w-3.5 h-3.5" /> Settings Saved & Enforced
+                    </div>
+                )}
             </section>
         </div>
     );
@@ -406,6 +589,11 @@ export function SettingsPage() {
                 {/* Blockchain Tab */}
                 {activeTab === 'blockchain' && (
                     <BlockchainSettings />
+                )}
+
+                {/* Guardrails Tab */}
+                {activeTab === 'guardrails' && (
+                    <GuardrailSettings />
                 )}
 
                 {/* Providers Tab */}

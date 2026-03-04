@@ -1,5 +1,6 @@
 import { Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { insertTransaction, updateTransactionStatus } from '../lib/Database.js';
+import { TradeIntent, validateIntent } from '../lib/Guardrails.js';
 import { getConnection } from './TransactionBuilder.js';
 import { getKeypair, isKeyLoaded } from './Wallet.js';
 
@@ -36,6 +37,30 @@ export async function signAndSubmit(
       `Agent "${agentName}" is inactive (keys wiped) — private key not in memory. Cannot sign.`
     );
   }
+
+  // ─── GUARDRAILS CHECK ───────────────────────────────────────────────────
+  const connection = getConnection();
+  const keypair = await getKeypair(agentName);
+  const balance = await connection.getBalance(keypair.publicKey);
+  const portfolioValue = balance / 1e9;
+
+  const intent: TradeIntent = {
+    agentId,
+    type: txType as any,
+    amount: txMeta?.amount,
+    recipient: txMeta?.recipient,
+    portfolioValue
+  };
+
+  const validation = validateIntent(intent);
+  if (!validation.passed) {
+    throw new Error(`Guardrail Blocked: ${validation.reason}`);
+  }
+
+  if (validation.requiresConfirmation) {
+    throw new Error(`Guardrail Alert: ${validation.reason} [REQUIRES_MANUAL_CONFIRMATION]`);
+  }
+  // ────────────────────────────────────────────────────────────────────────
 
   // Record pending transaction in DB
   const dbResult = insertTransaction(
