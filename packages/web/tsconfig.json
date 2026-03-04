@@ -1,4 +1,3 @@
-// Web TSConfig: Vite project root config. References separate configs for app (browser) and node (build environment).
 {
   "files": [],
   "references": [

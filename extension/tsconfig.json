@@ -1,4 +1,3 @@
-// Extension TSConfig: Chrome browser extension configuration.
 {
   "extends": "plasmo/templates/tsconfig.base",
   "exclude": [

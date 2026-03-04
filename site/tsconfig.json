@@ -1,4 +1,3 @@
-// Site TSConfig: Next.js specific configuration for the Fumadocs documentation / landing page.
 {
   "compilerOptions": {
     "baseUrl": ".",
