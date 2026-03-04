@@ -4,6 +4,7 @@ import http from 'http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server as SocketIOServer } from 'socket.io';
+import { AppError } from '../lib/Errors.js';
 import { logger } from '../lib/Logger.js';
 import { authMiddleware } from './middleware/auth.js';
 import { apiLimiter, authLimiter, llmLimiter } from './middleware/rateLimit.js';
@@ -76,8 +77,17 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
 
   // Global error handler
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    logger.error('Server error', { message: err.message });
-    res.status(500).json({ message: err.message, data: null });
+    logger.error('Server error', { message: err.message, stack: err.stack });
+
+    if (err instanceof AppError) {
+      res.status(err.statusCode).json({
+        message: err.message,
+        data: null,
+      });
+      return;
+    }
+
+    res.status(500).json({ message: 'Internal Server Error', data: null });
   });
 
   // Serve Web Dashboard (Static Site)
