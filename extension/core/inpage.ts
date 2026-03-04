@@ -102,26 +102,59 @@ class SigilWalletProvider extends EventEmitter implements SigilProvider {
   }
 
   async signTransaction(transaction: any): Promise<any> {
-    // We send base64 encoded transaction to the background script
-    const serializedTx = transaction.serialize({ requireAllSignatures: false, verifySignatures: false });
+    console.log(`[Sigil Provider] signTransaction called. TX type: ${transaction.constructor?.name}, has version: ${'version' in transaction}`);
+
+    // Serialize the transaction to send to the background script
+    let serializedTx: Uint8Array;
+    try {
+        serializedTx = transaction.serialize({ requireAllSignatures: false, verifySignatures: false });
+        console.log(`[Sigil Provider] Serialized as legacy Transaction (${serializedTx.length} bytes).`);
+    } catch (e) {
+        // VersionedTransaction.serialize() accepts no args
+        console.log(`[Sigil Provider] Legacy serialize failed, trying VersionedTransaction serialize...`);
+        serializedTx = transaction.serialize();
+        console.log(`[Sigil Provider] Serialized as VersionedTransaction (${serializedTx.length} bytes).`);
+    }
+
+    const base64Tx = Buffer.from(serializedTx).toString('base64');
+    console.log(`[Sigil Provider] Sending base64 TX (${base64Tx.length} chars) to background...`);
+
     const res = await this._request('signTransaction', { 
-        transactionMessage: Buffer.from(serializedTx).toString('base64') 
+        transactionMessage: base64Tx
     });
     
-    // The background script will return a base64 encoded signed transaction or signature.
-    // For simplicity, assuming the background returns the full signed transaction in base64.
-    const decodedTx = Buffer.from(res.signedTransaction, 'base64');
-    
-    // We modify the original transaction object if it's an old VersionedTransaction or Transaction
-    if ('version' in transaction) {
-       // @ts-ignore - this is a crude way to restore it, depending on web3.js version we might need `VersionedTransaction.deserialize`
-       const tx = window.solanaWeb3.VersionedTransaction.deserialize(decodedTx);
-       return tx;
-    } else {
-       // @ts-ignore
-       const tx = window.solanaWeb3.Transaction.from(decodedTx);
-       return tx;
+    console.log(`[Sigil Provider] Received response from background:`, JSON.stringify(res).substring(0, 200));
+
+    if (!res || !res.signedTransaction) {
+        console.error(`[Sigil Provider] No signedTransaction in response:`, res);
+        throw new Error('Signing failed: No signed transaction returned from Sigil.');
     }
+
+    // Return the raw signed bytes as a Uint8Array — the calling dApp will
+    // deserialize using its own @solana/web3.js (we can't import it here
+    // because this script runs in the page's MAIN world, not the extension).
+    const signedBytes = Uint8Array.from(Buffer.from(res.signedTransaction, 'base64'));
+    console.log(`[Sigil Provider] Returning signed TX buffer (${signedBytes.length} bytes) to dApp.`);
+    
+    // Mutate the original transaction object with the signed data.
+    // This works because Transaction.from() / VersionedTransaction.deserialize()
+    // are on the dApp's @solana/web3.js, and the constructor is known.
+    const txConstructor = transaction.constructor;
+    if (txConstructor && typeof txConstructor.from === 'function') {
+       // Legacy Transaction
+       const signed = txConstructor.from(signedBytes);
+       console.log(`[Sigil Provider] Deserialized signed legacy Transaction via constructor.from().`);
+       return signed;
+    } else if (txConstructor && typeof txConstructor.deserialize === 'function') {
+       // VersionedTransaction
+       const signed = txConstructor.deserialize(signedBytes);
+       console.log(`[Sigil Provider] Deserialized signed VersionedTransaction via constructor.deserialize().`);
+       return signed;
+    }
+
+    // Fallback: return a plain object with the signed bytes for the dApp to handle
+    console.log(`[Sigil Provider] Could not find constructor methods, returning raw signedTransaction.`);
+    return { signedTransaction: res.signedTransaction, signedBytes };
   }
 
   async signAllTransactions(transactions: any[]): Promise<any[]> {

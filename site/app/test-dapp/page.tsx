@@ -96,9 +96,13 @@ export default function TestDappPage() {
       tx.recentBlockhash = blockhash;
       tx.feePayer = new PublicKey(pubkey);
 
-      const result = await provider.signTransaction(tx);
+      const signedTx = await provider.signTransaction(tx);
       
-      setTxResult({ status: "success", tx: result });
+      // Submit the signed transaction to devnet
+      const rawTx = signedTx.serialize();
+      const signature = await connection.sendRawTransaction(rawTx, { skipPreflight: false });
+      
+      setTxResult({ status: "success", signature });
       
     } catch (error: any) {
       setTxResult({ status: "rejected", error: error.message });
@@ -183,7 +187,7 @@ export default function TestDappPage() {
                   <button 
                       onClick={simulateTransaction}
                       disabled={isSimulating}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
+                      className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
                   >
                       {isSimulating ? "Waiting for Agent..." : "Trigger Transaction"}
                   </button>
@@ -192,8 +196,23 @@ export default function TestDappPage() {
                       <div className={`p-4 rounded-lg border text-sm ${
                           txResult.status === 'success' ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'
                       }`}>
-                          <strong className="block mb-1 font-semibold">{txResult.status === 'success' ? 'Transaction Signed!' : 'Transaction Rejected'}</strong>
-                          <span className="text-muted-foreground">{txResult.error || "The Agent signed the transaction and returned the buffer."}</span>
+                          <strong className="block mb-1 font-semibold">{txResult.status === 'success' ? 'Transaction Submitted!' : 'Transaction Failed'}</strong>
+                          {txResult.status === 'success' ? (
+                            <div className="space-y-2">
+                              <p className="text-muted-foreground">Transaction has been signed and submitted to Solana Devnet.</p>
+                              <a 
+                                href={`https://explorer.solana.com/tx/${txResult.signature}?cluster=devnet`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 text-primary hover:underline font-medium"
+                              >
+                                View on Solana Explorer ↗
+                              </a>
+                              <p className="text-xs text-muted-foreground font-mono break-all mt-1">{txResult.signature}</p>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">{txResult.error}</span>
+                          )}
                       </div>
                   )}
                </div>

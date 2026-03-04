@@ -5,9 +5,8 @@ import { useEffect, useState } from "react";
 // ─── Type Definitions ──────────────────────────────────────────────────────
 
 interface SimulationData {
-  status: 'approved' | 'rejected';
   analysis?: string;
-  riskLevel?: 'LOW' | 'HIGH';
+  riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
   error?: string;
 }
 
@@ -224,7 +223,7 @@ export default function IndexPopup() {
           .then(res => {
               if (res.status === 401) {
                   setAuthToken(null);
-                  setSimulationData({ error: 'Authentication required. Please re-enter your token.', status: 'rejected' });
+                  setSimulationData({ error: 'Authentication required. Please re-enter your token.', riskLevel: 'HIGH' });
                   return null;
               }
               return res.json();
@@ -233,7 +232,7 @@ export default function IndexPopup() {
               if (data) setSimulationData(data);
           })
           .catch(err => {
-              setSimulationData({ error: err.message, status: 'rejected' });
+              setSimulationData({ error: err.message, riskLevel: 'HIGH' });
           })
           .finally(() => {
               setIsSimulating(false);
@@ -375,8 +374,8 @@ export default function IndexPopup() {
             disabled={isValidatingToken || !tokenInput.trim()}
             style={{
               width: "100%", padding: "12px", marginTop: "16px", borderRadius: "8px", border: "none",
-              backgroundColor: theme === 'dark' ? "#fff" : "#000",
-              color: theme === 'dark' ? "#000" : "#fff",
+              backgroundColor: "#16a34a",
+              color: "#fff",
               cursor: (isValidatingToken || !tokenInput.trim()) ? "not-allowed" : "pointer",
               fontWeight: "bold", fontSize: "14px",
               opacity: (isValidatingToken || !tokenInput.trim()) ? 0.5 : 1,
@@ -437,7 +436,7 @@ export default function IndexPopup() {
                           resolveRequest(null, "Failed to connect to Sigil: " + (e instanceof Error ? e.message : 'Unknown error'));
                       }
                   }}
-                  style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "none", backgroundColor: theme === 'dark' ? "#fff" : "#000", color: theme === 'dark' ? "#000" : "#fff", cursor: "pointer", fontWeight: "bold" }}>
+                  style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "none", backgroundColor: "#16a34a", color: "#fff", cursor: "pointer", fontWeight: "bold" }}>
                     Connect
                 </button>
             </div>
@@ -644,7 +643,11 @@ export default function IndexPopup() {
   // Sign Transaction view perfectly matches Transaction Detail Modal inside the Wallet View envelope
   if (requestObj?.type === "signTransaction") {
       const sim = simulationData || requestObj.simulationData;
-      const isApproved = sim?.status === "approved";
+      const riskLevel = sim?.riskLevel || 'HIGH';
+      const riskColor = riskLevel === 'LOW' ? '#10b981' : riskLevel === 'MEDIUM' ? '#f59e0b' : '#ef4444';
+      const riskBg = riskLevel === 'LOW' ? 'rgba(16, 185, 129, 0.05)' : riskLevel === 'MEDIUM' ? 'rgba(245, 158, 11, 0.05)' : 'rgba(239, 68, 68, 0.05)';
+      const riskBorder = riskLevel === 'LOW' ? 'rgba(16, 185, 129, 0.2)' : riskLevel === 'MEDIUM' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+      const riskLabel = riskLevel === 'LOW' ? 'Low Risk' : riskLevel === 'MEDIUM' ? 'Medium Risk' : 'High Risk';
 
       return (
          <div style={{ padding: 0, margin: 0, width: "100%", height: "100vh", boxSizing: "border-box", fontFamily: "sans-serif", backgroundColor: colors.bg, color: colors.text, display: "flex", flexDirection: "column", transition: "all 0.2s", overflow: "hidden" }}>
@@ -671,13 +674,15 @@ export default function IndexPopup() {
                     <>
                         {/* Agent Analysis Grid Match */}
                         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "16px", marginBottom: "20px" }}>
-                            <div style={{ padding: "12px", backgroundColor: isApproved ? "rgba(16, 185, 129, 0.05)" : "rgba(239, 68, 68, 0.05)", border: `1px solid ${isApproved ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)"}`, borderRadius: "8px" }}>
-                                <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: colors.textMuted, textTransform: "uppercase", fontWeight: "500" }}>Analysis Status</p>
-                                <span style={{ fontSize: "14px", fontWeight: "600", color: isApproved ? "#10b981" : "#ef4444" }}>
-                                    {isApproved ? "Confirmed Safe" : "Action Required / Warning"}
-                                </span>
+                            <div style={{ padding: "12px", backgroundColor: riskBg, border: `1px solid ${riskBorder}`, borderRadius: "8px" }}>
+                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                                    <p style={{ margin: 0, fontSize: "12px", color: colors.textMuted, textTransform: "uppercase", fontWeight: "500" }}>Agent Risk Assessment</p>
+                                    <span style={{ fontSize: "11px", fontWeight: "700", color: riskColor, padding: "2px 8px", borderRadius: "4px", backgroundColor: riskBg, border: `1px solid ${riskBorder}`, textTransform: "uppercase" }}>
+                                        {riskLabel}
+                                    </span>
+                                </div>
                                 
-                                <p style={{ margin: "8px 0 0 0", fontSize: "13px", color: theme === 'dark' ? "#d4d4d8" : "#3f3f46", lineHeight: "1.5" }}>
+                                <p style={{ margin: 0, fontSize: "13px", color: theme === 'dark' ? "#d4d4d8" : "#3f3f46", lineHeight: "1.5" }}>
                                     {sim?.analysis || "The agent could not analyze this transaction."}
                                 </p>
                             </div>
@@ -722,8 +727,8 @@ export default function IndexPopup() {
                 <button 
                   onClick={() => resolveRequest({ approved: true })}
                   disabled={isSigning || isSimulating}
-                  style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "none", backgroundColor: isSimulating ? colors.border : (isApproved ? "#3b82f6" : "#ef4444"), color: (isSimulating && theme === 'light') ? "#000" : "#fff", cursor: (isSigning || isSimulating) ? "not-allowed" : "pointer", fontWeight: "bold", transition: "opacity 0.2s", opacity: (isSigning || isSimulating) ? 0.7 : 1 }}>
-                   {isSigning ? "Signing..." : (isApproved ? "Sign Transaction" : "Sign Anyway")}
+                  style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "none", backgroundColor: isSimulating ? colors.border : "#16a34a", color: (isSimulating && theme === 'light') ? "#000" : "#fff", cursor: (isSigning || isSimulating) ? "not-allowed" : "pointer", fontWeight: "bold", transition: "opacity 0.2s", opacity: (isSigning || isSimulating) ? 0.7 : 1 }}>
+                   {isSigning ? "Signing..." : "Sign Transaction"}
                 </button>
             </div>
          </div>

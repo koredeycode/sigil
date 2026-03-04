@@ -104,6 +104,29 @@ walletProviderRouter.get('/transactions', async (req, res) => {
   }
 });
 
+const SYSTEM_PROGRAM_ID = '11111111111111111111111111111111';
+
+/**
+ * Decode known program instruction data into human-readable text.
+ * Falls back to raw hex for unknown programs.
+ */
+function decodeInstructionData(programId: string, data: Uint8Array, accounts: string[]): string {
+  if (programId === SYSTEM_PROGRAM_ID && data.length >= 4) {
+    const ixType = data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24);
+    if (ixType === 2 && data.length >= 12) {
+      // Transfer instruction: 4-byte type + 8-byte lamports (little-endian u64)
+      const view = new DataView(data.buffer, data.byteOffset, data.byteLength);
+      const lamports = Number(view.getBigUint64(4, true));
+      const sol = lamports / 1e9;
+      return `System Program: Transfer ${sol} SOL (${lamports.toLocaleString()} lamports) from ${accounts[0] || '?'} to ${accounts[1] || '?'}`;
+    }
+    const ixNames: Record<number, string> = { 0: 'CreateAccount', 1: 'Assign', 2: 'Transfer', 3: 'CreateAccountWithSeed', 4: 'AdvanceNonceAccount', 5: 'WithdrawNonceAccount', 6: 'InitializeNonceAccount', 7: 'AuthorizeNonceAccount', 8: 'Allocate', 9: 'AllocateWithSeed', 10: 'AssignWithSeed', 11: 'TransferWithSeed' };
+    return `System Program: ${ixNames[ixType] || `Unknown(${ixType})`}`;
+  }
+  // Unknown program — return raw hex
+  return `Data (hex): ${Buffer.from(data).toString('hex')}`;
+}
+
 // POST /api/wallet/provider/simulate
 walletProviderRouter.post('/simulate', validateBody(simulateTransactionSchema), async (req, res) => {
   try {
@@ -117,6 +140,7 @@ walletProviderRouter.post('/simulate', validateBody(simulateTransactionSchema), 
 
     // Decode the base64 transaction string
     const txBuffer = Buffer.from(transactionMessage, 'base64');
+    logger.info(`[Simulate] Received transaction buffer (${txBuffer.length} bytes) from origin: ${origin}`);
     let decodedTx: Transaction | VersionedTransaction;
     let instructionsSummary = '';
 
@@ -124,59 +148,80 @@ walletProviderRouter.post('/simulate', validateBody(simulateTransactionSchema), 
       // Try parsing as a VersionedTransaction first, fallback to standard Transaction
       try {
          decodedTx = VersionedTransaction.deserialize(txBuffer);
-         instructionsSummary = `Versioned Transaction containing ${decodedTx.message.compiledInstructions.length} instructions.`;
+         const accountKeys = decodedTx.message.staticAccountKeys;
+         logger.info(`[Simulate] Decoded as VersionedTransaction with ${decodedTx.message.compiledInstructions.length} instruction(s) and ${accountKeys.length} account key(s).`);
+
+         const ixDetails = decodedTx.message.compiledInstructions.map((ix, i) => {
+            const programId = accountKeys[ix.programIdIndex]?.toBase58() ?? `Unknown(index=${ix.programIdIndex})`;
+            const accounts = ix.accountKeyIndexes.map((idx) => accountKeys[idx]?.toBase58() ?? `Unknown(index=${idx})`);
+            const decoded = decodeInstructionData(programId, ix.data, accounts);
+            return `Instruction ${i + 1}:\n  Program: ${programId}\n  Accounts: [${accounts.join(', ')}]\n  ${decoded}`;
+         });
+
+         instructionsSummary = `Versioned Transaction with ${decodedTx.message.compiledInstructions.length} instruction(s):\n\n${ixDetails.join('\n\n')}`;
+         logger.info(`[Simulate] Versioned TX instruction summary:\n${instructionsSummary}`);
       } catch (e) {
          decodedTx = Transaction.from(txBuffer);
-         instructionsSummary = decodedTx.instructions.map((ix, i) => 
-            `Instruction ${i + 1}: Program=${ix.programId.toBase58()} Keys=${ix.keys.map(k=>k.pubkey.toBase58()).join(', ')}`
-         ).join('\n');
+         logger.info(`[Simulate] Decoded as legacy Transaction with ${decodedTx.instructions.length} instruction(s).`);
+         instructionsSummary = decodedTx.instructions.map((ix, i) => {
+            const programId = ix.programId.toBase58();
+            const accounts = ix.keys.map(k => k.pubkey.toBase58());
+            const decoded = decodeInstructionData(programId, ix.data, accounts);
+            return `Instruction ${i + 1}:\n  Program: ${programId}\n  Accounts: [${ix.keys.map(k => `${k.pubkey.toBase58()} (signer=${k.isSigner}, writable=${k.isWritable})`).join(', ')}]\n  ${decoded}`;
+         }).join('\n\n');
+         logger.info(`[Simulate] Legacy TX instruction summary:\n${instructionsSummary}`);
       }
     } catch (e) {
-      logger.error(`Failed to decode transaction for simulation`, { error: e });
+      logger.error(`[Simulate] Failed to decode transaction buffer`, { error: e });
       const errMsg = e instanceof Error ? e.message : String(e);
       return res.status(400).json({ message: 'Failed to decode transaction buffer: ' + errMsg, data: null });
     }
 
-    logger.info(`Passing transaction to Agent '${mainAgent.name}' for risk analysis...`);
-    // Ask the agent to analyze the transaction
-    const prompt = `A dApp at ${origin} is requesting the user to sign a Solana transaction.
-Here is the raw breakdown of the transaction instructions:
+    logger.info(`[Simulate] Passing transaction to Agent '${mainAgent.name}' for risk analysis...`);
+
+    // Concise advisory-only prompt — formatted for clean chat display
+    const prompt = `Analyze this Solana transaction from ${origin}:
 
 ${instructionsSummary}
 
-Please analyze this transaction. Is it safe to sign? If it looks like a standard SOL or Token transfer, a swap, or a standard program interaction without malicious intent, approve it. 
-Explain your reasoning clearly and concisely to the user.
-End your response with exactly "DECISION: APPROVED" or "DECISION: REJECTED".`;
+Be concise. State what the transaction does in plain language, flag any concerns, and classify risk.
+Format: a short summary sentence, then "Risk: LOW", "MEDIUM", or "HIGH" on its own line at the end.`;
 
     let agentAnalysis = "Analysis failed.";
-    let status = 'rejected';
+    let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' = 'HIGH';
 
     try {
+        logger.info(`[Simulate] Invoking agent '${mainAgent.id}' with analysis prompt...`);
         const agentResponse = await agentManager.invoke(mainAgent.id, prompt);
         const text = agentResponse.response;
+        logger.info(`[Simulate] Agent raw response (${text.length} chars): ${text.substring(0, 200)}...`);
         
-        // Extract the decision
-        if (text.includes('DECISION: APPROVED')) {
-            status = 'approved';
-            agentAnalysis = text.replace('DECISION: APPROVED', '').trim();
-        } else if (text.includes('DECISION: REJECTED')) {
-            status = 'rejected';
-            agentAnalysis = text.replace('DECISION: REJECTED', '').trim();
+        // Extract the risk level classification (case-insensitive)
+        const upperText = text.toUpperCase();
+        if (upperText.includes('RISK: LOW')) {
+            riskLevel = 'LOW';
+        } else if (upperText.includes('RISK: MEDIUM')) {
+            riskLevel = 'MEDIUM';
+        } else if (upperText.includes('RISK: HIGH')) {
+            riskLevel = 'HIGH';
         } else {
-            status = 'rejected';
-            agentAnalysis = text + "\n\n(Agent failed to provide a conclusive DECISION indicator. Defaulting to rejected for safety.)";
+            riskLevel = 'HIGH';
+        }
+
+        // Clean the analysis text: remove the risk classification line
+        agentAnalysis = text.replace(/\n?Risk:\s*(LOW|MEDIUM|HIGH)/i, '').trim();
+        if (!agentAnalysis) {
+            agentAnalysis = '(No additional analysis provided.)';
         }
     } catch (e) {
-        logger.error(`Agent evaluation failed`, { error: e });
+        logger.error(`[Simulate] Agent evaluation failed`, { error: e });
         const errMsg = e instanceof Error ? e.message : String(e);
         agentAnalysis = `Agent failed to analyze transaction: ${errMsg}`;
     }
 
-    logger.info(`Evaluation complete. Status: ${status}, Risk: ${status === 'approved' ? 'LOW' : 'HIGH'}`);
-    const riskLevel = status === 'approved' ? 'LOW' : 'HIGH';
+    logger.info(`[Simulate] Evaluation complete. Risk: ${riskLevel}`);
 
     res.json({
-        status, 
         analysis: agentAnalysis,
         riskLevel
     });
@@ -197,28 +242,34 @@ walletProviderRouter.post('/sign', validateBody(signTransactionSchema), async (r
       return;
     }
 
-    logger.info(`Received request to physically sign transaction by Agent '${mainAgent.name}'...`);
+    logger.info(`[Sign] Received request to physically sign transaction by Agent '${mainAgent.name}'...`);
     
     const txBuffer = Buffer.from(transactionMessage, 'base64');
+    logger.info(`[Sign] Transaction buffer size: ${txBuffer.length} bytes`);
     let decodedTx: Transaction | VersionedTransaction;
     let finalTransactionBase64 = transactionMessage;
+    let txType = 'unknown';
 
     try {
         const keypair = await getKeypair(mainAgent.name);
-        logger.info(`Successfully retrieved private key for agent '${mainAgent.name}' from keytar.`);
+        logger.info(`[Sign] Successfully retrieved private key for agent '${mainAgent.name}' from keytar.`);
         
         try {
            decodedTx = VersionedTransaction.deserialize(txBuffer);
+           txType = 'versioned';
+           logger.info(`[Sign] Decoded as VersionedTransaction. Signing...`);
            decodedTx.sign([keypair]);
            finalTransactionBase64 = Buffer.from(decodedTx.serialize()).toString('base64');
         } catch (e) {
            decodedTx = Transaction.from(txBuffer);
+           txType = 'legacy';
+           logger.info(`[Sign] Decoded as legacy Transaction. Partial-signing...`);
            decodedTx.partialSign(keypair);
            finalTransactionBase64 = Buffer.from(decodedTx.serialize({ requireAllSignatures: false })).toString('base64');
         }
-        logger.info(`Transaction successfully signed by '${mainAgent.name}'. Returning payload to dApp.`);
+        logger.info(`[Sign] Transaction (${txType}) successfully signed by '${mainAgent.name}'. Signed payload size: ${finalTransactionBase64.length} chars base64.`);
     } catch (e) {
-        logger.error(`Signing failed`, { error: e });
+        logger.error(`[Sign] Signing failed`, { error: e });
         const errMsg = e instanceof Error ? e.message : String(e);
         return res.status(500).json({ message: "Failed to sign transaction physically: " + errMsg, data: null });
     }
