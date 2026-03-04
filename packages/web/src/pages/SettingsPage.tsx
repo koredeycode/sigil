@@ -167,16 +167,19 @@ function BlockchainSettings() {
     );
 }
 
+const GUARDRAIL_DEFAULTS = {
+    kill_switch: false,
+    per_trade_limit: 5,
+    daily_volume_cap: 10,
+    slippage_cap: 1,
+    cooldown_period: 30,
+    confirmation_threshold: 50
+};
+
 function GuardrailSettings() {
-    const [config, setConfig] = useState<any>({
-        kill_switch: false,
-        per_trade_limit: 5,
-        daily_volume_cap: 10,
-        slippage_cap: 1,
-        cooldown_period: 30,
-        confirmation_threshold: 50
-    });
-    const [, setIsSaving] = useState(false);
+    const [config, setConfig] = useState<any>(GUARDRAIL_DEFAULTS);
+    const [originalConfig, setOriginalConfig] = useState<any>(GUARDRAIL_DEFAULTS);
+    const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [loading, setLoading] = useState(true);
 
@@ -187,14 +190,16 @@ function GuardrailSettings() {
             const client = new ApiClient(token);
             const res = await client.getConfig();
             if (res.data) {
-                setConfig({
+                const fetched = {
                     kill_switch: res.data.kill_switch === 'true',
                     per_trade_limit: parseFloat(res.data.per_trade_limit || '5'),
                     daily_volume_cap: parseFloat(res.data.daily_volume_cap || '10'),
                     slippage_cap: parseFloat(res.data.slippage_cap || '1'),
                     cooldown_period: parseInt(res.data.cooldown_period || '30', 10),
                     confirmation_threshold: parseFloat(res.data.confirmation_threshold || '50')
-                });
+                };
+                setConfig(fetched);
+                setOriginalConfig(fetched);
             }
         } catch (e) { console.error('Failed to load config:', e); }
         finally { setLoading(false); }
@@ -204,19 +209,25 @@ function GuardrailSettings() {
         fetchConfig();
     }, [fetchConfig]);
 
-    const handleSave = async (updates: any) => {
+    const handleSave = async () => {
         const token = localStorage.getItem('sigil_token');
         if (!token) return;
         setIsSaving(true);
         try {
             const client = new ApiClient(token);
-            await client.setConfig(updates);
-            setConfig((prev: any) => ({ ...prev, ...updates }));
+            await client.setConfig(config);
+            setOriginalConfig(config);
             setSaved(true);
             setTimeout(() => setSaved(false), 2000);
         } catch (e) { console.error('Failed to save guardrails:', e); }
         finally { setIsSaving(false); }
     };
+
+    const handleResetDefaults = () => {
+        setConfig(GUARDRAIL_DEFAULTS);
+    };
+
+    const hasChanges = JSON.stringify(config) !== JSON.stringify(originalConfig);
 
     if (loading) {
         return (
@@ -241,7 +252,7 @@ function GuardrailSettings() {
                             <p className="text-xs text-muted-foreground">Immediately halt all transaction signing across all agents.</p>
                         </div>
                         <button
-                            onClick={() => handleSave({ kill_switch: !config.kill_switch })}
+                            onClick={() => setConfig({...config, kill_switch: !config.kill_switch})}
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${config.kill_switch ? 'bg-red-500' : 'bg-secondary'}`}
                         >
                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.kill_switch ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -261,7 +272,6 @@ function GuardrailSettings() {
                             type="range" min="0.1" max="100" step="0.1"
                             value={config.per_trade_limit}
                             onChange={(e) => setConfig({...config, per_trade_limit: parseFloat(e.target.value)})}
-                            onMouseUp={() => handleSave({ per_trade_limit: config.per_trade_limit })}
                             className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
                         />
                     </div>
@@ -277,7 +287,6 @@ function GuardrailSettings() {
                                 type="number" 
                                 value={config.daily_volume_cap}
                                 onChange={(e) => setConfig({...config, daily_volume_cap: parseFloat(e.target.value)})}
-                                onBlur={() => handleSave({ daily_volume_cap: config.daily_volume_cap })}
                                 className="w-20 px-2 py-1 bg-secondary border border-border rounded text-sm font-mono text-right"
                             />
                             <span className="text-xs text-muted-foreground font-bold">SOL</span>
@@ -295,7 +304,6 @@ function GuardrailSettings() {
                                 type="number" 
                                 value={config.slippage_cap}
                                 onChange={(e) => setConfig({...config, slippage_cap: parseFloat(e.target.value)})}
-                                onBlur={() => handleSave({ slippage_cap: config.slippage_cap })}
                                 className="w-20 px-2 py-1 bg-secondary border border-border rounded text-sm font-mono text-right"
                             />
                             <span className="text-xs text-muted-foreground font-bold">%</span>
@@ -313,7 +321,6 @@ function GuardrailSettings() {
                                 type="number" 
                                 value={config.cooldown_period}
                                 onChange={(e) => setConfig({...config, cooldown_period: parseInt(e.target.value, 10)})}
-                                onBlur={() => handleSave({ cooldown_period: config.cooldown_period })}
                                 className="w-20 px-2 py-1 bg-secondary border border-border rounded text-sm font-mono text-right"
                             />
                             <span className="text-xs text-muted-foreground font-bold">SEC</span>
@@ -331,11 +338,38 @@ function GuardrailSettings() {
                                 type="number" 
                                 value={config.confirmation_threshold}
                                 onChange={(e) => setConfig({...config, confirmation_threshold: parseFloat(e.target.value)})}
-                                onBlur={() => handleSave({ confirmation_threshold: config.confirmation_threshold })}
                                 className="w-20 px-2 py-1 bg-secondary border border-border rounded text-sm font-mono text-right"
                             />
                             <span className="text-xs text-muted-foreground font-bold">SOL</span>
                         </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-4">
+                    <button
+                        onClick={handleResetDefaults}
+                        className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
+                    >
+                        Reset to Project Defaults
+                    </button>
+                    
+                    <div className="flex items-center gap-3">
+                        {hasChanges && (
+                            <button
+                                onClick={() => setConfig(originalConfig)}
+                                className="px-4 py-2 text-sm font-medium hover:bg-secondary rounded-md transition-colors"
+                            >
+                                Discard
+                            </button>
+                        )}
+                        <button
+                            disabled={!hasChanges || isSaving}
+                            onClick={handleSave}
+                            className="px-6 py-2 bg-primary text-primary-foreground rounded-md text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 disabled:opacity-50 disabled:shadow-none transition-all flex items-center gap-2"
+                        >
+                            {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                            {saved ? <><Check className="w-4 h-4" /> Changes Saved</> : 'Save Changes'}
+                        </button>
                     </div>
                 </div>
 
