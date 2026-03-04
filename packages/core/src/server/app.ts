@@ -54,7 +54,7 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
     const start = Date.now();
     res.on('finish', () => {
         const ms = Date.now() - start;
-        console.info(`[API Request] ${req.method} ${req.originalUrl} - ${res.statusCode} (${ms}ms)`);
+        logger.info(`[API Request] ${req.method} ${req.originalUrl} - ${res.statusCode} (${ms}ms)`);
     });
     next();
   });

@@ -1,7 +1,6 @@
 import { Navbar } from '@/components/Navbar';
-import type { ReactNode } from 'react';
 
-export default function Layout({ children }: { children: ReactNode }) {
+export default function Layout({ children }: { children: any }) {
   return (
     <div className="flex-1 flex flex-col">
       <Navbar />

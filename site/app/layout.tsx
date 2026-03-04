@@ -2,7 +2,6 @@ import { Footer } from '@/components/Footer';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import { ThemeProvider } from 'next-themes';
 import { JetBrains_Mono, Outfit } from 'next/font/google';
-import type { ReactNode } from 'react';
 import './global.css';
 
 const sans = Outfit({
@@ -15,7 +14,7 @@ const mono = JetBrains_Mono({
   variable: '--font-mono',
 });
 
-export default function Layout({ children }: { children: ReactNode }) {
+export default function Layout({ children }: { children: any }) {
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
       <body className="flex flex-col min-h-screen font-sans">
