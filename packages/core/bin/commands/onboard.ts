@@ -1,7 +1,6 @@
 import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
 import open from 'open';
-import { startTui } from 'sigil-tui';
 import { agentManager } from '../../src/agent/AgentManager.js';
 import { encryptApiKey } from '../../src/lib/Auth.js';
 import { getAuthToken } from '../../src/lib/Config.js';
@@ -207,6 +206,7 @@ export function registerOnboardCommand(program: Command) {
         } else {
           clack.log.info('Launching Terminal Interface...');
           console.clear();
+          const { startTui } = await import('sigil-tui');
           const app = startTui(7445, token);
           await app.waitUntilExit();
           clack.outro('Sigil is still running in the background. See you soon!');

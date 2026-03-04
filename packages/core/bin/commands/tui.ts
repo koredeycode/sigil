@@ -1,6 +1,5 @@
   import { Command } from 'commander';
 
-import { startTui } from 'sigil-tui';
 import { getAuthToken } from '../../src/lib/Config.js';
 
 export function register(program: Command) {
@@ -17,6 +16,7 @@ export function register(program: Command) {
       const API_PORT = 7445;
       // Clear screen before starting TUI
       console.clear();
+      const { startTui } = await import('sigil-tui');
       const app = startTui(API_PORT, token);
       await app.waitUntilExit();
     });
