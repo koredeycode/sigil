@@ -6,9 +6,16 @@ import { ESSENTIAL_TOOL_NAMES, clearAgentKit, getSolanaAgentKit } from './Solana
 
 /**
  * TOOL REGISTRY MODE
- * 'curated' - Efficient subset of solana-agent-kit tools (default)
- * 'full'    - All 100+ solana-agent-kit tools (vulnerable to token limits)
- * 'custom'  - Custom built tools (CustomTools)
+ * 
+ * @deprecated 'curated' - Efficient subset of solana-agent-kit tools. 
+ * Deprecated because direct solana-agent-kit tools bypass Sigil's internal 
+ * guardrails and transaction builder. Use 'custom' instead.
+ * 
+ * @deprecated 'full' - All 100+ solana-agent-kit tools.
+ * Deprecated for the same reason: lack of guardrail integration and 
+ * vulnerability to prompt injection bypassing security layers.
+ * 
+ * 'custom' - Sigil-native tools that route through Guardrails & Signer.
  */
 const TOOL_REGISTRY_MODE: 'curated' | 'full' | 'custom' = 'custom';
 
