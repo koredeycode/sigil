@@ -1,6 +1,14 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
-import { deleteCronJob, getAgent, insertCronJob } from '../lib/Database.js';
+import {
+  deleteCronJob,
+  getAgent,
+  getAgentLogs,
+  getCronJobsForAgent,
+  insertCronJob,
+  toggleCronJob,
+  updateCronJob
+} from '../lib/Database.js';
 import { agentManager } from './AgentManager.js';
 import { cronScheduler } from './CronScheduler.js';
 
@@ -10,6 +18,7 @@ import { cronScheduler } from './CronScheduler.js';
  */
 export function createOrchestratorTools(): DynamicStructuredTool[] {
   return [
+    // ─── Agent Management ─────────────────────────────────────────
     new DynamicStructuredTool({
       name: 'manage_agent',
       description: 'Create, start, pause, or destroy sub-agents.',
@@ -63,6 +72,61 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
       }
     }),
     new DynamicStructuredTool({
+      name: 'get_agent_info',
+      description: 'Get detailed information about a specific agent by name or ID, including its cron job count.',
+      schema: z.object({
+        nameOrId: z.string().describe('The name or ID of the agent to look up')
+      }),
+      func: async ({ nameOrId }) => {
+        try {
+          const agent = agentManager.get(nameOrId);
+          if (!agent) return `Agent "${nameOrId}" not found.`;
+          const crons = getCronJobsForAgent(agent.id);
+          const activeCrons = crons.filter(c => c.is_active);
+          return JSON.stringify({
+            id: agent.id,
+            name: agent.name,
+            status: agent.status,
+            pubkey: agent.pubkey,
+            loop_interval: agent.loop_interval,
+            prompt: agent.prompt,
+            created_at: agent.created_at,
+            cron_jobs_total: crons.length,
+            cron_jobs_active: activeCrons.length,
+          }, null, 2);
+        } catch (e: any) {
+          return `Failed to get agent info: ${e.message}`;
+        }
+      }
+    }),
+    new DynamicStructuredTool({
+      name: 'get_agent_logs',
+      description: 'Fetch the most recent logs for a specific agent.',
+      schema: z.object({
+        nameOrId: z.string().describe('The name or ID of the agent'),
+        limit: z.number().optional().describe('Maximum number of logs to return (default 20)')
+      }),
+      func: async ({ nameOrId, limit }) => {
+        try {
+          const agent = agentManager.get(nameOrId);
+          if (!agent) return `Agent "${nameOrId}" not found.`;
+          const logs = getAgentLogs(agent.id, limit || 20);
+          if (logs.length === 0) return `No logs found for agent "${agent.name}".`;
+          return JSON.stringify(logs.map(l => ({
+            id: l.id,
+            timestamp: l.timestamp,
+            action: l.action,
+            result: l.result,
+            thought: l.thought,
+          })), null, 2);
+        } catch (e: any) {
+          return `Failed to get agent logs: ${e.message}`;
+        }
+      }
+    }),
+
+    // ─── Cron Job Management ──────────────────────────────────────
+    new DynamicStructuredTool({
       name: 'schedule_cron_job',
       description: 'Schedule a cron job to send a prompt to an agent at given intervals.',
       schema: z.object({
@@ -84,8 +148,96 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
       }
     }),
     new DynamicStructuredTool({
+      name: 'list_cron_jobs',
+      description: 'List all cron jobs for a specific agent, including their ID, schedule, active status, and last run time.',
+      schema: z.object({
+        targetAgentName: z.string().describe('The name or ID of the agent to list cron jobs for')
+      }),
+      func: async ({ targetAgentName }) => {
+        try {
+          const agent = getAgent(targetAgentName);
+          if (!agent) return `Agent "${targetAgentName}" not found.`;
+          const jobs = getCronJobsForAgent(agent.id);
+          if (jobs.length === 0) return `No cron jobs found for agent "${agent.name}".`;
+          return JSON.stringify(jobs.map(j => ({
+            id: j.id,
+            name: j.name,
+            expression: j.expression,
+            task_prompt: j.task_prompt,
+            active: !!j.is_active,
+            last_run: j.last_run || 'Never',
+            created_at: j.created_at,
+          })), null, 2);
+        } catch (e: any) {
+          return `Failed to list cron jobs: ${e.message}`;
+        }
+      }
+    }),
+    new DynamicStructuredTool({
+      name: 'update_cron_job',
+      description: 'Update an existing cron job\'s name, cron expression, or task prompt.',
+      schema: z.object({
+        jobId: z.number().describe('The ID of the cron job to update'),
+        name: z.string().describe('New name for the scheduled task'),
+        expression: z.string().describe('New cron expression (e.g. "0 */2 * * *")'),
+        prompt: z.string().describe('New prompt/task to run when the cron triggers')
+      }),
+      func: async ({ jobId, name, expression, prompt }) => {
+        try {
+          const { getCronJob: getCron } = await import('../lib/Database.js');
+          const job = getCron(jobId);
+          if (!job) return `Cron job ${jobId} not found.`;
+
+          updateCronJob(jobId, name, expression, prompt);
+
+          // Reschedule if active
+          if (job.is_active) {
+            cronScheduler.cancel(String(jobId));
+            const agent = getAgent(job.agent_id);
+            if (agent && agent.status === 'running') {
+              cronScheduler.schedule(String(jobId), expression, job.agent_id, agent.name, prompt);
+            }
+          }
+
+          return `Cron job ${jobId} updated successfully. Name: "${name}", Expression: "${expression}".`;
+        } catch (e: any) {
+          return `Failed to update cron job ${jobId}: ${e.message}`;
+        }
+      }
+    }),
+    new DynamicStructuredTool({
+      name: 'toggle_cron_job',
+      description: 'Activate or deactivate an existing cron job.',
+      schema: z.object({
+        jobId: z.number().describe('The ID of the cron job to toggle'),
+        active: z.boolean().describe('Set to true to activate, false to deactivate')
+      }),
+      func: async ({ jobId, active }) => {
+        try {
+          const { getCronJob: getCron } = await import('../lib/Database.js');
+          const job = getCron(jobId);
+          if (!job) return `Cron job ${jobId} not found.`;
+
+          toggleCronJob(jobId, active);
+
+          if (active) {
+            const agent = getAgent(job.agent_id);
+            if (agent && agent.status === 'running') {
+              cronScheduler.schedule(String(jobId), job.expression, job.agent_id, agent.name, job.task_prompt);
+            }
+          } else {
+            cronScheduler.cancel(String(jobId));
+          }
+
+          return `Cron job ${jobId} ("${job.name}") ${active ? 'activated' : 'deactivated'} successfully.`;
+        } catch (e: any) {
+          return `Failed to toggle cron job ${jobId}: ${e.message}`;
+        }
+      }
+    }),
+    new DynamicStructuredTool({
       name: 'cancel_cron_job',
-      description: 'Cancel a scheduled cron job using its ID.',
+      description: 'Cancel and permanently delete a scheduled cron job using its ID.',
       schema: z.object({
         jobId: z.number().describe('The ID of the cron job to cancel')
       }),

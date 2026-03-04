@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import cron from 'node-cron';
 import { cronScheduler } from '../../agent/CronScheduler.js';
-import { deleteCronJob, getAgent, getCronJob, getCronJobsForAgent, insertCronJob, toggleCronJob } from '../../lib/Database.js';
+import { deleteCronJob, getAgent, getCronJob, getCronJobsForAgent, insertCronJob, toggleCronJob, updateCronJob } from '../../lib/Database.js';
 
 export const cronRouter: Router = Router();
 
@@ -80,6 +80,46 @@ cronRouter.patch('/:id', (req, res) => {
     }
 
     res.json({ message: `Cron job ${active ? 'activated' : 'deactivated'}`, data: { id, active } });
+  } catch (error) {
+    res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
+  }
+});
+
+// PUT /api/cron/:id — update a cron job
+cronRouter.put('/:id', (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { name, expression, taskPrompt } = req.body;
+
+    if (!name || !expression || !taskPrompt) {
+      res.status(400).json({ message: 'name, expression, and taskPrompt are required', data: null });
+      return;
+    }
+
+    if (!cron.validate(expression)) {
+      res.status(400).json({ message: `Invalid cron expression: ${expression}`, data: null });
+      return;
+    }
+
+    const job = getCronJob(id);
+    if (!job) {
+      res.status(404).json({ message: 'Cron job not found', data: null });
+      return;
+    }
+
+    updateCronJob(id, name, expression, taskPrompt);
+
+    // Reschedule if active
+    if (job.is_active) {
+      cronScheduler.cancel(String(id));
+      const agent = getAgent(job.agent_id);
+      if (agent && agent.status === 'running') {
+        cronScheduler.schedule(String(id), expression, job.agent_id, agent.name, taskPrompt);
+      }
+    }
+
+    const updated = getCronJob(id);
+    res.json({ message: 'Cron job updated', data: updated });
   } catch (error) {
     res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }

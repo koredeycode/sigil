@@ -463,6 +463,13 @@ export function deleteCronJob(id: number) {
   return db.prepare('DELETE FROM cron_jobs WHERE id = ?').run(id);
 }
 
+export function updateCronJob(id: number, name: string, expression: string, taskPrompt: string) {
+  const db = getDatabase();
+  return db.prepare(
+    'UPDATE cron_jobs SET name = ?, expression = ?, task_prompt = ? WHERE id = ?'
+  ).run(name, expression, taskPrompt, id);
+}
+
 export function getCronJob(id: number) {
   const db = getDatabase();
   return db.prepare('SELECT * FROM cron_jobs WHERE id = ?').get(id) as unknown as CronJobRow | undefined;

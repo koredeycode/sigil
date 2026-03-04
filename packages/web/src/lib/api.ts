@@ -209,6 +209,10 @@ export class ApiClient {
     return this.request('POST', '/cron', { agentId, name, expression, taskPrompt });
   }
 
+  async updateCronJob(id: number, name: string, expression: string, taskPrompt: string): Promise<ApiResponse<any>> {
+    return this.request('PUT', `/cron/${id}`, { name, expression, taskPrompt });
+  }
+
   async deleteCronJob(id: number): Promise<ApiResponse<void>> {
     return this.request<void>('DELETE', `/cron/${id}`);
   }
