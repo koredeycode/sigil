@@ -1,6 +1,8 @@
 export { };
 
-const SIGIL_SERVER_URL = "http://127.0.0.1:7445";
+    import { config } from '../core/config.js';
+
+const SIGIL_SERVER_URL = config.SERVER_URL;
 
 /**
  * Read the stored auth token from chrome.storage.local.

@@ -45,7 +45,9 @@ interface StorageChanges {
   [key: string]: chrome.storage.StorageChange;
 }
 
-const SIGIL_SERVER_URL = "http://127.0.0.1:7445";
+import { config } from "./core/config";
+
+const SIGIL_SERVER_URL = config.SERVER_URL;
 
 /**
  * Authenticated fetch wrapper. Reads the auth token from chrome.storage.local
