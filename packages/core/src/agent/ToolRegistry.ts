@@ -10,7 +10,7 @@ import { ESSENTIAL_TOOL_NAMES, clearAgentKit, getSolanaAgentKit } from './Solana
  * 'full'    - All 100+ solana-agent-kit tools (vulnerable to token limits)
  * 'custom'  - Custom built tools (CustomTools)
  */
-const TOOL_REGISTRY_MODE: 'curated' | 'full' | 'custom' = 'curated';
+const TOOL_REGISTRY_MODE: 'curated' | 'full' | 'custom' = 'custom';
 
 /**
  * Main entry point for creating tools.
