@@ -4,6 +4,7 @@ import http from 'http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server as SocketIOServer } from 'socket.io';
+import { getWebDistPath } from '../lib/Config.js';
 import { CONSTANTS } from '../lib/Constants.js';
 import { AppError } from '../lib/Errors.js';
 import { logger } from '../lib/Logger.js';
@@ -92,25 +93,7 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
   });
 
   // Serve Web Dashboard (Static Site)
-  const isDev = __dirname.includes(`src${path.sep}server`) && !__dirname.includes('dist');
-  const isCompiled = __dirname.includes(`dist${path.sep}src${path.sep}server`);
-  
-  let monoRepoRoot = '';
-  if (isCompiled) {
-      // packages/core/dist/src/server -> ../../../../../.. to root
-      // dist/src/server (1) -> dist/src (2) -> dist (3) -> core (4) -> packages (5) -> root
-      monoRepoRoot = path.resolve(__dirname, '../../../../..');
-  } else if (isDev) {
-      // packages/core/src/server -> ../../../..
-      // src/server (1) -> src (2) -> core (3) -> packages (4) -> root
-      monoRepoRoot = path.resolve(__dirname, '../../../..');
-  } else {
-      // packages/core -> ../..
-      monoRepoRoot = path.resolve(__dirname, '../..');
-  }
-  
-  const webDistPath = path.join(monoRepoRoot, 'packages', 'web', 'dist');
-  
+  const webDistPath = getWebDistPath();
   attachWebDashboard(app, webDistPath);
 
   // Setup WebSocket event forwarding

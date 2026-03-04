@@ -1,3 +1,5 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { getConfig, setConfig } from './Database.js';
 
 /**
@@ -84,4 +86,29 @@ export function getMainAgentName(): string {
 
 export function setMainAgentName(name: string): void {
   setConfig('main_agent_name', name);
+}
+
+/**
+ * Robust path resolution for the Web Dashboard dist directory across dev and prod builds.
+ * Calculates monorepo root dynamically using import.meta.url context.
+ */
+export function getWebDistPath(): string {
+  const currentFilename = fileURLToPath(import.meta.url);
+  const currentDirname = path.dirname(currentFilename);
+
+  const isDev = currentDirname.includes(`src${path.sep}lib`) && !currentDirname.includes('dist');
+  const isCompiled = currentDirname.includes(`dist${path.sep}src${path.sep}lib`);
+
+  let monoRepoRoot = '';
+  if (isCompiled) {
+    // packages/core/dist/src/lib -> root
+    monoRepoRoot = path.resolve(currentDirname, '../../../../..');
+  } else if (isDev) {
+    // packages/core/src/lib -> root
+    monoRepoRoot = path.resolve(currentDirname, '../../../..');
+  } else {
+    monoRepoRoot = path.resolve(currentDirname, '../..');
+  }
+
+  return path.join(monoRepoRoot, 'packages', 'web', 'dist');
 }
