@@ -3,6 +3,7 @@ import { MemorySaver } from '@langchain/langgraph';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import { getAgent, getAgentChats, insertLog } from '../lib/Database.js';
 import { logger } from '../lib/Logger.js';
+import { LRUCache } from '../lib/LRUCache.js';
 import { agentManager } from './AgentManager.js';
 import { buildSystemPrompt, getPrimaryModel } from './LLMChain.js';
 import { createTools } from './ToolRegistry.js';
@@ -12,7 +13,7 @@ import { createTools } from './ToolRegistry.js';
 const checkpointer = new MemorySaver();
 
 // Cached agent graphs per agent ID
-const agentGraphCache = new Map<string, ReturnType<typeof createReactAgent>>();
+const agentGraphCache = new LRUCache<string, ReturnType<typeof createReactAgent>>(50);
 
 /**
  * Get or create a LangGraph ReAct agent for the given agent.
@@ -98,12 +99,19 @@ export async function invokeSolanaAgent(
 
     inputMessages.push(new HumanMessage(message));
 
-    // Invoke the LangGraph agent with thread_id for memory persistence
-    const result = await graph.invoke(
-      { messages: inputMessages },
-      { 
-        configurable: { thread_id: agentId },
-        callbacks: [
+    // AbortController for LLM timeout (60 seconds)
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(new Error('LLM Invocation timed out after 60s')), 60000);
+
+    let result;
+    try {
+      // Invoke the LangGraph agent with thread_id for memory persistence
+      result = await graph.invoke(
+        { messages: inputMessages },
+        { 
+          configurable: { thread_id: agentId },
+          signal: abortController.signal,
+          callbacks: [
           {
             handleLLMEnd: (output) => {
               const usage = output.llmOutput?.tokenUsage || output.llmOutput?.estimatedTokenUsage;
@@ -117,7 +125,10 @@ export async function invokeSolanaAgent(
           }
         ]
       }
-    );
+      );
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     // Extract the last AI message from the result
     const resultMessages: BaseMessage[] = result.messages;
