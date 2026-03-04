@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { Server as SocketIOServer } from 'socket.io';
 import { logger } from '../lib/Logger.js';
 import { authMiddleware } from './middleware/auth.js';
+import { apiLimiter, authLimiter, llmLimiter } from './middleware/rateLimit.js';
 import { agentsRouter } from './routes/agents.js';
 import { chatRouter } from './routes/chat.js';
 import { configRouter } from './routes/config.js';
@@ -41,6 +42,9 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
   // Middleware
   app.use(cors());
   app.use(express.json());
+  
+  // Rate limits
+  app.use('/api', apiLimiter);
 
   // Request Logging Middleware
   app.use((req, res, next) => {
@@ -54,12 +58,15 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
 
   // Public routes (no auth)
   app.use('/api/status', statusRouter);
-  app.use('/api/extension/token', extensionTokenRouter);
+  app.use('/api/extension/token', authLimiter, extensionTokenRouter);
 
   // Auth-protected routes
   app.use('/api', authMiddleware);
   app.use('/api/agents', agentsRouter);
-  app.use('/api/chat', chatRouter);
+  
+  // Costly endpoints get an extra LLM rate limiter
+  app.use('/api/chat', llmLimiter, chatRouter);
+  app.use('/api/extension/simulate', llmLimiter);
   app.use('/api/transactions', transactionsRouter);
   app.use('/api/providers', providersRouter);
   app.use('/api/config', configRouter);
