@@ -16,7 +16,7 @@ export interface GuardrailResult {
 
 export interface TradeIntent {
   agentId: string;
-  type: 'transfer' | 'swap' | 'mint' | 'burn' | 'airdrop' | 'create_token' | 'close_account' | 'create_pool';
+  type: 'transfer' | 'swap' | 'mint' | 'burn' | 'airdrop' | 'create_token' | 'close_account' | 'create_pool' | 'stake' | 'memo';
   amount?: number;        // in SOL equivalent
   recipient?: string;
   slippage?: number;      // percentage for swaps

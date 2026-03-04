@@ -1,4 +1,4 @@
-import { Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { Keypair, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { insertTransaction, updateTransactionStatus } from '../lib/Database.js';
 import { TradeIntent, validateIntent } from '../lib/Guardrails.js';
 import { getConnection } from './TransactionBuilder.js';
@@ -19,6 +19,7 @@ export interface SignResult {
  * @param agentId - Agent ID for DB logging
  * @param txType - Transaction type for logging (e.g., 'transfer', 'mint')
  * @param txMeta - Optional metadata for logging (token, amount, recipient)
+ * @param extraSigners - Optional additional keypairs to sign the transaction (e.g., mintKeypair, stakeKeypair)
  */
 export async function signAndSubmit(
   agentName: string,
@@ -29,7 +30,8 @@ export async function signAndSubmit(
     token?: string;
     amount?: number;
     recipient?: string;
-  }
+  },
+  extraSigners?: Keypair[]
 ): Promise<SignResult> {
   // Safety check: ensure the key is loaded (not wiped by kill)
   if (!isKeyLoaded(agentName)) {
@@ -86,7 +88,7 @@ export async function signAndSubmit(
     transaction.feePayer = keypair.publicKey;
 
     // Sign and submit
-    const signature = await sendAndConfirmTransaction(connection, transaction, [keypair], {
+    const signature = await sendAndConfirmTransaction(connection, transaction, [keypair, ...(extraSigners || [])], {
       commitment: 'confirmed',
     });
 
