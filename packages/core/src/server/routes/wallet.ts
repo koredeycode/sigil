@@ -3,6 +3,12 @@ import { Router } from 'express';
 import { getRpcUrl } from '../../lib/Config.js';
 import { getAgent } from '../../lib/Database.js';
 
+interface SolanaInstruction {
+  programId?: string | { toBase58: () => string };
+  program?: string;
+  parsed?: unknown;
+}
+
 export const walletRouter: Router = Router();
 
 function getConnection(): Connection {
@@ -112,8 +118,8 @@ walletRouter.get('/:agentId/transaction/:signature', async (req, res) => {
       fee: tx.meta?.fee ? tx.meta.fee / 1e9 : 0,
       status: tx.meta?.err ? 'failed' : 'confirmed',
       error: tx.meta?.err ? JSON.stringify(tx.meta.err) : null,
-      instructions: tx.transaction.message.instructions.map((ix: any) => ({
-        programId: ix.programId?.toBase58?.() || ix.programId,
+      instructions: tx.transaction.message.instructions.map((ix: SolanaInstruction) => ({
+        programId: ix.programId && typeof ix.programId !== 'string' ? ix.programId.toBase58() : ix.programId,
         program: ix.program || null,
         parsed: ix.parsed || null,
       })),

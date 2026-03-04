@@ -22,8 +22,8 @@ extensionRouter.post('/connect', (req, res) => {
     
     // Return pubkey and name to the extension
     res.json({ message: 'Success', data: { publicKey: mainAgent.pubkey, name: mainAgent.name } });
-  } catch (err: any) {
-    res.status(500).json({ message: err.message, data: null });
+  } catch (err) {
+    res.status(500).json({ message: err instanceof Error ? err.message : String(err), data: null });
   }
 });
 
@@ -67,8 +67,8 @@ extensionRouter.get('/portfolio', async (req, res) => {
         pubkey: mainAgent.pubkey,
       },
     });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message, data: null });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }
 });
 
@@ -97,8 +97,8 @@ extensionRouter.get('/transactions', async (req, res) => {
     }));
 
     res.json({ message: 'Success', data: transactions });
-  } catch (error: any) {
-    res.status(500).json({ message: error.message, data: null });
+  } catch (error) {
+    res.status(500).json({ message: error instanceof Error ? error.message : String(error), data: null });
   }
 });
 
@@ -134,9 +134,10 @@ extensionRouter.post('/simulate', async (req, res) => {
             `Instruction ${i + 1}: Program=${ix.programId.toBase58()} Keys=${ix.keys.map(k=>k.pubkey.toBase58()).join(', ')}`
          ).join('\n');
       }
-    } catch (e: any) {
+    } catch (e) {
       logger.error(`Failed to decode transaction for simulation`, { error: e });
-      return res.status(400).json({ message: 'Failed to decode transaction buffer: ' + e.message, data: null });
+      const errMsg = e instanceof Error ? e.message : String(e);
+      return res.status(400).json({ message: 'Failed to decode transaction buffer: ' + errMsg, data: null });
     }
 
     logger.info(`Passing transaction to Agent '${mainAgent.name}' for risk analysis...`);
@@ -168,9 +169,10 @@ End your response with exactly "DECISION: APPROVED" or "DECISION: REJECTED".`;
             status = 'rejected';
             agentAnalysis = text + "\n\n(Agent failed to provide a conclusive DECISION indicator. Defaulting to rejected for safety.)";
         }
-    } catch (e: any) {
+    } catch (e) {
         logger.error(`Agent evaluation failed`, { error: e });
-        agentAnalysis = `Agent failed to analyze transaction: ${e.message}`;
+        const errMsg = e instanceof Error ? e.message : String(e);
+        agentAnalysis = `Agent failed to analyze transaction: ${errMsg}`;
     }
 
     logger.info(`Evaluation complete. Status: ${status}, Risk: ${status === 'approved' ? 'LOW' : 'HIGH'}`);
@@ -182,8 +184,8 @@ End your response with exactly "DECISION: APPROVED" or "DECISION: REJECTED".`;
         riskLevel
     });
 
-  } catch (err: any) {
-    res.status(500).json({ message: err.message, data: null });
+  } catch (err) {
+    res.status(500).json({ message: err instanceof Error ? err.message : String(err), data: null });
   }
 });
 
@@ -223,9 +225,10 @@ extensionRouter.post('/sign', async (req, res) => {
            finalTransactionBase64 = Buffer.from(decodedTx.serialize({ requireAllSignatures: false })).toString('base64');
         }
         logger.info(`Transaction successfully signed by '${mainAgent.name}'. Returning payload to dApp.`);
-    } catch (e: any) {
+    } catch (e) {
         logger.error(`Signing failed`, { error: e });
-        return res.status(500).json({ message: "Failed to sign transaction physically: " + e.message, data: null });
+        const errMsg = e instanceof Error ? e.message : String(e);
+        return res.status(500).json({ message: "Failed to sign transaction physically: " + errMsg, data: null });
     }
 
     res.json({
@@ -235,7 +238,7 @@ extensionRouter.post('/sign', async (req, res) => {
         }
     });
 
-  } catch (err: any) {
-    res.status(500).json({ message: err.message, data: null });
+  } catch (err) {
+    res.status(500).json({ message: err instanceof Error ? err.message : String(err), data: null });
   }
 });

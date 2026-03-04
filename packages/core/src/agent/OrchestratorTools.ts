@@ -1,13 +1,13 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
 import {
-  deleteCronJob,
-  getAgent,
-  getAgentLogs,
-  getCronJobsForAgent,
-  insertCronJob,
-  toggleCronJob,
-  updateCronJob
+    deleteCronJob,
+    getAgent,
+    getAgentLogs,
+    getCronJobsForAgent,
+    insertCronJob,
+    toggleCronJob,
+    updateCronJob
 } from '../lib/Database.js';
 import { agentManager } from './AgentManager.js';
 import { cronScheduler } from './CronScheduler.js';
@@ -46,8 +46,8 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
             default:
               return `Unknown action ${action}`;
           }
-        } catch (e: any) {
-          return `Failed to ${action} agent ${name}: ${e.message}`;
+        } catch (e) {
+          return `Failed to ${action} agent ${name}: ${e instanceof Error ? e.message : String(e)}`;
         }
       }
     }),
@@ -66,8 +66,8 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
             loop_interval: a.loop_interval,
             created_at: a.created_at
           })), null, 2);
-        } catch (e: any) {
-          return `Failed to list agents: ${e.message}`;
+        } catch (e) {
+          return `Failed to list agents: ${e instanceof Error ? e.message : String(e)}`;
         }
       }
     }),
@@ -94,8 +94,8 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
             cron_jobs_total: crons.length,
             cron_jobs_active: activeCrons.length,
           }, null, 2);
-        } catch (e: any) {
-          return `Failed to get agent info: ${e.message}`;
+        } catch (e) {
+          return `Failed to get agent info: ${e instanceof Error ? e.message : String(e)}`;
         }
       }
     }),
@@ -119,8 +119,8 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
             result: l.result,
             thought: l.thought,
           })), null, 2);
-        } catch (e: any) {
-          return `Failed to get agent logs: ${e.message}`;
+        } catch (e) {
+          return `Failed to get agent logs: ${e instanceof Error ? e.message : String(e)}`;
         }
       }
     }),
@@ -142,8 +142,8 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
           const jobId = insertCronJob(agent.id, name, expression, prompt);
           cronScheduler.schedule(String(jobId), expression, agent.id, agent.name, prompt);
           return `Cron job ${jobId} ('${name}') scheduled for agent ${targetAgentName} with expression ${expression}.`;
-        } catch (e: any) {
-          return `Failed to schedule cron job: ${e.message}`;
+        } catch (e) {
+          return `Failed to schedule cron job: ${e instanceof Error ? e.message : String(e)}`;
         }
       }
     }),
@@ -168,8 +168,8 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
             last_run: j.last_run || 'Never',
             created_at: j.created_at,
           })), null, 2);
-        } catch (e: any) {
-          return `Failed to list cron jobs: ${e.message}`;
+        } catch (e) {
+          return `Failed to list cron jobs: ${e instanceof Error ? e.message : String(e)}`;
         }
       }
     }),
@@ -200,8 +200,8 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
           }
 
           return `Cron job ${jobId} updated successfully. Name: "${name}", Expression: "${expression}".`;
-        } catch (e: any) {
-          return `Failed to update cron job ${jobId}: ${e.message}`;
+        } catch (e) {
+          return `Failed to update cron job ${jobId}: ${e instanceof Error ? e.message : String(e)}`;
         }
       }
     }),
@@ -230,8 +230,8 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
           }
 
           return `Cron job ${jobId} ("${job.name}") ${active ? 'activated' : 'deactivated'} successfully.`;
-        } catch (e: any) {
-          return `Failed to toggle cron job ${jobId}: ${e.message}`;
+        } catch (e) {
+          return `Failed to toggle cron job ${jobId}: ${e instanceof Error ? e.message : String(e)}`;
         }
       }
     }),
@@ -246,8 +246,8 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
           deleteCronJob(jobId);
           cronScheduler.cancel(String(jobId));
           return `Cron job ${jobId} canceled successfully.`;
-        } catch (e: any) {
-          return `Failed to cancel cron job ${jobId}: ${e.message}`;
+        } catch (e) {
+          return `Failed to cancel cron job ${jobId}: ${e instanceof Error ? e.message : String(e)}`;
         }
       }
     })

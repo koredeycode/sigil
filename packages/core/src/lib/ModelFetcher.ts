@@ -8,36 +8,43 @@ interface ModelInfo {
   label: string;
 }
 
-const PROVIDER_ENDPOINTS: Record<string, { url: string; parseModels: (data: any) => ModelInfo[] }> = {
+interface OpenAIModel { id: string; }
+interface GroqModel { id: string; }
+interface AnthropicModel { id: string; display_name?: string; }
+interface GoogleModel { name: string; displayName?: string; }
+
+interface ProviderResponse<T> { data?: T[]; models?: T[]; }
+
+const PROVIDER_ENDPOINTS: Record<string, { url: string; parseModels: (data: ProviderResponse<any>) => ModelInfo[] }> = {
   openai: {
     url: 'https://api.openai.com/v1/models',
-    parseModels: (data) =>
+    parseModels: (data: ProviderResponse<OpenAIModel>) =>
       (data.data ?? [])
-        .filter((m: any) => m.id.startsWith('gpt-'))
-        .sort((a: any, b: any) => a.id.localeCompare(b.id))
-        .map((m: any) => ({ id: m.id, label: m.id })),
+        .filter((m: OpenAIModel) => m.id.startsWith('gpt-'))
+        .sort((a: OpenAIModel, b: OpenAIModel) => a.id.localeCompare(b.id))
+        .map((m: OpenAIModel) => ({ id: m.id, label: m.id })),
   },
   groq: {
     url: 'https://api.groq.com/openai/v1/models',
-    parseModels: (data) =>
+    parseModels: (data: ProviderResponse<GroqModel>) =>
       (data.data ?? [])
-        .filter((m: any) => !m.id.includes('whisper') && !m.id.includes('safeguard'))
-        .sort((a: any, b: any) => a.id.localeCompare(b.id))
-        .map((m: any) => ({ id: m.id, label: m.id })),
+        .filter((m: GroqModel) => !m.id.includes('whisper') && !m.id.includes('safeguard'))
+        .sort((a: GroqModel, b: GroqModel) => a.id.localeCompare(b.id))
+        .map((m: GroqModel) => ({ id: m.id, label: m.id })),
   },
   anthropic: {
     url: 'https://api.anthropic.com/v1/models',
-    parseModels: (data) =>
+    parseModels: (data: ProviderResponse<AnthropicModel>) =>
       (data.data ?? [])
-        .sort((a: any, b: any) => a.id.localeCompare(b.id))
-        .map((m: any) => ({ id: m.id, label: m.display_name ?? m.id })),
+        .sort((a: AnthropicModel, b: AnthropicModel) => a.id.localeCompare(b.id))
+        .map((m: AnthropicModel) => ({ id: m.id, label: m.display_name ?? m.id })),
   },
   google: {
     url: 'https://generativelanguage.googleapis.com/v1beta/models',
-    parseModels: (data) =>
+    parseModels: (data: ProviderResponse<GoogleModel>) =>
       (data.models ?? [])
-        .filter((m: any) => m.name?.includes('gemini'))
-        .map((m: any) => ({
+        .filter((m: GoogleModel) => m.name?.includes('gemini'))
+        .map((m: GoogleModel) => ({
           id: m.name.replace('models/', ''),
           label: m.displayName ?? m.name.replace('models/', ''),
         })),
@@ -110,10 +117,11 @@ export async function fetchModelsForProvider(
     const data = await res.json();
     const models = config.parseModels(data);
     return { models: models.length > 0 ? models : null, error: null };
-  } catch (err: any) {
-    const msg = err.name === 'AbortError'
+  } catch (err) {
+    const error = err as Error;
+    const msg = error.name === 'AbortError'
       ? 'Request timed out — is the provider reachable?'
-      : (err.message || 'Unknown error');
+      : (error.message || 'Unknown error');
     return { models: null, error: msg };
   }
 }
