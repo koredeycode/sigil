@@ -62,7 +62,18 @@ export function SocketProvider({ children }: SocketProviderProps) {
     socketRef.current = socketInstance;
     setSocket(socketInstance);
 
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'sigil_token') {
+        if (socketInstance) {
+          socketInstance.auth = e.newValue ? { token: e.newValue } : {};
+          socketInstance.disconnect().connect();
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
     return () => {
+      window.removeEventListener('storage', handleStorageChange);
       socketInstance.disconnect();
       socketRef.current = null;
     };

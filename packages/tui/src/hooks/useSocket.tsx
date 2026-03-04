@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 interface SocketContextType {
@@ -24,6 +24,10 @@ export function SocketProvider({ children, apiPort, authToken }: SocketProviderP
     const socketInstance = io(`http://localhost:${apiPort}`, {
       auth: { token: authToken },
       transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
     });
 
     socketInstance.on('connect', () => {
