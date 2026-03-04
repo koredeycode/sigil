@@ -17,8 +17,40 @@ interface ChatBoxProps {
     activeAgent: Agent | null;
 }
 
-export function ChatBox({ activeAgent }: ChatBoxProps) {
+const ChatInputArea = ({ activeAgent, socket, sending, setSending }: { activeAgent: Agent, socket: any, sending: boolean, setSending: (s: boolean) => void }) => {
     const [input, setInput] = useState('');
+
+    const handleSend = () => {
+        if (!input.trim() || !activeAgent || !socket) return;
+        socket.emit('chat:message', { agentId: activeAgent.id, content: input.trim() });
+        setInput('');
+        setSending(true);
+    };
+
+    return (
+        <div className="p-3 border-t border-border bg-card/50">
+            <div className="relative flex items-center">
+                <input 
+                    value={input} 
+                    onChange={e => setInput(e.target.value)} 
+                    onKeyDown={e => e.key === 'Enter' && handleSend()}
+                    placeholder={`Message ${activeAgent.name}...`}
+                    disabled={sending}
+                    className="w-full pl-4 pr-12 py-2.5 bg-secondary border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm placeholder:text-muted-foreground disabled:opacity-50"
+                />
+                <button 
+                    onClick={handleSend} 
+                    disabled={!input.trim() || sending}
+                    className="absolute right-2 p-1.5 text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-md hover:bg-background/50"
+                >
+                    <Send className="w-4 h-4" />
+                </button>
+            </div>
+        </div>
+    );
+};
+
+export function ChatBox({ activeAgent }: ChatBoxProps) {
     const [sending, setSending] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [hasMore, setHasMore] = useState(true);
@@ -28,8 +60,8 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
 
     const { socket } = useSocket();
 
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const scrollToBottom = (instant = false) => {
+        messagesEndRef.current?.scrollIntoView({ behavior: instant ? 'auto' : 'smooth' });
     };
 
     const ToolResult = ({ tools }: { tools: string | Array<{ tool: string; result: string }> }) => {
@@ -96,7 +128,7 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
                 const data = res.data || [];
                 setMessages(data);
                 setHasMore(data.length >= 100);
-                scrollToBottom();
+                setTimeout(() => scrollToBottom(true), 10);
             } catch (e) {
                 console.error('Failed to load chat history:', e);
             }
@@ -119,10 +151,10 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
                 const older = res.data || [];
                 if (older.length === 0) { setHasMore(false); }
                 else {
-                    const prevHeight = el.scrollHeight;
+                    const distanceToBottom = el.scrollHeight - el.scrollTop;
                     setMessages(prev => [...older, ...prev]);
-                    // Preserve scroll position
-                    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight - prevHeight; });
+                    // Preserve scroll position perfectly
+                    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight - distanceToBottom; });
                     if (older.length < 50) setHasMore(false);
                 }
             } catch (e) { console.error('Failed to load older chats:', e); }
@@ -137,10 +169,16 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
         const handleMessage = (data: any) => {
             if (data.agent === activeAgent.name) {
                 setMessages(prev => {
-                    // Check to avoid duplicates just in case
                     const exists = prev.some(m => m.id === data.timestamp || (m.role === data.role && m.content === data.content && Date.now() - Number(m.id) < 1000));
                     if (exists && data.role === 'user') return prev;
                     
+                    // Conditionally scroll when new message comes in if at bottom
+                    const el = chatContainerRef.current;
+                    const isAtBottom = el ? el.scrollHeight - el.scrollTop - el.clientHeight < 100 : false;
+                    if (isAtBottom) {
+                        setTimeout(scrollToBottom, 50);
+                    }
+
                     return [...prev, {
                         id: data.timestamp || Date.now(),
                         role: data.role,
@@ -162,16 +200,8 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
     }, [socket, activeAgent]);
 
     useEffect(() => {
-        scrollToBottom();
-    }, [messages, sending]);
-
-    const handleSend = () => {
-        if (!input.trim() || !activeAgent || !socket) return;
-        
-        socket.emit('chat:message', { agentId: activeAgent.id, content: input.trim() });
-        setInput('');
-        setSending(true);
-    };
+        if (sending) scrollToBottom();
+    }, [sending]);
 
     if (!activeAgent) return <div className="flex-1 flex items-center justify-center text-muted-foreground p-4">Select an agent</div>;
 
@@ -257,25 +287,7 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
                 <div ref={messagesEndRef} />
             </div>
             
-            <div className="p-3 border-t border-border bg-card/50">
-                <div className="relative flex items-center">
-                    <input 
-                        value={input} 
-                        onChange={e => setInput(e.target.value)} 
-                        onKeyDown={e => e.key === 'Enter' && handleSend()}
-                        placeholder={`Message ${activeAgent.name}...`}
-                        disabled={sending}
-                        className="w-full pl-4 pr-12 py-2.5 bg-secondary border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm placeholder:text-muted-foreground disabled:opacity-50"
-                    />
-                    <button 
-                        onClick={handleSend} 
-                        disabled={!input.trim() || sending}
-                        className="absolute right-2 p-1.5 text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-md hover:bg-background/50"
-                    >
-                        <Send className="w-4 h-4" />
-                    </button>
-                </div>
-            </div>
+            <ChatInputArea activeAgent={activeAgent} socket={socket} sending={sending} setSending={setSending} />
         </div>
     );
 }

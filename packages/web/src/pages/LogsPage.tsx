@@ -42,6 +42,7 @@ export function LogsPage({ agents }: { agents: Agent[] }) {
             const data = res.data ? res.data.reverse() : [];
             setLogs(data);
             setHasMore(data.length >= 100);
+            setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'auto' }), 100);
         } catch (err: any) {
             console.error('Failed to fetch logs:', err);
             setError(err.error || err.message || 'Failed to fetch logs');
@@ -69,9 +70,9 @@ export function LogsPage({ agents }: { agents: Agent[] }) {
                 const older = res.data ? res.data.reverse() : [];
                 if (older.length === 0) { setHasMore(false); }
                 else {
-                    const prevHeight = el.scrollHeight;
+                    const distanceToBottom = el.scrollHeight - el.scrollTop;
                     setLogs(prev => [...older, ...prev]);
-                    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight - prevHeight; });
+                    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight - distanceToBottom; });
                     if (older.length < 50) setHasMore(false);
                 }
             } catch (e) { console.error('Failed to load older logs:', e); }
@@ -95,8 +96,12 @@ export function LogsPage({ agents }: { agents: Agent[] }) {
                     timestamp: data.timestamp || new Date().toISOString()
                 }]);
                 
-                // Optional: Scroll to bottom slightly after state settles
-                setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+                // Optional: Scroll to bottom conditionally
+                const el = logContainerRef.current;
+                const isAtBottom = el ? el.scrollHeight - el.scrollTop - el.clientHeight < 100 : false;
+                if (isAtBottom) {
+                    setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+                }
             }
         };
 
@@ -187,11 +192,11 @@ export function LogsPage({ agents }: { agents: Agent[] }) {
                 </div>
             ) : (
                 <div className="flex-1 overflow-hidden flex flex-col bg-secondary/20 dark:bg-[#0b0f19] text-foreground dark:text-gray-300 border border-border rounded-xl shadow-inner mr-2 relative font-mono text-sm leading-relaxed">
-                    <div className="absolute top-0 w-full flex items-center bg-secondary/50 dark:bg-[#131b2e] border-b border-border dark:border-white/5 py-2 px-4 shadow-sm z-10">
+                    <div className="absolute top-0 w-full flex items-center bg-secondary dark:bg-[#131b2e] border-b border-border dark:border-white/5 py-2 px-4 shadow-sm z-10">
                         <Terminal className="w-4 h-4 mr-2 opacity-50 text-foreground" />
                         <span className="text-xs font-bold uppercase tracking-widest opacity-50 text-foreground">Log Viewer</span>
                     </div>
-                    <div ref={logContainerRef} onScroll={handleScrollUp} className="overflow-y-auto w-full pt-12 pb-4 px-4 flex-col-reverse flex">
+                    <div ref={logContainerRef} onScroll={handleScrollUp} className="overflow-y-auto w-full pt-12 pb-4 px-4 flex-col flex">
                         <div className="space-y-2">
                             {loadingMore && (
                                 <div className="flex justify-center py-2">
@@ -258,8 +263,8 @@ export function LogsPage({ agents }: { agents: Agent[] }) {
                                 );
                             })}
                         </div>
+                        <div ref={endRef} />
                     </div>
-                    <div ref={endRef} />
                 </div>
             )}
         </div>

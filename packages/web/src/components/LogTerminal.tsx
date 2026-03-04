@@ -9,6 +9,7 @@ interface LogTerminalProps {
 }
 
 interface LogEntry {
+    id?: number | string;
     type: 'info' | 'thought' | 'action' | 'error';
     content: string;
     timestamp: string;
@@ -17,10 +18,16 @@ interface LogEntry {
 export function LogTerminal({ activeAgent }: LogTerminalProps) {
     const { socket } = useSocket();
     const [logs, setLogs] = useState<LogEntry[]>([]);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const endRef = useRef<HTMLDivElement>(null);
+    const logContainerRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => endRef.current?.scrollIntoView({ behavior: 'smooth' });
 
     useEffect(() => {
         setLogs([]); // Clear on agent switch
+        setHasMore(true);
         if (!activeAgent) return;
 
         const fetchPastLogs = async () => {
@@ -37,12 +44,15 @@ export function LogTerminal({ activeAgent }: LogTerminalProps) {
                         else if (log.action.toLowerCase().includes('error')) mappedType = 'error';
 
                         return {
+                            id: log.id,
                             type: mappedType,
                             content: log.result || log.thought || log.action,
                             timestamp: new Date(log.timestamp).toLocaleTimeString()
                         };
                     });
                     setLogs(historical);
+                    setHasMore(historical.length >= 50);
+                    setTimeout(scrollToBottom, 100);
                 }
             } catch (e) {
                 console.error("Failed to fetch logs", e);
@@ -52,16 +62,61 @@ export function LogTerminal({ activeAgent }: LogTerminalProps) {
         fetchPastLogs();
     }, [activeAgent?.id]);
 
+    const handleScroll = async () => {
+        const el = logContainerRef.current;
+        if (!el || !activeAgent || loadingMore || !hasMore) return;
+
+        if (el.scrollTop < 60) {
+            setLoadingMore(true);
+            const oldestId = logs.length > 0 ? Number(logs[0].id) : undefined;
+            const token = localStorage.getItem('sigil_token');
+            if (!token) { setLoadingMore(false); return; }
+            try {
+                const client = new ApiClient(token);
+                const res = await client.getLogs(activeAgent.id, 50, oldestId);
+                const older = res.data ? res.data.reverse() : [];
+                
+                if (older.length === 0) {
+                    setHasMore(false);
+                } else {
+                    const distanceToBottom = el.scrollHeight - el.scrollTop;
+                    const historical: LogEntry[] = older.map(log => {
+                        let mappedType: 'info' | 'thought' | 'action' | 'error' = 'info';
+                        if (log.action === 'llm_decision') mappedType = 'thought';
+                        else if (log.action.startsWith('tool:')) mappedType = 'action';
+                        else if (log.action.toLowerCase().includes('error')) mappedType = 'error';
+                        return { id: log.id, type: mappedType, content: log.result || log.thought || log.action, timestamp: new Date(log.timestamp).toLocaleTimeString() };
+                    });
+
+                    setLogs(prev => [...historical, ...prev]);
+                    requestAnimationFrame(() => { el.scrollTop = el.scrollHeight - distanceToBottom; });
+                    if (older.length < 50) setHasMore(false);
+                }
+            } catch (e) {
+                console.error('Failed to load older logs:', e);
+            } finally {
+                setLoadingMore(false);
+            }
+        }
+    };
+
     useEffect(() => {
         if (!socket || !activeAgent) return;
 
         const handleLog = (data: Record<string, string>) => {
             if (data.agentId === activeAgent.id) {
-                setLogs(prev => [...prev, {
-                    type: data.type as 'info' | 'thought' | 'action' | 'error',
-                    content: data.content,
-                    timestamp: new Date().toLocaleTimeString()
-                }]);
+                setLogs(prev => {
+                    const el = logContainerRef.current;
+                    const isAtBottom = el ? el.scrollHeight - el.scrollTop - el.clientHeight < 100 : false;
+                    if (isAtBottom) {
+                        setTimeout(scrollToBottom, 50);
+                    }
+                    return [...prev, {
+                        type: data.type as 'info' | 'thought' | 'action' | 'error',
+                        content: data.content,
+                        timestamp: new Date().toLocaleTimeString()
+                    }];
+                });
             }
         };
 
@@ -76,14 +131,15 @@ export function LogTerminal({ activeAgent }: LogTerminalProps) {
         };
     }, [socket, activeAgent]);
 
-    useEffect(() => {
-        endRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [logs]);
-
     if (!activeAgent) return null;
 
     return (
-        <div className="flex-1 overflow-y-auto p-4 font-mono text-sm bg-secondary/20 space-y-2">
+        <div ref={logContainerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-4 font-mono text-sm bg-secondary/20 space-y-2">
+            {loadingMore && (
+                <div className="flex justify-center py-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                </div>
+            )}
             {logs.map((log, i) => (
                 <div key={i} className="flex items-start gap-3 animate-in fade-in duration-300">
                      <span className="flex items-center gap-1 text-[10px] text-muted-foreground min-w-[70px] mt-0.5 select-none opacity-60">
