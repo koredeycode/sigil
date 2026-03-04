@@ -1,17 +1,20 @@
+import { HumanMessage } from '@langchain/core/messages';
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import { setMainAgentId, setMainAgentName } from '../lib/Config.js';
 import {
-    AgentRow,
-    createAgent as dbCreateAgent,
-    deleteAgent as dbDeleteAgent,
-    getAgent,
-    getAllAgents,
-    updateAgentProfile,
-    updateAgentStatus,
+  AgentRow,
+  createAgent as dbCreateAgent,
+  deleteAgent as dbDeleteAgent,
+  getAgent,
+  getAllAgents,
+  updateAgentProfile,
+  updateAgentStatus,
 } from '../lib/Database.js';
+import { logger } from '../lib/Logger.js';
 import { createWallet, deleteWallet, getKeypair, importWallet, renameWallet, wipeFromMemory } from '../wallet/Wallet.js';
 import { invalidateAgentGraph, invokeSolanaAgent, setAgentManager } from './AgentLoop.js';
+import { getPrimaryModel } from './LLMChain.js';
 import { clearAgentKit } from './ToolRegistry.js';
 
 const MAIN_AGENT_NAME = 'sigil';
@@ -121,6 +124,20 @@ export class AgentManager extends EventEmitter {
     if (!message) throw new Error('Message is required');
 
     return invokeSolanaAgent(agent.id, agent.name, message, opts);
+  }
+
+  /**
+   * Lightweight LLM call without tools or agent graph.
+   * Used for analysis-only tasks (e.g., transaction risk assessment)
+   * where tools are unnecessary and would waste tokens.
+   */
+  async analyze(prompt: string): Promise<string> {
+    const model = getPrimaryModel();
+    logger.info(`[AgentManager] Running tool-free analysis (${prompt.length} chars)...`);
+    const result = await model.invoke([new HumanMessage(prompt)]);
+    const text = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
+    logger.info(`[AgentManager] Analysis complete (${text.length} chars).`);
+    return text;
   }
 
   /**

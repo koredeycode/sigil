@@ -191,9 +191,8 @@ Format: a short summary sentence, then "Risk: LOW", "MEDIUM", or "HIGH" on its o
     let riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' = 'HIGH';
 
     try {
-        logger.info(`[Simulate] Invoking agent '${mainAgent.id}' with analysis prompt...`);
-        const agentResponse = await agentManager.invoke(mainAgent.id, prompt);
-        const text = agentResponse.response;
+        logger.info(`[Simulate] Running tool-free analysis...`);
+        const text = await agentManager.analyze(prompt);
         logger.info(`[Simulate] Agent raw response (${text.length} chars): ${text.substring(0, 200)}...`);
         
         // Extract the risk level classification (case-insensitive)
