@@ -1,8 +1,8 @@
 import cron from 'node-cron';
 import {
-    getAgent,
-    getAllActiveCronJobs,
-    updateCronJobLastRun
+  getAgent,
+  getAllActiveCronJobs,
+  updateCronJobLastRun
 } from '../lib/Database.js';
 import { logger } from '../lib/Logger.js';
 import { invokeSolanaAgent, runAutonomousCycle } from './AgentLoop.js';
@@ -31,11 +31,11 @@ class CronScheduler {
     }
 
     const task = cron.schedule(expression, async () => {
-      console.info(`[Cron:${jobId}] Running scheduled task for ${agentName}`);
+      logger.info(`[Cron:${jobId}] Running scheduled task for ${agentName}`);
 
       const agent = getAgent(agentId);
       if (!agent || agent.status !== 'running') {
-        console.info(`[Cron:${jobId}] Agent not running, skipping`);
+        logger.info(`[Cron:${jobId}] Agent not running, skipping`);
         return;
       }
 
@@ -53,7 +53,7 @@ class CronScheduler {
     });
 
     this.tasks.set(jobId, task);
-    console.info(`[Cron] Scheduled job ${jobId} (${expression}) for ${agentName}`);
+    logger.info(`[Cron] Scheduled job ${jobId} (${expression}) for ${agentName}`);
   }
 
   /**
@@ -78,7 +78,7 @@ class CronScheduler {
     });
 
     this.autonomousTasks.set(agentId, task);
-    console.info(`[Cron] Started autonomous cycle for ${agentName} (every ${minutes} min)`);
+    logger.info(`[Cron] Started autonomous cycle for ${agentName} (every ${minutes} min)`);
   }
 
   /**
@@ -120,7 +120,7 @@ class CronScheduler {
         );
       }
     }
-    console.info(`[Cron] Loaded ${jobs.length} active cron jobs`);
+    logger.info(`[Cron] Loaded ${jobs.length} active cron jobs`);
   }
 
   /**
@@ -158,7 +158,7 @@ class CronScheduler {
       task.stop();
     }
     this.autonomousTasks.clear();
-    console.info('[Cron] All scheduled tasks stopped');
+    logger.info('[Cron] All scheduled tasks stopped');
   }
 }
 

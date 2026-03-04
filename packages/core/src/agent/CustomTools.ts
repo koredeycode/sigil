@@ -1,6 +1,7 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { PublicKey } from '@solana/web3.js';
 import { z } from 'zod';
+import { logger } from '../lib/Logger.js';
 import { requestAirdrop, signAndSubmit } from '../wallet/Signer.js';
 import { buildTransferSol, getConnection, lamportsToSol, solToLamports } from '../wallet/TransactionBuilder.js';
 import { getKeypair } from '../wallet/Wallet.js';
@@ -18,7 +19,7 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
       schema: z.object({}),
       func: async () => {
         try {
-          console.info(`[Tool:get_balance] Starting for ${agentName}`);
+          logger.debug(`[Tool:get_balance] Starting for ${agentName}`);
           const keypair = await getKeypair(agentName);
           const balance = await connection.getBalance(keypair.publicKey);
           const solBalance = lamportsToSol(balance);
@@ -52,7 +53,7 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
       }),
       func: async ({ amount }) => {
         try {
-          console.info(`[Tool:request_airdrop] Requesting ${amount} SOL for ${agentName}`);
+          logger.debug(`[Tool:request_airdrop] Requesting ${amount} SOL for ${agentName}`);
           const lamports = solToLamports(amount);
           const result = await requestAirdrop(agentName, agentId, lamports);
           if (result.status === 'confirmed') {
@@ -74,7 +75,7 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
       }),
       func: async ({ to, amount }) => {
         try {
-          console.info(`[Tool:transfer_sol] Transferring ${amount} SOL to ${to} for ${agentName}`);
+          logger.debug(`[Tool:transfer_sol] Transferring ${amount} SOL to ${to} for ${agentName}`);
           const keypair = await getKeypair(agentName);
           const recipient = new PublicKey(to);
           const lamports = solToLamports(amount);
@@ -128,7 +129,7 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
       schema: z.object({}),
       func: async () => {
         try {
-          console.info(`[Tool:get_token_accounts] Fetching for ${agentName}`);
+          logger.debug(`[Tool:get_token_accounts] Fetching for ${agentName}`);
           const keypair = await getKeypair(agentName);
           const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
             keypair.publicKey,
@@ -158,7 +159,7 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
       schema: z.object({}),
       func: async () => {
         try {
-          console.info(`[Tool:get_portfolio_snapshot] Fetching for ${agentName}`);
+          logger.debug(`[Tool:get_portfolio_snapshot] Fetching for ${agentName}`);
           const keypair = await getKeypair(agentName);
           const balance = await connection.getBalance(keypair.publicKey);
           const solBalance = lamportsToSol(balance);
@@ -204,7 +205,7 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
       }),
       func: async ({ address }) => {
         try {
-          console.info(`[Tool:get_account_info] Fetching info for ${address}`);
+          logger.debug(`[Tool:get_account_info] Fetching info for ${address}`);
           const pubkey = new PublicKey(address);
           const info = await connection.getAccountInfo(pubkey);
           if (!info) return `Account ${address} not found on-chain.`;

@@ -82,7 +82,7 @@ export async function invokeSolanaAgent(
   message: string,
   opts?: { includeHistory?: boolean }
 ): Promise<{ response: string; toolResults: Array<{ tool: string; result: string }> }> {
-  console.info(`[AgentLoop:${agentName}] Invoking with message: ${message.substring(0, 100)}...`);
+  logger.info(`[AgentLoop:${agentName}] Invoking with message: ${message.substring(0, 100)}...`);
 
   const agent = getAgent(agentId);
   if (!agent) throw new Error(`Agent "${agentId}" not found`);
@@ -123,7 +123,7 @@ export async function invokeSolanaAgent(
             handleLLMEnd: (output) => {
               const usage = output.llmOutput?.tokenUsage || output.llmOutput?.estimatedTokenUsage;
               if (usage) {
-                console.info(
+                logger.info(
                   `[Token Usage:${agentName}] Input: ${usage.promptTokens} | Output: ${usage.completionTokens} | Total: ${usage.totalTokens}`
                 );
                 insertLog(agentId, 'token_usage', `Input: ${usage.promptTokens} | Output: ${usage.completionTokens} | Total: ${usage.totalTokens}`, 'LLM Iteration');
@@ -184,7 +184,7 @@ export async function invokeSolanaAgent(
       });
     }
 
-    console.info(`[AgentLoop:${agentName}] Response: ${response.substring(0, 200)}...`);
+    logger.info(`[AgentLoop:${agentName}] Response: ${response.substring(0, 200)}...`);
 
     return { response, toolResults };
   } catch (error) {
@@ -209,7 +209,7 @@ export async function invokeSolanaAgent(
  * Evaluates active instructions and sends triggered ones as messages to the agent.
  */
 export async function runAutonomousCycle(agentId: string, agentName: string): Promise<void> {
-  console.info(`[AgentLoop:${agentName}] Running autonomous cycle`);
+  logger.info(`[AgentLoop:${agentName}] Running autonomous cycle`);
 
   const agent = getAgent(agentId);
   if (!agent || agent.status !== 'running') {
