@@ -66,8 +66,16 @@ export const signTransactionSchema = z.object({
 
 // providers.ts
 export const addProviderSchema = z.object({
-  provider: z.string().min(1, 'Provider name is required'),
+  provider: z.string().min(1, 'Provider name is required').optional(),
+  name: z.string().min(1).optional(),
   apiKey: z.string().min(1, 'API key is required'),
+  model: z.string().min(1, 'Model is required'),
+  isPrimary: z.boolean().optional(),
+  baseUrl: z.string().url().optional().or(z.literal('')).or(z.undefined()),
+  compat: z.enum(['openai', 'anthropic']).optional(),
+}).refine(data => data.provider || data.name, {
+  message: "Either provider or name is required",
+  path: ["provider"]
 });
 
 export const updateProviderSchema = z.object({

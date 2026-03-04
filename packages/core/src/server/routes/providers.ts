@@ -31,14 +31,14 @@ providersRouter.post('/', validateBody(addProviderSchema), (req, res) => {
     // Map alias -> real property where needed (name corresponds to provider in schema)
     const provider = req.body.provider || name;
     const encryptedKey = apiKey ? encryptApiKey(apiKey) : null;
-    const result = addProvider(name, encryptedKey, model, isPrimary ?? false, baseUrl, compat);
+    const result = addProvider(provider, encryptedKey, model, isPrimary ?? false, baseUrl, compat);
 
     // If this new provider is set as primary, flush cached graphs so the new model is used
     if (isPrimary) invalidateAllAgentGraphs();
 
     res.status(201).json({ message: 'Provider created successfully', data: {
       id: Number(result.lastInsertRowid),
-      name,
+      name: provider,
       model,
       baseUrl,
       compat,

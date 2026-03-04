@@ -107,8 +107,8 @@ export async function invokeSolanaAgent(
     inputMessages.push(new HumanMessage(message));
 
     // AbortController for LLM timeout (60 seconds)
-    const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(new Error('LLM Invocation timed out')), CONSTANTS.TIMEOUTS.LLM_INVOKE_MS);
+    // const abortController = new AbortController();
+    // const timeoutId = setTimeout(() => abortController.abort(new Error('LLM Invocation timed out')), CONSTANTS.TIMEOUTS.LLM_INVOKE_MS);
 
     let result;
     try {
@@ -117,7 +117,7 @@ export async function invokeSolanaAgent(
         { messages: inputMessages },
         { 
           configurable: { thread_id: agentId },
-          signal: abortController.signal,
+          // signal: abortController.signal,
           callbacks: [
           {
             handleLLMEnd: (output) => {
@@ -134,7 +134,7 @@ export async function invokeSolanaAgent(
       }
       );
     } finally {
-      clearTimeout(timeoutId);
+      // clearTimeout(timeoutId);
     }
 
     // Extract the last AI message from the result

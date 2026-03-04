@@ -187,7 +187,7 @@ export function createAgent(id: string, name: string, pubkey: string, loopInterv
   const db = getDatabase();
   return db.prepare(
     'INSERT INTO agents (id, name, pubkey, loop_interval, prompt) VALUES (?, ?, ?, ?, ?)'
-  ).run(id, name, pubkey, loopInterval, prompt);
+  ).run(id, name, pubkey, loopInterval, prompt ?? null);
 }
 
 export function getAgent(nameOrId: string) {
@@ -290,7 +290,7 @@ export function setConfig(key: string, value: string) {
 }
 
 // Providers
-export function addProvider(name: string, apiKey: string | null, model: string, isPrimary = false, baseUrl: string | null = null, compat: string | null = null) {
+export function addProvider(name: string, apiKey: string | null, model: string, isPrimary = false, baseUrl?: string | null, compat?: string | null) {
   const db = getDatabase();
   // If setting as primary, clear all other primaries first
   if (isPrimary) {
@@ -298,7 +298,7 @@ export function addProvider(name: string, apiKey: string | null, model: string, 
   }
   return db.prepare(
     'INSERT INTO providers (name, api_key, model, is_primary, base_url, compat) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(name, apiKey, model, isPrimary ? 1 : 0, baseUrl, compat ?? 'openai');
+  ).run(name, apiKey ?? null, model, isPrimary ? 1 : 0, baseUrl ?? null, compat ?? 'openai');
 }
 
 export function getAllProviders() {
@@ -339,7 +339,7 @@ export function insertTransaction(
   return db.prepare(
     `INSERT INTO transactions (agent_id, type, token, amount, recipient, signature, status, fee)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(agentId, type, token, amount, recipient, signature, status, fee);
+  ).run(agentId, type, token ?? null, amount ?? null, recipient ?? null, signature ?? null, status, fee ?? null);
 }
 
 export function updateTransactionStatus(id: number, status: 'confirmed' | 'failed', signature?: string) {

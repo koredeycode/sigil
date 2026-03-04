@@ -1,4 +1,4 @@
-import { AlertCircle, Bot, Check, ChevronDown, Globe, Key, Loader2, Monitor, Palette, Plus, Shield, Trash2, Wallet, X } from 'lucide-react';
+import { AlertCircle, Brain, Check, ChevronDown, Globe, Key, Loader2, Monitor, Palette, Plus, Shield, Trash2, Wallet, X } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { ApiClient } from '../lib/api';
@@ -17,7 +17,7 @@ const TABS: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
     { id: 'appearance', label: 'Appearance', icon: <Palette className="w-4 h-4" /> },
     { id: 'blockchain', label: 'Blockchain', icon: <Globe className="w-4 h-4" /> },
     { id: 'guardrails', label: 'Guardrails', icon: <Shield className="w-4 h-4" /> },
-    { id: 'providers', label: 'Providers', icon: <Bot className="w-4 h-4" /> },
+    { id: 'providers', label: 'Providers', icon: <Brain className="w-4 h-4" /> },
 ];
 
 interface CustomSelectProps {
@@ -506,10 +506,10 @@ export function SettingsPage() {
     };
 
     return (
-        <div className="flex flex-col h-full max-w-5xl mx-auto py-4 px-1">
-            <header className="space-y-1 mb-6">
+        <div className="flex flex-col space-y-6 overflow-y-auto pr-2">
+            <header className="flex flex-col space-y-2 shrink-0">
                 <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-                <p className="text-muted-foreground text-sm">Manage system, appearance, blockchain, and AI provider configurations.</p>
+                <p className="text-muted-foreground">Manage system, appearance, blockchain, and AI provider configurations.</p>
             </header>
 
             {/* Tab Bar */}
@@ -635,7 +635,7 @@ export function SettingsPage() {
                     <div className="space-y-6 max-w-2xl">
                         <section className="space-y-4">
                             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                                <Bot className="w-4 h-4" />
+                                <Brain className="w-4 h-4" />
                                 AI Providers
                             </h2>
                             <div className="bg-card border border-border rounded-xl divide-y divide-border shadow-sm">

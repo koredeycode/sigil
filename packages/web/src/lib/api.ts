@@ -151,7 +151,7 @@ export class ApiClient {
   }
 
   async addProvider(provider: string, apiKey: string, model: string, baseUrl?: string, compat?: string): Promise<ApiResponse<any>> {
-    return this.request('POST', '/providers', { name: provider, apiKey, model, baseUrl, compat });
+    return this.request('POST', '/providers', { provider, apiKey, model, baseUrl, compat });
   }
 
   async deleteProvider(id: number): Promise<ApiResponse<void>> {

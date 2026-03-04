@@ -73,7 +73,7 @@ export function AgentManager({ agents, refreshAgents }: AgentManagerProps) {
     return (
         <div className="flex flex-col h-full overflow-y-auto pr-2 pb-6 space-y-6">
             <header>
-                <h1 className="text-2xl font-bold tracking-tight">Manage Agents</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Manage Agents</h1>
                 <p className="text-muted-foreground">Create, configure, and monitor your autonomous agents.</p>
             </header>
             
