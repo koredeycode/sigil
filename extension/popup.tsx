@@ -1,6 +1,49 @@
-// @ts-nocheck
 import iconBase64 from "data-base64:~assets/icon.png";
 import { useEffect, useState } from "react";
+
+// ─── Type Definitions ──────────────────────────────────────────────────────
+
+interface SimulationData {
+  status: 'approved' | 'rejected';
+  analysis?: string;
+  riskLevel?: 'LOW' | 'HIGH';
+  error?: string;
+}
+
+interface RequestData {
+  type: 'connect' | 'signTransaction';
+  origin: string;
+  transactionMessage?: string;
+  simulationData?: SimulationData;
+}
+
+interface TokenAccount {
+  address: string;
+  mint: string;
+  balance: number;
+  decimals: number;
+  symbol: string;
+}
+
+interface Portfolio {
+  sol: number;
+  solLamports: number;
+  tokens: TokenAccount[];
+  pubkey: string;
+}
+
+interface Transaction {
+  signature: string;
+  blockTime: string | null;
+  slot: number;
+  status: string;
+  err: unknown;
+  memo: string | null;
+}
+
+interface StorageChanges {
+  [key: string]: chrome.storage.StorageChange;
+}
 
 const SIGIL_SERVER_URL = "http://127.0.0.1:7445";
 
@@ -35,20 +78,20 @@ async function authFetch(url: string, opts: RequestInit = {}): Promise<Response>
 }
 
 export default function IndexPopup() {
-  const [requestObj, setRequestObj] = useState<any>(null);
+  const [requestObj, setRequestObj] = useState<RequestData | null>(null);
   const [requestId, setRequestId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const [mainPubkey, setMainPubkey] = useState<string>("");
   const [agentName, setAgentName] = useState<string>("");
-  const [portfolio, setPortfolio] = useState<any>(null);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [portfolio, setPortfolio] = useState<Portfolio | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [activeTab, setActiveTab] = useState<'portfolio' | 'transactions'>('portfolio');
   const [isPortfolioLoading, setIsPortfolioLoading] = useState(true);
   const [isTransactionsLoading, setIsTransactionsLoading] = useState(true);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isSigning, setIsSigning] = useState(false);
-  const [simulationData, setSimulationData] = useState<any>(null);
+  const [simulationData, setSimulationData] = useState<SimulationData | null>(null);
   const [isSimulating, setIsSimulating] = useState(false);
 
   // Auth token state
@@ -77,7 +120,7 @@ export default function IndexPopup() {
     });
 
     // Listen for storage changes across different popup windows
-    const listener = (changes: any, namespace: string) => {
+    const listener = (changes: StorageChanges, namespace: string) => {
        if (namespace === 'local' && changes.sigil_theme) {
            setTheme(changes.sigil_theme.newValue);
        }
@@ -116,7 +159,7 @@ export default function IndexPopup() {
         setAuthToken(tokenInput.trim());
         setTokenInput('');
       });
-    } catch (err: any) {
+    } catch (err) {
       setTokenError('Cannot reach Sigil server. Is it running?');
     } finally {
       setIsValidatingToken(false);
@@ -149,9 +192,10 @@ export default function IndexPopup() {
     
     if (reqId) {
       setRequestId(reqId);
-      chrome.storage.local.get([`request_${reqId}`], (result) => {
-        if (result[`request_${reqId}`]) {
-          setRequestObj(result[`request_${reqId}`]);
+      chrome.storage.local.get([`request_${reqId}`], (result: Record<string, unknown>) => {
+        const stored = result[`request_${reqId}`] as RequestData | undefined;
+        if (stored) {
+          setRequestObj(stored);
         }
       });
     } else {
@@ -251,7 +295,7 @@ export default function IndexPopup() {
     );
   };
 
-  const resolveRequest = async (data: any, error?: string) => {
+  const resolveRequest = async (data: Record<string, unknown> | null, error?: string) => {
     if (!requestId) return;
     
     if (requestObj?.type === 'signTransaction' && !error && data?.approved) {
@@ -272,8 +316,8 @@ export default function IndexPopup() {
              }
              const json = await res.json();
              data = { signedTransaction: json.data.signedTransaction };
-         } catch(e: any) {
-             error = e.message;
+         } catch(e) {
+             error = e instanceof Error ? e.message : 'Unknown error';
          } finally {
              setIsSigning(false);
          }
@@ -386,8 +430,8 @@ export default function IndexPopup() {
                           if (!data.data || !data.data.publicKey) throw new Error("No public key returned by agent");
                           
                           resolveRequest({ publicKey: data.data.publicKey });
-                      } catch (e: any) {
-                          resolveRequest(null, "Failed to connect to Sigil: " + e.message);
+                      } catch (e) {
+                          resolveRequest(null, "Failed to connect to Sigil: " + (e instanceof Error ? e.message : 'Unknown error'));
                       }
                   }}
                   style={{ flex: 1, padding: "12px", borderRadius: "8px", border: "none", backgroundColor: theme === 'dark' ? "#fff" : "#000", color: theme === 'dark' ? "#000" : "#fff", cursor: "pointer", fontWeight: "bold" }}>
@@ -507,7 +551,7 @@ export default function IndexPopup() {
                             </div>
                             
                             {/* Tokens Map */}
-                            {portfolio?.tokens?.map?.((token: any, i: number) => (
+                            {portfolio?.tokens?.map?.((token: TokenAccount, i: number) => (
                                 <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px", margin: "8px -8px 0 -8px", borderRadius: "8px", cursor: "pointer", transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.backgroundColor = colors.hover} onMouseOut={e => e.currentTarget.style.backgroundColor = "transparent"}>
                                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                                        <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "linear-gradient(to bottom right, #4b5563, #374151)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "12px" }}>
@@ -549,7 +593,7 @@ export default function IndexPopup() {
                           </div>
                         ) : (
                           <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
-                              {transactions.map((tx: any, i: number) => (
+                              {transactions.map((tx: Transaction, i: number) => (
                                   <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px", borderRadius: "8px", backgroundColor: colors.btnBg, border: `1px solid ${colors.border}` }}>
                                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                                            <span style={{ fontSize: "13px", fontWeight: "600", color: colors.text }}>
