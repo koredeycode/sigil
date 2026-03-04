@@ -2,6 +2,7 @@ import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/
 import { MemorySaver } from '@langchain/langgraph';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import { getAgent, getAgentChats, insertLog } from '../lib/Database.js';
+import { logger } from '../lib/Logger.js';
 import { agentManager } from './AgentManager.js';
 import { buildSystemPrompt, getPrimaryModel } from './LLMChain.js';
 import { createTools } from './ToolRegistry.js';
@@ -168,7 +169,7 @@ export async function invokeSolanaAgent(
     return { response, toolResults };
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error(`[AgentLoop:${agentName}] Error:`, errMsg);
+    logger.error(`AgentLoop error for ${agentName}`, { error: errMsg });
     insertLog(agentId, 'agent_error', `Error: ${errMsg}`, message);
 
     agentManager.emit('agent:error', {

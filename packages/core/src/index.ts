@@ -9,6 +9,7 @@ export * from './lib/Config.js';
 export { closeDatabase, getDatabase } from './lib/Database.js';
 export type { AgentRow, ChatRow, CronJobRow, LogRow, ProviderRow, TransactionRow } from './lib/Database.js';
 export { validateIntent } from './lib/Guardrails.js';
+export { logger } from './lib/Logger.js';
 export { startServer } from './server/app.js';
 export type { ApiResponse } from './server/types.js';
 export { requestAirdrop, signAndSubmit } from './wallet/Signer.js';

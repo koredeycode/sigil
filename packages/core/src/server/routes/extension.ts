@@ -2,6 +2,7 @@ import { Connection, PublicKey, Transaction, VersionedTransaction } from '@solan
 import { Router } from 'express';
 import { agentManager } from '../../agent/AgentManager.js';
 import { getRpcUrl } from '../../lib/Config.js';
+import { logger } from '../../lib/Logger.js';
 import { getKeypair } from '../../wallet/Wallet.js';
 
 export const extensionRouter: Router = Router();
@@ -134,11 +135,11 @@ extensionRouter.post('/simulate', async (req, res) => {
          ).join('\n');
       }
     } catch (e: any) {
-      console.error(`[Extension API] Failed to decode transaction for simulation:`, e);
+      logger.error(`Failed to decode transaction for simulation`, { error: e });
       return res.status(400).json({ message: 'Failed to decode transaction buffer: ' + e.message, data: null });
     }
 
-    console.log(`[Extension API] Passing transaction to Agent '${mainAgent.name}' for risk analysis...`);
+    logger.info(`Passing transaction to Agent '${mainAgent.name}' for risk analysis...`);
     // Ask the agent to analyze the transaction
     const prompt = `A dApp at ${origin} is requesting the user to sign a Solana transaction.
 Here is the raw breakdown of the transaction instructions:
@@ -168,11 +169,11 @@ End your response with exactly "DECISION: APPROVED" or "DECISION: REJECTED".`;
             agentAnalysis = text + "\n\n(Agent failed to provide a conclusive DECISION indicator. Defaulting to rejected for safety.)";
         }
     } catch (e: any) {
-        console.error(`[Extension API] Agent evaluation failed:`, e);
+        logger.error(`Agent evaluation failed`, { error: e });
         agentAnalysis = `Agent failed to analyze transaction: ${e.message}`;
     }
 
-    console.log(`[Extension API] Evaluation complete. Status: ${status}, Risk: ${status === 'approved' ? 'LOW' : 'HIGH'}`);
+    logger.info(`Evaluation complete. Status: ${status}, Risk: ${status === 'approved' ? 'LOW' : 'HIGH'}`);
     const riskLevel = status === 'approved' ? 'LOW' : 'HIGH';
 
     res.json({
@@ -202,7 +203,7 @@ extensionRouter.post('/sign', async (req, res) => {
        return;
     }
 
-    console.log(`[Extension API] Received request to physically sign transaction by Agent '${mainAgent.name}'...`);
+    logger.info(`Received request to physically sign transaction by Agent '${mainAgent.name}'...`);
     
     const txBuffer = Buffer.from(transactionMessage, 'base64');
     let decodedTx: Transaction | VersionedTransaction;
@@ -210,7 +211,7 @@ extensionRouter.post('/sign', async (req, res) => {
 
     try {
         const keypair = await getKeypair(mainAgent.name);
-        console.log(`[Extension API] Successfully retrieved private key for agent '${mainAgent.name}' from keytar.`);
+        logger.info(`Successfully retrieved private key for agent '${mainAgent.name}' from keytar.`);
         
         try {
            decodedTx = VersionedTransaction.deserialize(txBuffer);
@@ -221,9 +222,9 @@ extensionRouter.post('/sign', async (req, res) => {
            decodedTx.partialSign(keypair);
            finalTransactionBase64 = Buffer.from(decodedTx.serialize({ requireAllSignatures: false })).toString('base64');
         }
-        console.log(`[Extension API] Transaction successfully signed by '${mainAgent.name}'. Returning payload to dApp.`);
+        logger.info(`Transaction successfully signed by '${mainAgent.name}'. Returning payload to dApp.`);
     } catch (e: any) {
-        console.error(`[Extension API] Signing failed:`, e);
+        logger.error(`Signing failed`, { error: e });
         return res.status(500).json({ message: "Failed to sign transaction physically: " + e.message, data: null });
     }
 

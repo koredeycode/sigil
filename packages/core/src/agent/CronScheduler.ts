@@ -4,6 +4,7 @@ import {
     getAllActiveCronJobs,
     updateCronJobLastRun
 } from '../lib/Database.js';
+import { logger } from '../lib/Logger.js';
 import { invokeSolanaAgent, runAutonomousCycle } from './AgentLoop.js';
 import { agentManager } from './AgentManager.js';
 
@@ -42,7 +43,7 @@ class CronScheduler {
         await invokeSolanaAgent(agentId, agentName, prompt);
         updateCronJobLastRun(parseInt(jobId, 10));
       } catch (error) {
-        console.error(`[Cron:${jobId}] Error:`, error);
+        logger.error(`Cron error for job ${jobId}`, { error });
         agentManager.emit('agent:error', {
           agent: agentName,
           error: error instanceof Error ? error.message : String(error),
@@ -72,7 +73,7 @@ class CronScheduler {
       try {
         await runAutonomousCycle(agentId, agentName);
       } catch (error) {
-        console.error(`[Cron:autonomous:${agentName}] Error:`, error);
+        logger.error(`Autonomous cycle error for ${agentName}`, { error });
       }
     });
 

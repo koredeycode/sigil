@@ -4,6 +4,7 @@ import { agentManager } from '../agent/AgentManager.js';
 import { validateToken } from '../lib/Auth.js';
 import { getRpcUrl } from '../lib/Config.js';
 import { getAgent } from '../lib/Database.js';
+import { logger } from '../lib/Logger.js';
 
 
 /**
@@ -22,16 +23,16 @@ export function setupSocket(io: SocketIOServer): void {
 
     // Allow same-origin connections (when served from Express)
     if (!origin || origin.includes('localhost:7445')) {
-      console.log(`[Socket.IO] Same-origin connection from ${socket.id}`);
+      logger.info(`Same-origin connection from ${socket.id}`);
       next();
       return;
     }
 
     if (token && validateToken(token)) {
-      console.log(`[Socket.IO] Authenticated connection from ${socket.id}`);
+      logger.info(`Authenticated connection from ${socket.id}`);
       next();
     } else {
-      console.warn(`[Socket.IO] Auth failed for ${socket.id}, trying without token`);
+      logger.warn(`Auth failed for ${socket.id}, trying without token`);
       // For dev, allow all connections
       next();
     }
@@ -64,10 +65,10 @@ export function setupSocket(io: SocketIOServer): void {
 
   // Handle client connections
   io.on('connection', (socket) => {
-    console.log(`[Socket.IO] Client connected: ${socket.id}`);
+    logger.info(`Client connected: ${socket.id}`);
 
     socket.on('disconnect', (reason) => {
-      console.log(`[Socket.IO] Client disconnected: ${socket.id} (${reason})`);
+      logger.info(`Client disconnected: ${socket.id} (${reason})`);
     });
 
     // Chat messages from clients
@@ -107,7 +108,7 @@ export function setupSocket(io: SocketIOServer): void {
         });
 
       } catch (error) {
-        console.error(`[Socket.IO] Chat Error:`, error);
+        logger.error(`Chat Error for agent ${agent.name}`, { error });
         agentManager.emit('agent:error', {
           agent: agent.name,
           error: `Chat failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -137,9 +138,9 @@ export function setupSocket(io: SocketIOServer): void {
           });
 
           accountSubscriptions.set(agent.id, subId);
-          console.log(`[Socket.IO] Subscribed to wallet updates for ${agent.name}`);
+          logger.info(`Subscribed to wallet updates for ${agent.name}`);
         } catch (error) {
-          console.error(`[Socket.IO] Failed to subscribe to wallet:`, error);
+          logger.error(`Failed to subscribe to wallet for ${agent.name}`, { error });
         }
       }
     });
@@ -153,7 +154,7 @@ export function setupSocket(io: SocketIOServer): void {
           connection.removeAccountChangeListener(subId);
           accountSubscriptions.delete(data.agentId);
         } catch (error) {
-          console.error(`[Socket.IO] Failed to unsubscribe:`, error);
+          logger.error(`Failed to unsubscribe to wallet for ${data.agentId}`, { error });
         }
       }
     });

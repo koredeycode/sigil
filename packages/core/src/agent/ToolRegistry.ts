@@ -1,4 +1,5 @@
 import { createSolanaTools } from 'solana-agent-kit';
+import { logger } from '../lib/Logger.js';
 import { createCustomTools } from './CustomTools.js';
 import { createOrchestratorTools } from './OrchestratorTools.js';
 import { ESSENTIAL_TOOL_NAMES, clearAgentKit, getSolanaAgentKit } from './SolanaAgentKitTools.js';
@@ -26,18 +27,18 @@ export async function createTools(agentName: string, agentId?: string) {
       const agent = getAgent(agentName);
       agentId = agent?.id;
     }
-    console.log(`[ToolRegistry] Using CUSTOM toolset for ${agentName}`);
+    logger.info(`Using CUSTOM toolset for ${agentName}`);
     tools = createCustomTools(agentId || 'unknown', agentName);
   } else {
     const kit = await getSolanaAgentKit(agentName);
     const allTools = createSolanaTools(kit);
 
     if (TOOL_REGISTRY_MODE === 'full') {
-      console.log(`[ToolRegistry] Using FULL toolset (${allTools.length} tools) for ${agentName}`);
+      logger.info(`Using FULL toolset (${allTools.length} tools) for ${agentName}`);
       tools = allTools;
     } else {
       const curatedTools = allTools.filter(tool => ESSENTIAL_TOOL_NAMES.has(tool.name));
-      console.log(`[ToolRegistry] Using CURATED toolset (${curatedTools.length} tools) for ${agentName}`);
+      logger.info(`Using CURATED toolset (${curatedTools.length} tools) for ${agentName}`);
       tools = curatedTools;
     }
   }
@@ -46,7 +47,7 @@ export async function createTools(agentName: string, agentId?: string) {
   if (agentName === 'sigil') {
     const orchestratorTools = createOrchestratorTools();
     tools = [...tools, ...orchestratorTools];
-    console.log(`[ToolRegistry] +${orchestratorTools.length} orchestrator tools for sigil`);
+    logger.info(`+${orchestratorTools.length} orchestrator tools for sigil`);
   }
 
   return tools;

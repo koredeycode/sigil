@@ -4,6 +4,7 @@ import http from 'http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server as SocketIOServer } from 'socket.io';
+import { logger } from '../lib/Logger.js';
 import { authMiddleware } from './middleware/auth.js';
 import { agentsRouter } from './routes/agents.js';
 import { chatRouter } from './routes/chat.js';
@@ -68,7 +69,7 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
 
   // Global error handler
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error('[Server Error]', err.message);
+    logger.error('Server error', { message: err.message });
     res.status(500).json({ message: err.message, data: null });
   });
 
@@ -108,7 +109,7 @@ export function startServer(): Promise<{ io: SocketIOServer }> {
     const { httpServer, io } = createServer();
 
     httpServer.listen(API_PORT, () => {
-      console.log(`\n  ⎔ Sigil Server (API + Web) running on http://localhost:${API_PORT}`);
+      logger.info(`Sigil Server (API + Web) running on http://localhost:${API_PORT}`);
       resolve({ io });
     });
   });
