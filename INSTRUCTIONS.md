@@ -3,6 +3,39 @@
 **Generated:** March 4, 2026  
 **Priority:** Critical → High → Medium → Low
 
+---
+
+## ⚠️ IMPORTANT: Instructions Have Been Split
+
+**This file has been reorganized into an `instructions/` directory for better organization.**
+
+👉 **Go to: [`instructions/README.md`](instructions/README.md)** to get started.
+
+### Quick Links:
+
+- 📖 [**Instructions Directory**](instructions/README.md) - Start here
+- 🔴 [**Critical Fixes**](instructions/critical/) (01-04) - Fix these first
+- 🟠 [**High Priority Fixes**](instructions/high/) (05-10)
+- 🟡 [**Medium Priority Fixes**](instructions/medium/) (11-19)
+- 🟢 [**Low Priority Fixes**](instructions/low/) (20-23)
+- ✅ [**Testing Checklist**](instructions/TESTING.md)
+- 🚀 [**Deployment Guide**](instructions/DEPLOYMENT.md)
+- 📊 [**Status & Progress**](instructions/STATUS.md)
+
+### Why Split?
+
+- Each fix in its own file
+- Less overwhelming for agents
+- Focus on one task at a time
+- Easier to track progress
+- Better organization
+
+---
+
+## Original Consolidated Instructions Below
+
+_(Keep for reference - use the instructions/ directory for implementation)_
+
 This document provides step-by-step instructions to fix the 27 issues identified in the comprehensive code review. Follow the order of priority to address the most critical issues first.
 
 ---
@@ -16,6 +49,7 @@ This document provides step-by-step instructions to fix the 27 issues identified
 **Issue:** The file has `// @ts-nocheck` at line 1, completely disabling TypeScript type checking.
 
 **Instructions:**
+
 1. Remove the `// @ts-nocheck` comment from line 1
 2. Run `pnpm --filter sigil build` to see all type errors
 3. Fix each type error properly by:
@@ -42,7 +76,7 @@ This document provides step-by-step instructions to fix the 27 issues identified
 1. Create a new logger utility at `packages/core/src/lib/Logger.ts`:
 
 ```typescript
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 interface LoggerConfig {
   level: LogLevel;
@@ -62,7 +96,7 @@ class Logger {
 
   constructor(config?: Partial<LoggerConfig>) {
     this.config = {
-      level: config?.level || 'info',
+      level: config?.level || "info",
       enableConsole: config?.enableConsole ?? true,
       enableFile: config?.enableFile ?? false,
     };
@@ -79,27 +113,28 @@ class Logger {
     const logMessage = `[${timestamp}] [${level.toUpperCase()}] ${message}`;
 
     if (this.config.enableConsole) {
-      const method = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log';
-      console[method](logMessage, data || '');
+      const method =
+        level === "error" ? "error" : level === "warn" ? "warn" : "log";
+      console[method](logMessage, data || "");
     }
 
     // TODO: Add file logging if needed
   }
 
   debug(message: string, data?: any): void {
-    this.log('debug', message, data);
+    this.log("debug", message, data);
   }
 
   info(message: string, data?: any): void {
-    this.log('info', message, data);
+    this.log("info", message, data);
   }
 
   warn(message: string, data?: any): void {
-    this.log('warn', message, data);
+    this.log("warn", message, data);
   }
 
   error(message: string, error?: any): void {
-    this.log('error', message, error);
+    this.log("error", message, error);
   }
 }
 
@@ -108,8 +143,9 @@ export default logger;
 ```
 
 2. Add export to `packages/core/src/index.ts`:
+
 ```typescript
-export { logger } from './lib/Logger.js';
+export { logger } from "./lib/Logger.js";
 ```
 
 3. Replace console.log/error/warn statements systematically:
@@ -182,15 +218,18 @@ interface GoogleModel {
 }
 
 // Then update the parseModels functions to use these types:
-const PROVIDER_ENDPOINTS: Record<string, { 
-  url: string; 
-  parseModels: (data: { data?: any[]; models?: any[] }) => ModelInfo[] 
-}> = {
+const PROVIDER_ENDPOINTS: Record<
+  string,
+  {
+    url: string;
+    parseModels: (data: { data?: any[]; models?: any[] }) => ModelInfo[];
+  }
+> = {
   openai: {
-    url: 'https://api.openai.com/v1/models',
-    parseModels: (data: { data?: OpenAIModel[] }) => 
+    url: "https://api.openai.com/v1/models",
+    parseModels: (data: { data?: OpenAIModel[] }) =>
       (data.data || [])
-        .filter((m) => m.id.startsWith('gpt-'))
+        .filter((m) => m.id.startsWith("gpt-"))
         .sort((a, b) => a.id.localeCompare(b.id))
         .map((m) => ({ id: m.id, label: m.id })),
   },
@@ -241,16 +280,22 @@ instructions: tx.transaction.message.instructions.map((ix: TransactionInstructio
 2. Create validation schemas at `packages/core/src/server/schemas.ts`:
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 // Extension routes
 export const simulateTransactionSchema = z.object({
-  transactionMessage: z.string().min(1, 'Transaction message required').max(100000),
-  origin: z.string().url('Invalid origin URL').optional(),
+  transactionMessage: z
+    .string()
+    .min(1, "Transaction message required")
+    .max(100000),
+  origin: z.string().url("Invalid origin URL").optional(),
 });
 
 export const signTransactionSchema = z.object({
-  transactionMessage: z.string().min(1, 'Transaction message required').max(100000),
+  transactionMessage: z
+    .string()
+    .min(1, "Transaction message required")
+    .max(100000),
 });
 
 // Chat routes
@@ -261,7 +306,11 @@ export const chatMessageSchema = z.object({
 
 // Agent routes
 export const createAgentSchema = z.object({
-  name: z.string().min(1).max(100).regex(/^[a-zA-Z0-9_-]+$/, 'Invalid agent name'),
+  name: z
+    .string()
+    .min(1)
+    .max(100)
+    .regex(/^[a-zA-Z0-9_-]+$/, "Invalid agent name"),
   loopInterval: z.number().int().min(5000).max(3600000).optional(),
   prompt: z.string().max(5000).optional(),
 });
@@ -269,7 +318,7 @@ export const createAgentSchema = z.object({
 export const updateAgentSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   loopInterval: z.number().int().min(5000).max(3600000).optional(),
-  status: z.enum(['running', 'paused']).optional(),
+  status: z.enum(["running", "paused"]).optional(),
   prompt: z.string().max(5000).optional(),
 });
 
@@ -279,17 +328,29 @@ export const addProviderSchema = z.object({
   apiKey: z.string().min(1).max(500),
   model: z.string().min(1),
   baseUrl: z.string().url().optional(),
-  compat: z.enum(['openai', 'anthropic']).optional(),
+  compat: z.enum(["openai", "anthropic"]).optional(),
 });
 
 // Config routes
 export const updateConfigSchema = z.object({
-  kill_switch: z.enum(['true', 'false']).optional(),
-  per_trade_limit: z.string().regex(/^\d+(\.\d+)?$/).optional(),
-  daily_volume_cap: z.string().regex(/^\d+(\.\d+)?$/).optional(),
-  slippage_cap: z.string().regex(/^\d+(\.\d+)?$/).optional(),
+  kill_switch: z.enum(["true", "false"]).optional(),
+  per_trade_limit: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/)
+    .optional(),
+  daily_volume_cap: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/)
+    .optional(),
+  slippage_cap: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/)
+    .optional(),
   cooldown_period: z.string().regex(/^\d+$/).optional(),
-  confirmation_threshold: z.string().regex(/^\d+(\.\d+)?$/).optional(),
+  confirmation_threshold: z
+    .string()
+    .regex(/^\d+(\.\d+)?$/)
+    .optional(),
   rpc_url: z.string().url().optional(),
 });
 ```
@@ -297,8 +358,8 @@ export const updateConfigSchema = z.object({
 3. Create a validation middleware at `packages/core/src/server/middleware/validate.ts`:
 
 ```typescript
-import { NextFunction, Request, Response } from 'express';
-import { z, ZodError } from 'zod';
+import { NextFunction, Request, Response } from "express";
+import { z, ZodError } from "zod";
 
 export function validateBody(schema: z.ZodSchema) {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -308,9 +369,9 @@ export function validateBody(schema: z.ZodSchema) {
     } catch (error) {
       if (error instanceof ZodError) {
         res.status(400).json({
-          message: 'Validation error',
-          errors: error.errors.map(e => ({
-            path: e.path.join('.'),
+          message: "Validation error",
+          errors: error.errors.map((e) => ({
+            path: e.path.join("."),
             message: e.message,
           })),
           data: null,
@@ -326,17 +387,28 @@ export function validateBody(schema: z.ZodSchema) {
 4. Apply validation to routes. Example for `packages/core/src/server/routes/extension.ts`:
 
 ```typescript
-import { validateBody } from '../middleware/validate.js';
-import { simulateTransactionSchema, signTransactionSchema } from '../schemas.js';
+import { validateBody } from "../middleware/validate.js";
+import {
+  simulateTransactionSchema,
+  signTransactionSchema,
+} from "../schemas.js";
 
 // Add to routes:
-extensionRouter.post('/simulate', validateBody(simulateTransactionSchema), async (req, res) => {
-  // ... existing code
-});
+extensionRouter.post(
+  "/simulate",
+  validateBody(simulateTransactionSchema),
+  async (req, res) => {
+    // ... existing code
+  },
+);
 
-extensionRouter.post('/sign', validateBody(signTransactionSchema), async (req, res) => {
-  // ... existing code
-});
+extensionRouter.post(
+  "/sign",
+  validateBody(signTransactionSchema),
+  async (req, res) => {
+    // ... existing code
+  },
+);
 ```
 
 5. Apply to all other routes similarly:
@@ -360,6 +432,7 @@ extensionRouter.post('/sign', validateBody(signTransactionSchema), async (req, r
 **Instructions:**
 
 1. Install express-rate-limit:
+
 ```bash
 cd packages/core
 pnpm add express-rate-limit
@@ -369,13 +442,13 @@ pnpm add -D @types/express-rate-limit
 2. Create rate limit configs at `packages/core/src/server/middleware/rateLimit.ts`:
 
 ```typescript
-import rateLimit from 'express-rate-limit';
+import rateLimit from "express-rate-limit";
 
 // General API rate limit
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // 100 requests per window
-  message: 'Too many requests, please try again later.',
+  message: "Too many requests, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -384,28 +457,28 @@ export const apiLimiter = rateLimit({
 export const llmLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 10, // 10 requests per minute
-  message: 'Too many chat requests, please slow down.',
+  message: "Too many chat requests, please slow down.",
 });
 
 // Strict limit for auth endpoints
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  message: 'Too many authentication attempts.',
+  message: "Too many authentication attempts.",
 });
 ```
 
 3. Apply in `packages/core/src/server/app.ts`:
 
 ```typescript
-import { apiLimiter, authLimiter, llmLimiter } from './middleware/rateLimit.js';
+import { apiLimiter, authLimiter, llmLimiter } from "./middleware/rateLimit.js";
 
 // After CORS and JSON middleware:
-app.use('/api', apiLimiter);
+app.use("/api", apiLimiter);
 
 // Before route registration:
-app.use('/api/chat', llmLimiter);
-app.use('/api/extension/token', authLimiter);
+app.use("/api/chat", llmLimiter);
+app.use("/api/extension/token", authLimiter);
 ```
 
 **Expected Outcome:** API protected from abuse, DoS attacks, and quota exhaustion.
@@ -428,12 +501,12 @@ app.use('/api/extension/token', authLimiter);
  * Rolls back all changes if any operation fails.
  */
 function runInTransaction(db: DatabaseSync, operations: () => void): void {
-  db.exec('BEGIN TRANSACTION');
+  db.exec("BEGIN TRANSACTION");
   try {
     operations();
-    db.exec('COMMIT');
+    db.exec("COMMIT");
   } catch (error) {
-    db.exec('ROLLBACK');
+    db.exec("ROLLBACK");
     throw error;
   }
 }
@@ -445,11 +518,11 @@ function runInTransaction(db: DatabaseSync, operations: () => void): void {
 export function deleteAgent(id: string) {
   const db = getDatabase();
   runInTransaction(db, () => {
-    db.prepare('DELETE FROM cron_jobs WHERE agent_id = ?').run(id);
-    db.prepare('DELETE FROM logs WHERE agent_id = ?').run(id);
-    db.prepare('DELETE FROM transactions WHERE agent_id = ?').run(id);
-    db.prepare('DELETE FROM chats WHERE agent_id = ?').run(id);
-    db.prepare('DELETE FROM agents WHERE id = ?').run(id);
+    db.prepare("DELETE FROM cron_jobs WHERE agent_id = ?").run(id);
+    db.prepare("DELETE FROM logs WHERE agent_id = ?").run(id);
+    db.prepare("DELETE FROM transactions WHERE agent_id = ?").run(id);
+    db.prepare("DELETE FROM chats WHERE agent_id = ?").run(id);
+    db.prepare("DELETE FROM agents WHERE id = ?").run(id);
   });
 }
 ```
@@ -476,38 +549,38 @@ export class SigilError extends Error {
     message: string,
     public code: string,
     public statusCode: number = 500,
-    public details?: any
+    public details?: any,
   ) {
     super(message);
-    this.name = 'SigilError';
+    this.name = "SigilError";
   }
 }
 
 export class ValidationError extends SigilError {
   constructor(message: string, details?: any) {
-    super(message, 'VALIDATION_ERROR', 400, details);
-    this.name = 'ValidationError';
+    super(message, "VALIDATION_ERROR", 400, details);
+    this.name = "ValidationError";
   }
 }
 
 export class NotFoundError extends SigilError {
   constructor(resource: string) {
-    super(`${resource} not found`, 'NOT_FOUND', 404);
-    this.name = 'NotFoundError';
+    super(`${resource} not found`, "NOT_FOUND", 404);
+    this.name = "NotFoundError";
   }
 }
 
 export class AuthenticationError extends SigilError {
-  constructor(message: string = 'Authentication failed') {
-    super(message, 'AUTH_ERROR', 401);
-    this.name = 'AuthenticationError';
+  constructor(message: string = "Authentication failed") {
+    super(message, "AUTH_ERROR", 401);
+    this.name = "AuthenticationError";
   }
 }
 
 export class ConfigurationError extends SigilError {
   constructor(message: string) {
-    super(message, 'CONFIG_ERROR', 500);
-    this.name = 'ConfigurationError';
+    super(message, "CONFIG_ERROR", 500);
+    this.name = "ConfigurationError";
   }
 }
 ```
@@ -515,44 +588,51 @@ export class ConfigurationError extends SigilError {
 2. Update global error handler in `packages/core/src/server/app.ts`:
 
 ```typescript
-import { SigilError } from '../lib/Errors.js';
-import { logger } from '../lib/Logger.js';
+import { SigilError } from "../lib/Errors.js";
+import { logger } from "../lib/Logger.js";
 
 // Replace existing error handler:
-app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  if (err instanceof SigilError) {
-    logger.error(`${err.name}: ${err.message}`, err.details);
-    res.status(err.statusCode).json({ 
-      error: err.code,
-      message: err.message, 
-      details: err.details,
-      data: null 
-    });
-    return;
-  }
+app.use(
+  (
+    err: Error,
+    _req: express.Request,
+    res: express.Response,
+    _next: express.NextFunction,
+  ) => {
+    if (err instanceof SigilError) {
+      logger.error(`${err.name}: ${err.message}`, err.details);
+      res.status(err.statusCode).json({
+        error: err.code,
+        message: err.message,
+        details: err.details,
+        data: null,
+      });
+      return;
+    }
 
-  // Unknown error
-  logger.error('Unhandled error:', err);
-  res.status(500).json({ 
-    error: 'INTERNAL_ERROR',
-    message: 'An unexpected error occurred', 
-    data: null 
-  });
-});
+    // Unknown error
+    logger.error("Unhandled error:", err);
+    res.status(500).json({
+      error: "INTERNAL_ERROR",
+      message: "An unexpected error occurred",
+      data: null,
+    });
+  },
+);
 ```
 
 3. Use in route handlers (example):
 
 ```typescript
-import { NotFoundError, ValidationError } from '../../lib/Errors.js';
+import { NotFoundError, ValidationError } from "../../lib/Errors.js";
 
 // In route:
 if (!agent) {
-  throw new NotFoundError('Agent');
+  throw new NotFoundError("Agent");
 }
 
 if (!isValidInput(data)) {
-  throw new ValidationError('Invalid input format', { field: 'data' });
+  throw new ValidationError("Invalid input format", { field: "data" });
 }
 ```
 
@@ -576,11 +656,11 @@ if (!isValidInput(data)) {
 
 ```typescript
 // Default to localhost, can be overridden via chrome.storage
-const DEFAULT_SERVER_URL = 'http://127.0.0.1:7445';
+const DEFAULT_SERVER_URL = "http://127.0.0.1:7445";
 
 export async function getServerUrl(): Promise<string> {
   return new Promise((resolve) => {
-    chrome.storage.local.get(['sigil_server_url'], (result) => {
+    chrome.storage.local.get(["sigil_server_url"], (result) => {
       resolve(result.sigil_server_url || DEFAULT_SERVER_URL);
     });
   });
@@ -598,7 +678,7 @@ export async function setServerUrl(url: string): Promise<void> {
 2. Update `extension/background/index.ts`:
 
 ```typescript
-import { getServerUrl } from '../core/config';
+import { getServerUrl } from "../core/config";
 
 // Replace const SIGIL_SERVER_URL = "..." with async function calls:
 // Example for the connect method:
@@ -609,12 +689,12 @@ if (method === "set_token") {
     return true;
   }
 
-  getServerUrl().then(serverUrl => {
+  getServerUrl().then((serverUrl) => {
     fetch(`${serverUrl}/api/extension/token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token }),
-    })
+    });
     // ... rest of the code
   });
   return true;
@@ -642,17 +722,17 @@ if (method === "set_token") {
 ```typescript
 const result = await graph.invoke(
   { messages: inputMessages },
-  { 
+  {
     configurable: { thread_id: agentId },
     signal: AbortSignal.timeout(120000), // 2 minute timeout
     callbacks: [
       {
         handleLLMEnd: (output) => {
           // ... existing code
-        }
-      }
-    ]
-  }
+        },
+      },
+    ],
+  },
 );
 ```
 
@@ -663,9 +743,9 @@ try {
   const result = await graph.invoke(/* ... */);
   // ... rest of code
 } catch (error) {
-  if (error instanceof Error && error.name === 'AbortError') {
+  if (error instanceof Error && error.name === "AbortError") {
     logger.error(`LLM call timed out for agent ${agentName}`);
-    throw new Error('Request timed out. Please try again.');
+    throw new Error("Request timed out. Please try again.");
   }
   throw error;
 }
@@ -715,7 +795,7 @@ class LRUCache<K, V> {
     if (this.cache.has(key)) {
       this.cache.delete(key);
     }
-    
+
     this.cache.set(key, value);
 
     // Remove oldest if over limit
@@ -739,7 +819,10 @@ class LRUCache<K, V> {
 }
 
 // Replace the existing Map:
-const agentGraphCache = new LRUCache<string, ReturnType<typeof createReactAgent>>(50);
+const agentGraphCache = new LRUCache<
+  string,
+  ReturnType<typeof createReactAgent>
+>(50);
 ```
 
 2. Update the usage in `getOrCreateGraph`:
@@ -750,9 +833,9 @@ async function getOrCreateGraph(agentId: string, agentName: string) {
   if (cached) {
     return cached;
   }
-  
+
   // ... create graph ...
-  
+
   agentGraphCache.set(agentId, graph);
   return graph;
 }
@@ -773,12 +856,14 @@ async function getOrCreateGraph(agentId: string, agentName: string) {
 **Instructions:**
 
 1. Update `packages/tui/package.json`:
+
 ```json
 "react": "^19.0.0",
 "@types/react": "^19.0.0"
 ```
 
 2. Update `extension/package.json`:
+
 ```json
 "react": "^19.0.0",
 "react-dom": "^19.0.0",
@@ -788,11 +873,13 @@ async function getOrCreateGraph(agentId: string, agentName: string) {
 ```
 
 3. Update `packages/web/package.json`:
+
 ```json
 "typescript": "^5.7.3"
 ```
 
 4. Run clean install:
+
 ```bash
 pnpm install
 pnpm build
@@ -813,6 +900,7 @@ pnpm build
 **Instructions:**
 
 1. Delete these files:
+
 ```bash
 rm packages/core/test-key.ts
 rm packages/core/test-route.js
@@ -821,6 +909,7 @@ rm packages/core/test-route.js
 2. If they're imported anywhere, remove those imports.
 
 3. Update `.gitignore` to prevent similar files:
+
 ```
 # Test files
 test-*.ts
@@ -847,24 +936,26 @@ test-*.js
    - Or move tui command to tui package
 
 3. If feasible, remove the dependency:
+
 ```json
 // Remove from core/package.json:
 "sigil-tui": "workspace:*",
 ```
 
 4. Update `packages/core/bin/commands/tui.ts` to dynamically import:
+
 ```typescript
 export async function register(program: Command) {
   program
-    .command('tui')
-    .description('Launch interactive terminal UI')
+    .command("tui")
+    .description("Launch interactive terminal UI")
     .action(async () => {
       try {
         // Dynamic import to avoid circular dependency
-        const { renderTUI } = await import('sigil-tui');
+        const { renderTUI } = await import("sigil-tui");
         await renderTUI();
       } catch (error) {
-        console.error('Failed to load TUI. Make sure sigil-tui is installed.');
+        console.error("Failed to load TUI. Make sure sigil-tui is installed.");
         process.exit(1);
       }
     });
@@ -887,13 +978,13 @@ export async function register(program: Command) {
 
 ```typescript
 useEffect(() => {
-  const token = localStorage.getItem('sigil_token');
+  const token = localStorage.getItem("sigil_token");
   const apiUrl = getApiUrl();
 
   // Improved reconnection config with exponential backoff
-  const socketInstance = io(apiUrl || 'http://localhost:7445', {
+  const socketInstance = io(apiUrl || "http://localhost:7445", {
     auth: token ? { token } : {},
-    transports: ['websocket', 'polling'],
+    transports: ["websocket", "polling"],
     reconnection: true,
     reconnectionAttempts: 10, // Finite attempts
     reconnectionDelay: 1000,
@@ -925,8 +1016,8 @@ useEffect(() => {
     }
   };
 
-  window.addEventListener('storage', handleStorageChange);
-  return () => window.removeEventListener('storage', handleStorageChange);
+  window.addEventListener("storage", handleStorageChange);
+  return () => window.removeEventListener("storage", handleStorageChange);
 }, []);
 ```
 
@@ -994,10 +1085,12 @@ export const DEFAULT_CONFIRMATION_THRESHOLD = 50; // SOL
 2. Replace hardcoded values with imports from Constants:
 
 ```typescript
-import { API_PORT, DEFAULT_LOOP_INTERVAL } from './lib/Constants.js';
+import { API_PORT, DEFAULT_LOOP_INTERVAL } from "./lib/Constants.js";
 
 // In server/app.ts:
-httpServer.listen(API_PORT, () => { /* ... */ });
+httpServer.listen(API_PORT, () => {
+  /* ... */
+});
 
 // In agent creation:
 loopInterval = loopInterval || DEFAULT_LOOP_INTERVAL;
@@ -1017,23 +1110,23 @@ loopInterval = loopInterval || DEFAULT_LOOP_INTERVAL;
 
 Add JSDoc comments to all exported functions/classes:
 
-```typescript
+````typescript
 /**
  * Invalidates the cached agent graph for a specific agent.
  * Call this when agent configuration changes (model, tools, prompt, etc.)
- * 
+ *
  * @param agentId - The unique identifier of the agent
  * @example
  * ```typescript
  * invalidateAgentGraph('agent-123');
  * ```
  */
-export { invalidateAgentGraph, /* ... */ } from './agent/AgentLoop.js';
+export { invalidateAgentGraph /* ... */ } from "./agent/AgentLoop.js";
 
 /**
  * Manages agent lifecycle and state.
  * Singleton instance for controlling agents across the application.
- * 
+ *
  * @example
  * ```typescript
  * const mainAgent = agentManager.getMainAgent();
@@ -1042,10 +1135,10 @@ export { invalidateAgentGraph, /* ... */ } from './agent/AgentLoop.js';
  * }
  * ```
  */
-export { agentManager } from './agent/AgentManager.js';
+export { agentManager } from "./agent/AgentManager.js";
 
 // ... Add for all exports
-```
+````
 
 **Expected Outcome:** Better DX for library consumers, improved IDE tooltips.
 
@@ -1063,33 +1156,53 @@ export { agentManager } from './agent/AgentManager.js';
 
 ```typescript
 export function getWebDistPath(): string {
-  return getConfig('web_dist_path') || process.env.WEB_DIST_PATH || '';
+  return getConfig("web_dist_path") || process.env.WEB_DIST_PATH || "";
 }
 
 export function setWebDistPath(path: string): void {
-  setConfig('web_dist_path', path);
+  setConfig("web_dist_path", path);
 }
 ```
 
 2. Simplify in `packages/core/src/server/app.ts`:
 
 ```typescript
-import { getWebDistPath } from '../lib/Config.js';
+import { getWebDistPath } from "../lib/Config.js";
 
 // Replace lines 78-98 with:
 let webDistPath = getWebDistPath();
 
 if (!webDistPath) {
   // Fallback to heuristic detection
-  const isDev = __dirname.includes(`src${path.sep}server`) && !__dirname.includes('dist');
+  const isDev =
+    __dirname.includes(`src${path.sep}server`) && !__dirname.includes("dist");
   const isCompiled = __dirname.includes(`dist${path.sep}src${path.sep}server`);
-  
+
   if (isCompiled) {
-    webDistPath = path.resolve(__dirname, '../../../../..', 'packages', 'web', 'dist');
+    webDistPath = path.resolve(
+      __dirname,
+      "../../../../..",
+      "packages",
+      "web",
+      "dist",
+    );
   } else if (isDev) {
-    webDistPath = path.resolve(__dirname, '../../../..', 'packages', 'web', 'dist');
+    webDistPath = path.resolve(
+      __dirname,
+      "../../../..",
+      "packages",
+      "web",
+      "dist",
+    );
   } else {
-    webDistPath = path.resolve(__dirname, '..', '..', 'packages', 'web', 'dist');
+    webDistPath = path.resolve(
+      __dirname,
+      "..",
+      "..",
+      "packages",
+      "web",
+      "dist",
+    );
   }
 }
 
@@ -1223,9 +1336,9 @@ Add comments explaining non-obvious compiler options:
     "resolveJsonModule": true, // Allow importing JSON files
     "declaration": true, // Generate .d.ts files
     "declarationMap": true, // Generate source maps for .d.ts
-    "sourceMap": true // Generate .js.map files for debugging
+    "sourceMap": true, // Generate .js.map files for debugging
   },
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
 }
 ```
 
@@ -1257,7 +1370,8 @@ LOG_LEVEL=info
 ```
 
 Add to README:
-```markdown
+
+````markdown
 ## Environment Variables
 
 Copy `.env.example` to `.env` and configure as needed:
@@ -1265,9 +1379,11 @@ Copy `.env.example` to `.env` and configure as needed:
 ```bash
 cp packages/core/.env.example packages/core/.env
 ```
+````
 
 See `.env.example` for available options.
-```
+
+````
 
 **Expected Outcome:** Clear configuration documentation.
 
@@ -1284,7 +1400,7 @@ Enhance health check to include more details:
 ```typescript
 router.get('/', async (req, res) => {
   const agent = agentManager.getMainAgent();
-  
+
   // Check database connectivity
   let dbHealthy = false;
   try {
@@ -1313,7 +1429,7 @@ router.get('/', async (req, res) => {
     },
   });
 });
-```
+````
 
 **Expected Outcome:** More informative health checks for monitoring.
 
@@ -1324,23 +1440,27 @@ router.get('/', async (req, res) => {
 After implementing fixes, verify:
 
 ### Critical Tests:
+
 - [ ] Extension popup compiles without `@ts-nocheck`
 - [ ] All console.log replaced with logger calls
 - [ ] API input validation works (test with invalid inputs)
 - [ ] No private keys in logs
 
 ### High Priority Tests:
+
 - [ ] Rate limiting activates after threshold
 - [ ] Database transactions rollback on error
 - [ ] Configurable server URL in extension
 - [ ] LLM timeouts work correctly
 
 ### Medium Priority Tests:
+
 - [ ] All packages build successfully
 - [ ] No circular dependency warnings
 - [ ] Socket reconnection works
 
 ### Low Priority Tests:
+
 - [ ] Health check returns full details
 - [ ] Documentation is clear
 
@@ -1362,6 +1482,7 @@ After implementing fixes, verify:
 ## 📚 ADDITIONAL RECOMMENDATIONS
 
 ### Future Enhancements (not in scope):
+
 1. Add comprehensive test suite (Jest/Vitest)
 2. Implement OpenAPI/Swagger documentation
 3. Add monitoring and observability (Prometheus, Grafana)
@@ -1372,6 +1493,7 @@ After implementing fixes, verify:
 8. Implement backup/restore functionality
 
 ### Security Audit Recommendations:
+
 1. Conduct third-party security audit
 2. Implement secrets scanning in CI/CD
 3. Add dependency vulnerability scanning

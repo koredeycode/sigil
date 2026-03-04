@@ -1,3 +1,4 @@
+// TUI TSConfig: Extends root config for the Ink-based terminal UI (React for CLI).
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {

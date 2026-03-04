@@ -1,3 +1,4 @@
+// Core TSConfig: Extends root config. Compiles src/ and bin/ to the dist/ directory for the Node.js backend.
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {

@@ -1,3 +1,4 @@
+// Root TSConfig: Sets baseline compiler options (ES2022, Node16 modules) for all packages in the monorepo.
 {
   "compilerOptions": {
     "target": "ES2022",
