@@ -4,6 +4,8 @@ import { agentManager } from '../../agent/AgentManager.js';
 import { getRpcUrl } from '../../lib/Config.js';
 import { logger } from '../../lib/Logger.js';
 import { getKeypair } from '../../wallet/Wallet.js';
+import { validateBody } from '../middleware/validate.js';
+import { signTransactionSchema, simulateTransactionSchema } from '../schemas.js';
 
 export const extensionRouter: Router = Router();
 
@@ -103,7 +105,7 @@ extensionRouter.get('/transactions', async (req, res) => {
 });
 
 // POST /api/extension/simulate
-extensionRouter.post('/simulate', async (req, res) => {
+extensionRouter.post('/simulate', validateBody(simulateTransactionSchema), async (req, res) => {
   try {
     const { transactionMessage, origin } = req.body;
     const mainAgent = agentManager.getMainAgent();
@@ -111,11 +113,6 @@ extensionRouter.post('/simulate', async (req, res) => {
     if (!mainAgent) {
       res.status(404).json({ message: 'No active agent found', data: null });
       return;
-    }
-
-    if (!transactionMessage) {
-       res.status(400).json({ message: 'Transaction message required', data: null });
-       return;
     }
 
     // Decode the base64 transaction string
@@ -190,7 +187,7 @@ End your response with exactly "DECISION: APPROVED" or "DECISION: REJECTED".`;
 });
 
 // POST /api/extension/sign
-extensionRouter.post('/sign', async (req, res) => {
+extensionRouter.post('/sign', validateBody(signTransactionSchema), async (req, res) => {
   try {
     const { transactionMessage } = req.body;
     const mainAgent = agentManager.getMainAgent();
@@ -198,11 +195,6 @@ extensionRouter.post('/sign', async (req, res) => {
     if (!mainAgent) {
       res.status(404).json({ message: 'No active agent found', data: null });
       return;
-    }
-
-    if (!transactionMessage) {
-       res.status(400).json({ message: 'Transaction message required', data: null });
-       return;
     }
 
     logger.info(`Received request to physically sign transaction by Agent '${mainAgent.name}'...`);

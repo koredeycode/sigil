@@ -2,6 +2,8 @@ import { Router } from 'express';
 import cron from 'node-cron';
 import { cronScheduler } from '../../agent/CronScheduler.js';
 import { deleteCronJob, getAgent, getCronJob, getCronJobsForAgent, insertCronJob, toggleCronJob, updateCronJob } from '../../lib/Database.js';
+import { validateBody } from '../middleware/validate.js';
+import { createCronJobSchema, toggleCronJobSchema, updateCronJobSchema } from '../schemas.js';
 
 export const cronRouter: Router = Router();
 
@@ -16,14 +18,9 @@ cronRouter.get('/:agentId', (req, res) => {
 });
 
 // POST /api/cron — create a cron job
-cronRouter.post('/', (req, res) => {
+cronRouter.post('/', validateBody(createCronJobSchema), (req, res) => {
   try {
     const { agentId, name, expression, taskPrompt } = req.body;
-
-    if (!agentId || !name || !expression || !taskPrompt) {
-      res.status(400).json({ message: 'agentId, name, expression, and taskPrompt are required', data: null });
-      return;
-    }
 
     if (!cron.validate(expression)) {
       res.status(400).json({ message: `Invalid cron expression: ${expression}`, data: null });
@@ -52,15 +49,10 @@ cronRouter.post('/', (req, res) => {
 });
 
 // PATCH /api/cron/:id — toggle active/inactive
-cronRouter.patch('/:id', (req, res) => {
+cronRouter.patch('/:id', validateBody(toggleCronJobSchema), (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.id as string, 10);
     const { active } = req.body;
-
-    if (typeof active !== 'boolean') {
-      res.status(400).json({ message: 'active (boolean) is required', data: null });
-      return;
-    }
 
     const job = getCronJob(id);
     if (!job) {
@@ -86,15 +78,10 @@ cronRouter.patch('/:id', (req, res) => {
 });
 
 // PUT /api/cron/:id — update a cron job
-cronRouter.put('/:id', (req, res) => {
+cronRouter.put('/:id', validateBody(updateCronJobSchema), (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.id as string, 10);
     const { name, expression, taskPrompt } = req.body;
-
-    if (!name || !expression || !taskPrompt) {
-      res.status(400).json({ message: 'name, expression, and taskPrompt are required', data: null });
-      return;
-    }
 
     if (!cron.validate(expression)) {
       res.status(400).json({ message: `Invalid cron expression: ${expression}`, data: null });
@@ -128,7 +115,7 @@ cronRouter.put('/:id', (req, res) => {
 // DELETE /api/cron/:id — delete a cron job
 cronRouter.delete('/:id', (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.id as string, 10);
     cronScheduler.cancel(String(id));
     deleteCronJob(id);
     res.status(204).json({ message: 'Cron job deleted', data: null });

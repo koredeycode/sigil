@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { rotateToken } from '../../lib/Auth.js';
 import { getConfig, setConfig } from '../../lib/Database.js';
+import { validateBody } from '../middleware/validate.js';
+import { updateConfigSchema } from '../schemas.js';
 
 export const configRouter: Router = Router();
 
@@ -27,7 +29,7 @@ configRouter.get('/', (_req, res) => {
 });
 
 // POST /api/config — update config values
-configRouter.post('/', (req, res) => {
+configRouter.post('/', validateBody(updateConfigSchema), (req, res) => {
   try {
     const updates = req.body;
     for (const [key, value] of Object.entries(updates)) {

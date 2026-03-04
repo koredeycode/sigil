@@ -8,6 +8,8 @@ import {
     setPrimaryProvider,
 } from '../../lib/Database.js';
 import { fetchModelsForProvider } from '../../lib/ModelFetcher.js';
+import { validateBody } from '../middleware/validate.js';
+import { addProviderSchema } from '../schemas.js';
 
 export const providersRouter: Router = Router();
 
@@ -23,13 +25,11 @@ providersRouter.get('/', (_req, res) => {
 });
 
 // POST /api/providers — add a provider
-providersRouter.post('/', (req, res) => {
+providersRouter.post('/', validateBody(addProviderSchema), (req, res) => {
   try {
     const { name, apiKey, model, isPrimary, baseUrl, compat } = req.body;
-    if (!name || !model) {
-      res.status(400).json({ error: 'name and model are required' });
-      return;
-    }
+    // Map alias -> real property where needed (name corresponds to provider in schema)
+    const provider = req.body.provider || name;
     const encryptedKey = apiKey ? encryptApiKey(apiKey) : null;
     const result = addProvider(name, encryptedKey, model, isPrimary ?? false, baseUrl, compat);
 

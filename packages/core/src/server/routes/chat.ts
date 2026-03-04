@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { agentManager } from '../../agent/AgentManager.js';
 import { getAgent, getAgentChats, insertChat } from '../../lib/Database.js';
+import { validateBody } from '../middleware/validate.js';
+import { chatMessageSchema } from '../schemas.js';
 
 export const chatRouter: Router = Router();
 
@@ -18,13 +20,9 @@ chatRouter.get('/:agentId', (req, res) => {
 });
 
 // POST /api/chat — send a message to an agent's LLM
-chatRouter.post('/', async (req, res) => {
+chatRouter.post('/', validateBody(chatMessageSchema), async (req, res) => {
   try {
     const { agentId, message } = req.body;
-    if (!agentId || !message) {
-      res.status(400).json({ message: 'agentId and message are required', data: null });
-      return;
-    }
 
     const agent = getAgent(agentId);
     if (!agent) {

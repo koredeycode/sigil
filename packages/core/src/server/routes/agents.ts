@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { agentManager } from '../../agent/AgentManager.js';
 import { getAgentLogs } from '../../lib/Database.js';
+import { validateBody } from '../middleware/validate.js';
+import { agentActionSchema, createAgentSchema, updateAgentSchema } from '../schemas.js';
 
 export const agentsRouter: Router = Router();
 
@@ -11,13 +13,9 @@ agentsRouter.get('/', (_req, res) => {
 });
 
 // POST /api/agents — create a new agent
-agentsRouter.post('/', async (req, res) => {
+agentsRouter.post('/', validateBody(createAgentSchema), async (req, res) => {
   try {
     const { name, loopInterval, privateKey, prompt } = req.body;
-    if (!name || typeof name !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(name)) {
-      res.status(400).json({ message: 'Invalid agent name. Use only alphanumeric characters, dashes, or underscores.', data: null });
-      return;
-    }
     const agent = await agentManager.create(name, loopInterval, privateKey, prompt);
     res.status(201).json({ message: 'Agent created successfully', data: agent });
   } catch (error) {
@@ -26,9 +24,9 @@ agentsRouter.post('/', async (req, res) => {
 });
 
 // PATCH /api/agents/:id — update agent (start/pause/kill)
-agentsRouter.patch('/:id', async (req, res) => {
+agentsRouter.patch('/:id', validateBody(agentActionSchema), async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { action } = req.body;
 
     switch (action) {
@@ -54,15 +52,10 @@ agentsRouter.patch('/:id', async (req, res) => {
 });
 
 // PUT /api/agents/:id — update agent profile (name, interval)
-agentsRouter.put('/:id', async (req, res) => {
+agentsRouter.put('/:id', validateBody(updateAgentSchema), async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { name, loopInterval } = req.body;
-    
-    if (!name || typeof name !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(name) || !loopInterval) {
-      res.status(400).json({ message: 'Invalid name or missing loopInterval. Name must use only alphanumeric characters, dashes, or underscores.', data: null });
-      return;
-    }
 
     const agent = await agentManager.update(id, name, loopInterval);
     // Broadcast update
@@ -77,7 +70,7 @@ agentsRouter.put('/:id', async (req, res) => {
 // DELETE /api/agents/:id — destroy an agent
 agentsRouter.delete('/:id', async (req, res) => {
   try {
-    await agentManager.destroy(req.params.id);
+    await agentManager.destroy(req.params.id as string);
     res.status(204).json({ message: 'Agent destroyed', data: null });
   } catch (error) {
     res.status(400).json({ message: error instanceof Error ? error.message : String(error), data: null });
@@ -89,7 +82,7 @@ agentsRouter.get('/:id/logs', (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
     const before = req.query.before ? parseInt(req.query.before as string, 10) : undefined;
-    const logs = getAgentLogs(req.params.id, limit, before);
+    const logs = getAgentLogs(req.params.id as string, limit, before);
     res.json({ message: 'Success', data: logs });
   } catch (error) {
     res.status(500).json({ message: error instanceof Error ? error.message : String(error), data: null });
