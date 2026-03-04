@@ -40,7 +40,7 @@ export function TransactionDetailModal({ agentId, signature, onClose }: Transact
     }, [agentId, signature]);
 
     return (
-        <div className="fixed inset-0 z-50 flex flex-col bg-background" onClick={onClose}>
+        <div className="absolute inset-0 z-10 flex flex-col bg-background/95 backdrop-blur-sm" onClick={onClose}>
             <div
                 className="flex flex-col h-full w-full max-h-full overflow-hidden"
                 onClick={(e) => e.stopPropagation()}

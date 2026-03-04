@@ -19,6 +19,9 @@ importers:
       eventemitter3:
         specifier: ^5.0.4
         version: 5.0.4
+      lucide-react:
+        specifier: ^0.577.0
+        version: 0.577.0(react@18.2.0)
       plasmo:
         specifier: 0.90.5
         version: 0.90.5(@swc/core@1.15.18(@swc/helpers@0.5.18))(@swc/helpers@0.5.18)(@types/node@20.11.5)(lodash@4.17.23)(mustache@4.2.0)(postcss@8.5.6)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(ts-node@10.9.2(@swc/core@1.15.18(@swc/helpers@0.5.18))(@types/node@20.11.5)(typescript@5.3.3))
@@ -8406,6 +8409,11 @@ packages:
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
+  lucide-react@0.577.0:
+    resolution: {integrity: sha512-4LjoFv2eEPwYDPg/CUdBJQSDfPyzXCRrVW1X7jrx/trgxnxkHFjnVZINbzvzxjN70dxychOfg+FTYwBiS3pQ5A==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   lunr@2.3.9:
     resolution: {integrity: sha512-zTU3DaZaF3Rt9rhN3uBMGQD3dD2/vFQqnvZCDv4dl5iOzq2IZQqTxu90r4E5J+nP70J3ilqVCrbho2eWaeW8Ow==}
 
@@ -12057,7 +12065,7 @@ snapshots:
       nanoid: 3.3.4
       node-cache: 5.1.2
       rpc-websockets: 7.5.1
-      solana-bankrun: 0.3.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      solana-bankrun: 0.3.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)
       strict-event-emitter-types: 2.0.0
       tweetnacl: 1.0.3
       tweetnacl-util: 0.15.1
@@ -17586,11 +17594,11 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@solana/spl-token@0.3.7(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(typescript@4.9.5)(utf-8-validate@5.0.10)':
+  '@solana/spl-token@0.3.7(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(typescript@4.9.5)(utf-8-validate@5.0.10)':
     dependencies:
       '@solana/buffer-layout': 4.0.1
       '@solana/buffer-layout-utils': 0.2.0(bufferutil@4.1.0)(typescript@4.9.5)(utf-8-validate@5.0.10)
-      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)
+      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       buffer: 6.0.3
     transitivePeerDependencies:
       - bufferutil
@@ -17921,7 +17929,7 @@ snapshots:
   '@solworks/soltoolkit-sdk@0.0.23(bufferutil@4.1.0)(utf-8-validate@5.0.10)':
     dependencies:
       '@solana/buffer-layout': 4.0.1
-      '@solana/spl-token': 0.3.7(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(typescript@4.9.5)(utf-8-validate@5.0.10)
+      '@solana/spl-token': 0.3.7(@solana/web3.js@1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(typescript@4.9.5)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@4.9.5)(utf-8-validate@5.0.10)
       '@types/bn.js': 5.2.0
       '@types/node': 18.19.130
@@ -19384,7 +19392,7 @@ snapshots:
     dependencies:
       '@coral-xyz/anchor': 0.29.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@solana/web3.js': 1.92.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-      solana-bankrun: 0.3.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
+      solana-bankrun: 0.3.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)
 
   anchor-client-gen@0.28.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10):
     dependencies:
@@ -22523,6 +22531,10 @@ snapshots:
     dependencies:
       react: 19.2.4
 
+  lucide-react@0.577.0(react@18.2.0):
+    dependencies:
+      react: 18.2.0
+
   lunr@2.3.9: {}
 
   magic-string@0.30.21:
@@ -24853,22 +24865,6 @@ snapshots:
   solana-bankrun@0.3.1(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10):
     dependencies:
       '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@5.6.3)(utf-8-validate@5.0.10)
-      bs58: 4.0.1
-    optionalDependencies:
-      solana-bankrun-darwin-arm64: 0.3.1
-      solana-bankrun-darwin-universal: 0.3.1
-      solana-bankrun-darwin-x64: 0.3.1
-      solana-bankrun-linux-x64-gnu: 0.3.1
-      solana-bankrun-linux-x64-musl: 0.3.1
-    transitivePeerDependencies:
-      - bufferutil
-      - encoding
-      - typescript
-      - utf-8-validate
-
-  solana-bankrun@0.3.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10):
-    dependencies:
-      '@solana/web3.js': 1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       bs58: 4.0.1
     optionalDependencies:
       solana-bankrun-darwin-arm64: 0.3.1

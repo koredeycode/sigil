@@ -49,7 +49,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
 
     // Validate the token against the server before storing
-    fetch(`${SIGIL_SERVER_URL}/api/extension/token`, {
+    fetch(`${SIGIL_SERVER_URL}/api/wallet/token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token }),

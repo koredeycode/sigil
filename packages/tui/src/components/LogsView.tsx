@@ -104,7 +104,7 @@ export function LogsView({ agentId, agentName, maxLines = 50 }: LogsViewProps) {
   };
 
   return (
-    <Box flexDirection="column" gap={0}>
+    <Box flexDirection="column" gap={1}>
       {logs.length === 0 && (
         <Text dimColor>  Waiting for activity...</Text>
       )}

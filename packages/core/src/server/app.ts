@@ -14,12 +14,12 @@ import { agentsRouter } from './routes/agents.js';
 import { chatRouter } from './routes/chat.js';
 import { configRouter } from './routes/config.js';
 import { cronRouter } from './routes/cron.js';
-import { extensionRouter } from './routes/extension.js';
-import { extensionTokenRouter } from './routes/extensionToken.js';
 import { providersRouter } from './routes/providers.js';
 import { statusRouter } from './routes/status.js';
 import { transactionsRouter } from './routes/transactions.js';
 import { walletRouter } from './routes/wallet.js';
+import { walletProviderRouter } from './routes/walletProvider.js';
+import { walletTokenRouter } from './routes/walletToken.js';
 import { setupSocket } from './socket.js';
 import { attachWebDashboard } from './web.js';
 
@@ -61,7 +61,7 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
 
   // Public routes (no auth)
   app.use('/api/status', statusRouter);
-  app.use('/api/extension/token', authLimiter, extensionTokenRouter);
+  app.use('/api/wallet/token', authLimiter, walletTokenRouter);
 
   // Auth-protected routes
   app.use('/api', authMiddleware);
@@ -69,13 +69,13 @@ export function createServer(): { app: express.Express; httpServer: http.Server;
   
   // Costly endpoints get an extra LLM rate limiter
   app.use('/api/chat', llmLimiter, chatRouter);
-  app.use('/api/extension/simulate', llmLimiter);
+  app.use('/api/wallet/provider/simulate', llmLimiter);
   app.use('/api/transactions', transactionsRouter);
   app.use('/api/providers', providersRouter);
   app.use('/api/config', configRouter);
   app.use('/api/cron', cronRouter);
+  app.use('/api/wallet/provider', walletProviderRouter);
   app.use('/api/wallet', walletRouter);
-  app.use('/api/extension', extensionRouter);
 
   // Global error handler
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

@@ -17,7 +17,7 @@ function renderMessage(msg: ChatMessage) {
   // System messages (log events)
   if (msg.role === 'system') {
     return (
-      <Box paddingLeft={2}>
+      <Box paddingLeft={2} marginTop={1}>
         <Text dimColor>{msg.content}</Text>
       </Box>
     );
@@ -26,7 +26,7 @@ function renderMessage(msg: ChatMessage) {
   // User messages — highlighted
   if (msg.role === 'user') {
     return (
-      <Box marginTop={0}>
+      <Box marginTop={1}>
         <Text bold color="cyan">&gt; </Text>
         <Text bold inverse> {msg.content} </Text>
       </Box>
@@ -42,7 +42,7 @@ function renderMessage(msg: ChatMessage) {
   }
 
   return (
-    <Box flexDirection="column" marginTop={0}>
+    <Box flexDirection="column" marginTop={1}>
       <Box>
         <Text color="magenta">{'● '}</Text>
         <Text> {md(msg.content).trimEnd()}</Text>

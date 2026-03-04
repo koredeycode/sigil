@@ -5,6 +5,8 @@ import { ApiClient } from '../lib/api';
 import { PortfolioChart } from './PortfolioChart';
 import { TransactionLedger } from './TransactionLedger';
 
+import { TransactionDetailModal } from './TransactionDetailModal';
+
 import type { Agent } from '../hooks/useAgents';
 
 interface TokenAccount {
@@ -30,6 +32,7 @@ export function WalletView({ activeAgent }: { activeAgent: Agent | null }) {
     const [wallet, setWallet] = useState<WalletData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [selectedTx, setSelectedTx] = useState<string | null>(null);
 
     const truncatedAddress = activeAgent?.pubkey
         ? `${activeAgent.pubkey.slice(0, 4)}...${activeAgent.pubkey.slice(-4)}`
@@ -256,8 +259,17 @@ export function WalletView({ activeAgent }: { activeAgent: Agent | null }) {
                     </div>
 
                     <div className={`h-full ${activeTab === 'transactions' ? 'flex flex-col' : 'hidden'}`}>
-                        <TransactionLedger activeAgent={activeAgent} />
+                        <TransactionLedger activeAgent={activeAgent} onSelectTx={setSelectedTx} />
                     </div>
+                    
+                    {/* Transaction Detail Overlay */}
+                    {selectedTx && activeAgent && (
+                        <TransactionDetailModal 
+                            agentId={activeAgent.id} 
+                            signature={selectedTx} 
+                            onClose={() => setSelectedTx(null)} 
+                        />
+                    )}
                     
                     {/* Fade out gradient at bottom of assets list */}
                     {activeTab === 'portfolio' && (

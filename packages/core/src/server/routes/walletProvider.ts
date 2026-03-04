@@ -7,14 +7,14 @@ import { getKeypair } from '../../wallet/Wallet.js';
 import { validateBody } from '../middleware/validate.js';
 import { signTransactionSchema, simulateTransactionSchema } from '../schemas.js';
 
-export const extensionRouter: Router = Router();
+export const walletProviderRouter: Router = Router();
 
 function getConnection(): Connection {
   return new Connection(getRpcUrl(), 'confirmed');
 }
 
-// POST /api/extension/connect
-extensionRouter.post('/connect', (req, res) => {
+// POST /api/wallet/provider/connect
+walletProviderRouter.post('/connect', (req, res) => {
   try {
     const mainAgent = agentManager.getMainAgent();
     if (!mainAgent || !mainAgent.pubkey) {
@@ -22,15 +22,15 @@ extensionRouter.post('/connect', (req, res) => {
       return;
     }
     
-    // Return pubkey and name to the extension
+    // Return pubkey and name to the client
     res.json({ message: 'Success', data: { publicKey: mainAgent.pubkey, name: mainAgent.name } });
   } catch (err) {
     res.status(500).json({ message: err instanceof Error ? err.message : String(err), data: null });
   }
 });
 
-// GET /api/extension/portfolio
-extensionRouter.get('/portfolio', async (req, res) => {
+// GET /api/wallet/provider/portfolio
+walletProviderRouter.get('/portfolio', async (req, res) => {
   try {
     const mainAgent = agentManager.getMainAgent();
     if (!mainAgent || !mainAgent.pubkey) {
@@ -74,8 +74,8 @@ extensionRouter.get('/portfolio', async (req, res) => {
   }
 });
 
-// GET /api/extension/transactions
-extensionRouter.get('/transactions', async (req, res) => {
+// GET /api/wallet/provider/transactions
+walletProviderRouter.get('/transactions', async (req, res) => {
   try {
     const mainAgent = agentManager.getMainAgent();
     if (!mainAgent || !mainAgent.pubkey) {
@@ -104,8 +104,8 @@ extensionRouter.get('/transactions', async (req, res) => {
   }
 });
 
-// POST /api/extension/simulate
-extensionRouter.post('/simulate', validateBody(simulateTransactionSchema), async (req, res) => {
+// POST /api/wallet/provider/simulate
+walletProviderRouter.post('/simulate', validateBody(simulateTransactionSchema), async (req, res) => {
   try {
     const { transactionMessage, origin } = req.body;
     const mainAgent = agentManager.getMainAgent();
@@ -186,8 +186,8 @@ End your response with exactly "DECISION: APPROVED" or "DECISION: REJECTED".`;
   }
 });
 
-// POST /api/extension/sign
-extensionRouter.post('/sign', validateBody(signTransactionSchema), async (req, res) => {
+// POST /api/wallet/provider/sign
+walletProviderRouter.post('/sign', validateBody(signTransactionSchema), async (req, res) => {
   try {
     const { transactionMessage } = req.body;
     const mainAgent = agentManager.getMainAgent();

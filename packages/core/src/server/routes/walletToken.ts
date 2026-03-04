@@ -1,17 +1,17 @@
 import { Router } from 'express';
 import { validateToken } from '../../lib/Auth.js';
 
-export const extensionTokenRouter: Router = Router();
+export const walletTokenRouter: Router = Router();
 
 /**
- * POST /api/extension/token — Public token exchange endpoint.
+ * POST /api/wallet/token — Public token exchange endpoint.
  * 
- * The extension sends the session token (from `sigil start` output) to validate it.
- * If valid, responds with success so the extension can confidently store it.
- * This endpoint must remain PUBLIC (no authMiddleware) so the extension can
+ * The client sends the session token (from `sigil start` output) to validate it.
+ * If valid, responds with success so the client can confidently store it.
+ * This endpoint must remain PUBLIC (no authMiddleware) so the client can
  * acquire the token before it has one.
  */
-extensionTokenRouter.post('/', (req, res) => {
+walletTokenRouter.post('/', (req, res) => {
   try {
     const { token } = req.body;
 

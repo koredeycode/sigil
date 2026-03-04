@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import type { Agent } from '../hooks/useAgents';
 import { useSocket } from '../hooks/useSocket';
 import { ApiClient } from '../lib/api';
-import { TransactionDetailModal } from './TransactionDetailModal';
 
 interface TransactionLedgerProps {
     activeAgent: Agent | null;
@@ -19,11 +18,10 @@ interface OnChainTransaction {
     memo: string | null;
 }
 
-export function TransactionLedger({ activeAgent }: TransactionLedgerProps) {
+export function TransactionLedger({ activeAgent, onSelectTx }: TransactionLedgerProps & { onSelectTx: (sig: string) => void }) {
     const { socket } = useSocket();
     const [transactions, setTransactions] = useState<OnChainTransaction[]>([]);
     const [loading, setLoading] = useState(false);
-    const [selectedTx, setSelectedTx] = useState<string | null>(null);
 
     // Fetch real on-chain transactions from devnet
     useEffect(() => {
@@ -146,7 +144,7 @@ export function TransactionLedger({ activeAgent }: TransactionLedgerProps) {
                                     </td>
                                     <td className="px-4 py-2">
                                         <button
-                                            onClick={() => setSelectedTx(tx.signature)}
+                                            onClick={() => onSelectTx(tx.signature)}
                                             className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                                             title="View details"
                                         >
@@ -160,14 +158,7 @@ export function TransactionLedger({ activeAgent }: TransactionLedgerProps) {
                 </table>
             </div>
 
-            {/* Transaction Detail Modal */}
-            {selectedTx && activeAgent && (
-                <TransactionDetailModal
-                    agentId={activeAgent.id}
-                    signature={selectedTx}
-                    onClose={() => setSelectedTx(null)}
-                />
-            )}
+            {/* Transaction Detail Modal will be rendered by parent WalletView */}
         </div>
     );
 }

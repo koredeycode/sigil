@@ -1,4 +1,5 @@
 import iconBase64 from "data-base64:~assets/icon.png";
+import { ArrowUpRight, ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 
 // ─── Type Definitions ──────────────────────────────────────────────────────
@@ -144,7 +145,7 @@ export default function IndexPopup() {
     setTokenError('');
 
     try {
-      const res = await fetch(`${SIGIL_SERVER_URL}/api/extension/token`, {
+      const res = await fetch(`${SIGIL_SERVER_URL}/api/wallet/token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: tokenInput.trim() }),
@@ -216,7 +217,7 @@ export default function IndexPopup() {
       // If it's a signTransaction and we have the message but no sim data, fetch it
       if (requestObj.type === 'signTransaction' && !requestObj.simulationData && requestObj.transactionMessage) {
           setIsSimulating(true);
-          authFetch(`${SIGIL_SERVER_URL}/api/extension/simulate`, {
+          authFetch(`${SIGIL_SERVER_URL}/api/wallet/provider/simulate`, {
               method: 'POST',
               body: JSON.stringify({ transactionMessage: requestObj.transactionMessage, origin: requestObj.origin })
           })
@@ -246,7 +247,7 @@ export default function IndexPopup() {
       if (res.ok) {
         setIsConnected(true);
         try {
-            const extRes = await authFetch(`${SIGIL_SERVER_URL}/api/extension/connect`, { method: "POST" });
+            const extRes = await authFetch(`${SIGIL_SERVER_URL}/api/wallet/provider/connect`, { method: "POST" });
             if (extRes.status === 401) { setAuthToken(null); return; }
             if (extRes.ok) {
                 const data = await extRes.json();
@@ -257,7 +258,7 @@ export default function IndexPopup() {
 
         try {
             setIsPortfolioLoading(true);
-            const portRes = await authFetch(`${SIGIL_SERVER_URL}/api/extension/portfolio`);
+            const portRes = await authFetch(`${SIGIL_SERVER_URL}/api/wallet/provider/portfolio`);
             if (portRes.status === 401) { setAuthToken(null); return; }
             if (portRes.ok) {
                 const pData = await portRes.json();
@@ -267,7 +268,7 @@ export default function IndexPopup() {
 
         try {
             setIsTransactionsLoading(true);
-            const txRes = await authFetch(`${SIGIL_SERVER_URL}/api/extension/transactions`);
+            const txRes = await authFetch(`${SIGIL_SERVER_URL}/api/wallet/provider/transactions`);
             if (txRes.status === 401) { setAuthToken(null); return; }
             if (txRes.ok) {
                 const txData = await txRes.json();
@@ -303,7 +304,7 @@ export default function IndexPopup() {
     if (requestObj?.type === 'signTransaction' && !error && data?.approved) {
          try {
              setIsSigning(true);
-             const res = await authFetch(`${SIGIL_SERVER_URL}/api/extension/sign`, {
+             const res = await authFetch(`${SIGIL_SERVER_URL}/api/wallet/provider/sign`, {
                  method: 'POST',
                  body: JSON.stringify({ transactionMessage: requestObj.transactionMessage })
              });
@@ -421,7 +422,7 @@ export default function IndexPopup() {
                 <button 
                   onClick={async () => {
                       try {
-                          const extRes = await authFetch(`${SIGIL_SERVER_URL}/api/extension/connect`, { method: "POST" });
+                          const extRes = await authFetch(`${SIGIL_SERVER_URL}/api/wallet/provider/connect`, { method: "POST" });
                           if (extRes.status === 401) {
                               setAuthToken(null);
                               resolveRequest(null, "Authentication expired. Please re-enter your token.");
@@ -594,22 +595,42 @@ export default function IndexPopup() {
                               No recent activity found.
                           </div>
                         ) : (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
-                              {transactions.map((tx: Transaction, i: number) => (
-                                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px", borderRadius: "8px", backgroundColor: colors.btnBg, border: `1px solid ${colors.border}` }}>
-                                       <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                                           <span style={{ fontSize: "13px", fontWeight: "600", color: colors.text }}>
-                                               {tx.status === 'confirmed' ? 'Confirmed' : (tx.err ? 'Failed' : 'Pending')}
-                                           </span>
-                                           <span style={{ fontSize: "11px", color: colors.textMuted }}>
-                                               {tx.blockTime ? new Date(tx.blockTime).toLocaleString() : ''}
-                                           </span>
-                                       </div>
-                                       <code style={{ fontSize: "11px", color: colors.textMuted }}>
-                                           {tx.signature.slice(0, 8)}...{tx.signature.slice(-8)}
-                                       </code>
-                                  </div>
-                              ))}
+                          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "16px" }}>
+                              {transactions.map((tx: Transaction, i: number) => {
+                                  const isFailed = !!tx.err;
+                                  const isFinalized = tx.status === 'finalized';
+                                  const statusColor = isFailed ? "#ef4444" : (isFinalized ? "#10b981" : "#f59e0b");
+                                  const statusBg = isFailed ? "rgba(239, 68, 68, 0.1)" : (isFinalized ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)");
+                                  
+                                  return (
+                                      <div key={i} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px", borderRadius: "10px", backgroundColor: colors.btnBg, border: `1px solid ${colors.border}`, transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.backgroundColor = colors.hover} onMouseOut={e => e.currentTarget.style.backgroundColor = colors.btnBg}>
+                                           <div style={{ padding: "8px", backgroundColor: colors.hover, borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                               <ArrowUpRight style={{ width: "14px", height: "14px", color: colors.textMuted }} />
+                                           </div>
+                                           <div style={{ flex: 1, minWidth: 0 }}>
+                                               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                                   <span style={{ fontSize: "12px", fontWeight: "600", fontFamily: "monospace", color: colors.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                                       {tx.signature.slice(0, 8)}...{tx.signature.slice(-4)}
+                                                   </span>
+                                                   <a 
+                                                       href={`https://explorer.solana.com/tx/${tx.signature}?cluster=devnet`}
+                                                       target="_blank"
+                                                       rel="noopener noreferrer"
+                                                       style={{ display: "flex", alignItems: "center", color: colors.textMuted }}
+                                                   >
+                                                       <ExternalLink style={{ width: "12px", height: "12px" }} />
+                                                   </a>
+                                               </div>
+                                               <div style={{ fontSize: "11px", color: colors.textMuted, marginTop: "2px" }}>
+                                                   {tx.blockTime ? new Date(tx.blockTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Pending'}
+                                               </div>
+                                           </div>
+                                           <div style={{ padding: "2px 6px", borderRadius: "4px", backgroundColor: statusBg, color: statusColor, fontSize: "10px", fontWeight: "bold", textTransform: "capitalize" }}>
+                                               {isFailed ? 'failed' : tx.status || 'confirmed'}
+                                           </div>
+                                      </div>
+                                  );
+                              })}
                           </div>
                         )}
                        </div>
