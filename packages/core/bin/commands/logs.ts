@@ -1,7 +1,5 @@
 import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
-import { agentManager } from '../../src/agent/AgentManager.js';
-import { getAgentLogs, getDatabase } from '../../src/lib/Database.js';
 
 export function registerLogsCommand(program: Command) {
   program
@@ -9,6 +7,9 @@ export function registerLogsCommand(program: Command) {
     .option('-n, --tail <count>', 'Number of log entries', '20')
     .description('View an agent\'s recent activity')
     .action(async (agent?: string, opts?: { tail: string }) => {
+      const { agentManager } = await import('../../src/agent/AgentManager.js');
+      const { getAgentLogs, getDatabase } = await import('../../src/lib/Database.js');
+      
       getDatabase();
 
       if (!agent) {
@@ -31,11 +32,16 @@ export function registerLogsCommand(program: Command) {
       }
 
       const a = agentManager.get(agent);
-      if (!a) { console.log(`Agent "${agent}" not found.`); return; }
+      if (!a) { clack.log.error(`Agent "${agent}" not found.`); return; }
+      
+      const s = clack.spinner();
+      s.start(`Fetching logs for agent ${agent}...`);
       const logs = getAgentLogs(a.id, Number(opts?.tail ?? '20'));
-      if (logs.length === 0) { console.log('No logs yet.'); return; }
+      s.stop(`Fetched ${logs.length} logs for ${agent}`);
+      
+      if (logs.length === 0) { clack.log.info('No logs yet.'); return; }
       for (const log of logs.reverse()) {
-        console.log(`[${log.timestamp}] ${log.action}: ${log.result ?? ''}`);
+        clack.log.message(`[${log.timestamp}] ${log.action}: ${log.result ?? ''}`);
       }
     });
 }

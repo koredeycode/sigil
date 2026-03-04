@@ -1,12 +1,6 @@
 import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
 import open from 'open';
-import { agentManager } from '../../src/agent/AgentManager.js';
-import { encryptApiKey } from '../../src/lib/Auth.js';
-import { getAuthToken } from '../../src/lib/Config.js';
-import { spawnDaemon } from '../../src/lib/Daemon.js';
-import { addProvider, getDatabase } from '../../src/lib/Database.js';
-import { fetchModelsForProvider } from '../../src/lib/ModelFetcher.js';
 
 export function registerOnboardCommand(program: Command) {
   program
@@ -94,6 +88,8 @@ export function registerOnboardCommand(program: Command) {
           // Fetch models dynamically
           const s2 = clack.spinner();
           s2.start(`Fetching available models from ${String(providerName)}...`);
+          
+          const { fetchModelsForProvider } = await import('../../src/lib/ModelFetcher.js');
           const { models, error } = await fetchModelsForProvider(String(providerName), apiKey ? String(apiKey) : null);
           s2.stop(models ? `Found ${models.length} models` : 'Failed to fetch models');
 
@@ -135,6 +131,12 @@ export function registerOnboardCommand(program: Command) {
           providerReady = true;
         }
       }
+
+      const { agentManager } = await import('../../src/agent/AgentManager.js');
+      const { encryptApiKey } = await import('../../src/lib/Auth.js');
+      const { getAuthToken } = await import('../../src/lib/Config.js');
+      const { spawnDaemon } = await import('../../src/lib/Daemon.js');
+      const { addProvider, getDatabase } = await import('../../src/lib/Database.js');
 
       // Initialize DB
       getDatabase();

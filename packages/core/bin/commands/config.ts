@@ -1,5 +1,5 @@
+import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
-import { getConfig, setConfig } from '../../src/lib/Database.js';
 
 export function registerConfigCommand(program: Command) {
   const config = program
@@ -10,8 +10,8 @@ export function registerConfigCommand(program: Command) {
   config
     .command('list')
     .description('Show all configuration values')
-    .action(() => {
-      const { getDatabase } = require('../../src/lib/Database.js');
+    .action(async () => {
+      const { getDatabase, getConfig } = await import('../../src/lib/Database.js');
       getDatabase(); // ensure DB is initialized
 
       const keys = [
@@ -24,35 +24,30 @@ export function registerConfigCommand(program: Command) {
         'auth_token',
       ];
 
-      console.log('\n  ⎔ Sigil Configuration\n');
-      console.log('  ┌─────────────────────────────┬────────────────────────┐');
-      console.log('  │ Key                         │ Value                  │');
-      console.log('  ├─────────────────────────────┼────────────────────────┤');
-
+      clack.log.info('Sigil Configuration');
+      
       for (const key of keys) {
         const value = getConfig(key);
         const displayValue = key === 'auth_token' && value
           ? `${value.substring(0, 8)}...`
           : (value ?? '(not set)');
-        console.log(`  │ ${key.padEnd(27)} │ ${displayValue.padEnd(22)} │`);
+        clack.log.step(`${key.padEnd(25)} = ${displayValue}`);
       }
-
-      console.log('  └─────────────────────────────┴────────────────────────┘\n');
     });
 
   // sigil config get <key>
   config
     .command('get <key>')
     .description('Get a configuration value')
-    .action((key: string) => {
-      const { getDatabase } = require('../../src/lib/Database.js');
+    .action(async (key: string) => {
+      const { getDatabase, getConfig } = await import('../../src/lib/Database.js');
       getDatabase();
 
       const value = getConfig(key);
       if (value !== undefined) {
-        console.log(`  ${key} = ${value}`);
+        clack.log.success(`${key} = ${value}`);
       } else {
-        console.log(`  Config key "${key}" is not set.`);
+        clack.log.warn(`Config key "${key}" is not set.`);
       }
     });
 
@@ -60,11 +55,11 @@ export function registerConfigCommand(program: Command) {
   config
     .command('set <key> <value>')
     .description('Set a configuration value')
-    .action((key: string, value: string) => {
-      const { getDatabase } = require('../../src/lib/Database.js');
+    .action(async (key: string, value: string) => {
+      const { getDatabase, setConfig } = await import('../../src/lib/Database.js');
       getDatabase();
 
       setConfig(key, value);
-      console.log(`  ✔ ${key} = ${value}`);
+      clack.log.success(`${key} = ${value}`);
     });
 }

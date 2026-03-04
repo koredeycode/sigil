@@ -1,15 +1,16 @@
-  import { Command } from 'commander';
-
-import { getAuthToken } from '../../src/lib/Config.js';
+import * as clack from '@clack/prompts';
+import { Command } from 'commander';
 
 export function register(program: Command) {
   program
     .command('tui')
     .description('Launch the Terminal User Interface')
     .action(async () => {
+      const { getAuthToken } = await import('../../src/lib/Config.js');
       const token = getAuthToken();
+      
       if (!token) {
-        console.error('Error: No auth token found. Run "sigil init" first.');
+        clack.log.error('Error: No auth token found. Run "sigil init" first.');
         process.exit(1);
       }
 

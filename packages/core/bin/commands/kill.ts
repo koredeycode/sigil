@@ -1,14 +1,15 @@
 import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
-import { agentManager } from '../../src/agent/AgentManager.js';
-import { setKillSwitch } from '../../src/lib/Config.js';
-import { getDatabase } from '../../src/lib/Database.js';
 
 export function registerKillCommand(program: Command) {
   program
     .command('kill [agent]')
     .description('Activate kill switch — stops all agents or a specific one')
     .action(async (_agent?: string) => {
+      const { agentManager } = await import('../../src/agent/AgentManager.js');
+      const { setKillSwitch } = await import('../../src/lib/Config.js');
+      const { getDatabase } = await import('../../src/lib/Database.js');
+      
       getDatabase();
 
       if (_agent) {

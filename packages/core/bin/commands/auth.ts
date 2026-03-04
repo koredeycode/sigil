@@ -1,6 +1,5 @@
+import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
-import { createSessionToken } from '../../src/lib/Auth.js';
-import { getDatabase } from '../../src/lib/Database.js';
 
 export function registerAuthCommand(program: Command) {
   const auth = program.command('auth').description('Auth management');
@@ -8,9 +7,12 @@ export function registerAuthCommand(program: Command) {
   auth
     .command('rotate')
     .description('Rotate the session token')
-    .action(() => {
+    .action(async () => {
+      const { createSessionToken } = await import('../../src/lib/Auth.js');
+      const { getDatabase } = await import('../../src/lib/Database.js');
+      
       getDatabase();
       const token = createSessionToken();
-      console.log(`New session token: ${token}`);
+      clack.log.success(`New session token: ${token}`);
     });
 }

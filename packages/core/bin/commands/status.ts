@@ -1,3 +1,4 @@
+import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -11,7 +12,7 @@ export function registerStatusCommand(program: Command) {
       const pidFile = path.join(os.homedir(), '.sigil', 'run.pid');
       
       if (!fs.existsSync(pidFile)) {
-        console.log('Sigil is NOT running (no pidfile).');
+        clack.log.warn('Sigil is NOT running (no pidfile).');
         return;
       }
 
@@ -21,12 +22,12 @@ export function registerStatusCommand(program: Command) {
       try {
         // Sending signal 0 checks if the process exists without killing it
         process.kill(pid, 0); 
-        console.log(`Sigil is running (PID: ${pid}).`);
+        clack.log.success(`Sigil is running (PID: ${pid}).`);
       } catch (e: any) {
         if (e.code === 'ESRCH') {
-          console.log(`Sigil is NOT running (PID ${pid} is stale).`);
+          clack.log.warn(`Sigil is NOT running (PID ${pid} is stale).`);
         } else {
-          console.log(`Sigil status unknown (Error: ${e.message})`);
+          clack.log.error(`Sigil status unknown (Error: ${e.message})`);
         }
       }
     });

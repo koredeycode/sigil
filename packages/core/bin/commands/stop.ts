@@ -1,3 +1,4 @@
+import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -11,20 +12,22 @@ export function registerStopCommand(program: Command) {
       const pidFile = path.join(os.homedir(), '.sigil', 'run.pid');
       
       if (!fs.existsSync(pidFile)) {
-        console.log('No background agent is currently running (pidfile not found).');
+        clack.log.warn('No background agent is currently running (pidfile not found).');
         return;
       }
 
       const pid = parseInt(fs.readFileSync(pidFile, 'utf8'), 10);
       try {
+        const s = clack.spinner();
+        s.start(`Stopping process ${pid}...`);
         process.kill(pid); // Sending SIGTERM
-        console.log(`Sigil background process (PID ${pid}) stopped.`);
+        s.stop(`Sigil background process (PID ${pid}) stopped.`);
       } catch (err: any) {
         // ESRCH = No such process
         if (err.code === 'ESRCH') {
-          console.log(`Process ${pid} is not running. Cleaning up stale pidfile.`);
+          clack.log.info(`Process ${pid} is not running. Cleaning up stale pidfile.`);
         } else {
-          console.error(`Failed to stop process ${pid}: ${err.message}`);
+          clack.log.error(`Failed to stop process ${pid}: ${err.message}`);
         }
       }
 

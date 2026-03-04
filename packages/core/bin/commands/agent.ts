@@ -1,7 +1,5 @@
 import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
-import { agentManager } from '../../src/agent/AgentManager.js';
-import { getDatabase } from '../../src/lib/Database.js';
 
 export function registerAgentCommand(program: Command) {
   const agent = program.command('agent').description('Manage the Sigil agent');
@@ -12,14 +10,17 @@ export function registerAgentCommand(program: Command) {
     .option('-k, --key <privateKey>', 'Import an existing wallet via base58 private key')
     .description('Initialize the main Sigil agent with a new or imported wallet')
     .action(async (opts?: { key?: string }) => {
+      const { agentManager } = await import('../../src/agent/AgentManager.js');
+      const { getDatabase } = await import('../../src/lib/Database.js');
+      
       getDatabase();
 
       const existing = agentManager.getMainAgent();
       if (existing) {
-        console.log(`\n  ⎔ Main agent already initialized.`);
-        console.log(`  Name:   ${existing.name}`);
-        console.log(`  Wallet: ${existing.pubkey}`);
-        console.log(`  Status: ${existing.status}\n`);
+        clack.log.info(`Main agent already initialized.`);
+        clack.log.step(`Name:   ${existing.name}`);
+        clack.log.step(`Wallet: ${existing.pubkey}`);
+        clack.log.step(`Status: ${existing.status}`);
         return;
       }
 
@@ -42,28 +43,32 @@ export function registerAgentCommand(program: Command) {
         }
       }
 
+      const s = clack.spinner();
+      s.start('Initializing agent and persisting wallet...');
       const a = await agentManager.initMainAgent(privateKey);
-      clack.log.success(`Main agent initialized. Wallet: ${a.pubkey}`);
+      s.stop(`Main agent initialized. Wallet: ${a.pubkey}`);
     });
 
   // sigil agent info — show agent details
   agent
     .command('info')
     .description('Show the main agent details')
-    .action(() => {
+    .action(async () => {
+      const { agentManager } = await import('../../src/agent/AgentManager.js');
+      const { getDatabase } = await import('../../src/lib/Database.js');
+      
       getDatabase();
       const a = agentManager.getMainAgent();
       if (!a) {
-        console.log('  Agent not initialized. Run `sigil agent init` first.');
+        clack.log.warn('Agent not initialized. Run `sigil agent init` first.');
         return;
       }
-      console.log(`\n  ⎔ Sigil Agent\n`);
-      console.log(`  Name:     ${a.name}`);
-      console.log(`  ID:       ${a.id}`);
-      console.log(`  Wallet:   ${a.pubkey}`);
-      console.log(`  Status:   ${a.status}`);
-      console.log(`  Interval: ${a.loop_interval / 1000}s`);
-      console.log(`  Created:  ${a.created_at}\n`);
+      clack.log.info(`Sigil Agent: ${a.name}`);
+      clack.log.step(`ID:       ${a.id}`);
+      clack.log.step(`Wallet:   ${a.pubkey}`);
+      clack.log.step(`Status:   ${a.status}`);
+      clack.log.step(`Interval: ${a.loop_interval / 1000}s`);
+      clack.log.step(`Created:  ${a.created_at}`);
     });
 
   // sigil agent start — resume the agent
@@ -71,9 +76,12 @@ export function registerAgentCommand(program: Command) {
     .command('start')
     .description('Start the main agent')
     .action(async () => {
+      const { agentManager } = await import('../../src/agent/AgentManager.js');
+      const { getDatabase } = await import('../../src/lib/Database.js');
+      
       getDatabase();
       const a = agentManager.getMainAgent();
-      if (!a) { console.log('  Agent not initialized. Run `sigil agent init` first.'); return; }
+      if (!a) { clack.log.warn('Agent not initialized. Run `sigil agent init` first.'); return; }
       await agentManager.start();
       clack.log.success(`Agent "${a.name}" started.`);
     });
@@ -82,10 +90,13 @@ export function registerAgentCommand(program: Command) {
   agent
     .command('pause')
     .description('Pause the main agent')
-    .action(() => {
+    .action(async () => {
+      const { agentManager } = await import('../../src/agent/AgentManager.js');
+      const { getDatabase } = await import('../../src/lib/Database.js');
+      
       getDatabase();
       const a = agentManager.getMainAgent();
-      if (!a) { console.log('  Agent not initialized.'); return; }
+      if (!a) { clack.log.warn('Agent not initialized.'); return; }
       agentManager.pause();
       clack.log.success(`Agent "${a.name}" paused.`);
     });
@@ -95,10 +106,13 @@ export function registerAgentCommand(program: Command) {
     .command('reset')
     .description('Destroy the main agent and optionally reinitialize')
     .action(async () => {
+      const { agentManager } = await import('../../src/agent/AgentManager.js');
+      const { getDatabase } = await import('../../src/lib/Database.js');
+      
       getDatabase();
       const a = agentManager.getMainAgent();
       if (!a) {
-        console.log('  No agent to reset. Run `sigil agent init` to create one.');
+        clack.log.warn('No agent to reset. Run `sigil agent init` to create one.');
         return;
       }
 
@@ -110,8 +124,10 @@ export function registerAgentCommand(program: Command) {
         return;
       }
 
+      const s = clack.spinner();
+      s.start('Destroying agent...');
       await agentManager.destroy(a.id);
-      clack.log.success('Agent destroyed.');
+      s.stop('Agent destroyed.');
 
       const reinit = await clack.confirm({
         message: 'Reinitialize a fresh agent now?',
@@ -119,7 +135,8 @@ export function registerAgentCommand(program: Command) {
       });
       if (clack.isCancel(reinit) || !reinit) return;
 
+      s.start('Initializing fresh agent...');
       const newAgent = await agentManager.initMainAgent();
-      clack.log.success(`Fresh agent initialized. Wallet: ${newAgent.pubkey}`);
+      s.stop(`Fresh agent initialized. Wallet: ${newAgent.pubkey}`);
     });
 }

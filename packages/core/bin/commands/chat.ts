@@ -1,18 +1,19 @@
 import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
-import { agentManager } from '../../src/agent/AgentManager.js';
-import { getDatabase, insertChat } from '../../src/lib/Database.js';
 
 export function registerChatCommand(program: Command) {
   program
     .command('chat [message]')
     .description('Chat with the main Sigil agent')
     .action(async (message?: string) => {
+      const { agentManager } = await import('../../src/agent/AgentManager.js');
+      const { getDatabase, insertChat } = await import('../../src/lib/Database.js');
+      
       getDatabase();
 
       const agent = agentManager.getMainAgent();
       if (!agent) {
-        console.log('  Agent not initialized. Run `sigil agent init` first.');
+        clack.log.warn('Agent not initialized. Run `sigil agent init` first.');
         process.exit(1);
       }
 
@@ -26,8 +27,10 @@ export function registerChatCommand(program: Command) {
         message = String(input);
       }
 
-      console.log(`\n  You: ${message}`);
-      console.log('  Agent is thinking...\n');
+      clack.log.step(`You: ${message}`);
+      
+      const s = clack.spinner();
+      s.start('Agent is thinking...');
 
       try {
         insertChat(agent.id, 'user', message);
@@ -39,18 +42,22 @@ export function registerChatCommand(program: Command) {
         insertChat(agent.id, 'assistant', response);
 
         if (toolResults.length > 0) {
-          console.log('  ┌─ Tool Calls ─────────────────────');
+          s.stop('Agent finished thinking');
+          clack.log.message('┌─ Tool Calls ─────────────────────');
           for (const tr of toolResults) {
-            console.log(`  │ ⚡ ${tr.tool}`);
+            clack.log.message(`│ ⚡ ${tr.tool}`);
             const resultPreview = tr.result.length > 120 ? tr.result.substring(0, 120) + '...' : tr.result;
-            console.log(`  │   → ${resultPreview}`);
+            clack.log.message(`│   → ${resultPreview}`);
           }
-          console.log('  └──────────────────────────────────\n');
+          clack.log.message('└──────────────────────────────────');
+        } else {
+            s.stop('Agent finished thinking');
         }
 
-        console.log(`  ${agent.name}: ${response}\n`);
+        clack.log.success(`${agent.name}: ${response}`);
       } catch (error) {
-        console.error(`  Error: ${error instanceof Error ? error.message : String(error)}`);
+          s.stop('Error processing request.');
+          clack.log.error(`Error: ${error instanceof Error ? error.message : String(error)}`);
       }
     });
 }

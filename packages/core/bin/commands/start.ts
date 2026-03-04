@@ -1,11 +1,5 @@
+import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
-import { agentManager } from '../../src/agent/AgentManager.js';
-import { cronScheduler } from '../../src/agent/CronScheduler.js';
-import { createSessionToken } from '../../src/lib/Auth.js';
-import { getAuthToken } from '../../src/lib/Config.js';
-import { getRunningPid, removePid, spawnDaemon, writePid } from '../../src/lib/Daemon.js';
-import { getDatabase } from '../../src/lib/Database.js';
-import { startServer } from '../../src/server/app.js';
 
 export function registerStartCommand(program: Command) {
   program
@@ -13,17 +7,22 @@ export function registerStartCommand(program: Command) {
     .description('Boot the API server and start all active agent loops')
     .option('--fg', 'Run in the foreground instead of daemonizing')
     .action(async (options) => {
+      const { getRunningPid, removePid, spawnDaemon, writePid } = await import('../../src/lib/Daemon.js');
+
       const existingPid = getRunningPid();
       if (existingPid) {
-        console.log(`Sigil is already running (PID: ${existingPid}).`);
-        console.log(`Run \`sigil stop\` first, or \`sigil dashboard\` to open the UI.`);
+        clack.log.warn(`Sigil is already running (PID: ${existingPid}).`);
+        clack.log.info(`Run \`sigil stop\` first, or \`sigil dashboard\` to open the UI.`);
         process.exit(0);
       }
 
       if (options.fg) {
         // Run in foreground
-        console.log('\n  ⎔ Sigil — Starting in foreground...\n');
+        clack.log.info('Sigil — Starting in foreground...');
 
+        const { agentManager } = await import('../../src/agent/AgentManager.js');
+        const { cronScheduler } = await import('../../src/agent/CronScheduler.js');
+        
         // Write own PID
         writePid(process.pid);
         
@@ -37,24 +36,33 @@ export function registerStartCommand(program: Command) {
         process.on('SIGINT', cleanup);
         process.on('SIGTERM', cleanup);
 
+        const { createSessionToken } = await import('../../src/lib/Auth.js');
+        const { getAuthToken } = await import('../../src/lib/Config.js');
+        const { getDatabase } = await import('../../src/lib/Database.js');
+        const { startServer } = await import('../../src/server/app.js');
+
         getDatabase();
         let token = getAuthToken();
         if (!token) {
           token = createSessionToken();
         }
 
+        const s = clack.spinner();
+        s.start('Starting API Server...');
         // Start the API server
         await startServer();
+        s.stop('API Server started on port 7445');
 
         // Ensure main agent exists, auto-create on first boot
         let mainAgent = agentManager.getMainAgent();
         if (!mainAgent) {
-          console.log('  ⓘ No agent found — initializing main agent...');
+          s.start('No agent found — initializing main agent...');
           mainAgent = await agentManager.initMainAgent();
-          console.log(`  ✔ Main agent created. Wallet: ${mainAgent.pubkey}`);
+          s.stop(`Main agent created. Wallet: ${mainAgent.pubkey}`);
           await agentManager.start(mainAgent.id);
         }
 
+        s.start('Booting agents and resuming jobs...');
         // Auto-resume all agents that were previously running
         await agentManager.startAll();
 
@@ -64,20 +72,27 @@ export function registerStartCommand(program: Command) {
 
         const agents = agentManager.list();
         const cronInfo = cronScheduler.listActive();
-        console.log(`  Session Token: ${token}`);
-        console.log(`  Agents: ${agents.length} loaded`);
-        console.log(`  Cron Jobs: ${cronInfo.cronJobs} active, ${cronInfo.autonomousCycles} autonomous cycles\n`);
+        
+        s.stop('All systems operational.');
+        
+        clack.log.step(`Session Token: ${token}`);
+        clack.log.step(`Agents: ${agents.length} loaded`);
+        clack.log.step(`Cron Jobs: ${cronInfo.cronJobs} active, ${cronInfo.autonomousCycles} autonomous cycles`);
       } else {
         // Spawn background daemon
-        console.log('\n  ⎔ Sigil — Starting background process...\n');
+        clack.log.info('Sigil — Starting background process...');
 
+        const s = clack.spinner();
+        s.start('Spawning daemon...');
+        
         try {
           const pid = await spawnDaemon();
-          console.log(`  Daemon spawned with PID ${pid}`);
-          console.log(`  Run \`sigil dashboard\` to instantly access the UI in a few moments.`);
-          console.log(`  Run \`sigil logs\` to view daemon output, or \`sigil stop\` to kill it.\n`);
+          s.stop(`Daemon spawned with PID ${pid}`);
+          clack.log.step(`Run \`sigil dashboard\` to instantly access the UI in a few moments.`);
+          clack.log.step(`Run \`sigil logs\` to view daemon output, or \`sigil stop\` to kill it.`);
         } catch (error) {
-          console.error(`  Failed to spawn daemon: ${error instanceof Error ? error.message : String(error)}`);
+          s.stop('Failed to spawn daemon.');
+          clack.log.error(`Failed to spawn daemon: ${error instanceof Error ? error.message : String(error)}`);
         }
         
         process.exit(0);

@@ -1,23 +1,27 @@
+import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
 import open from 'open';
-import { getAuthToken } from '../../src/lib/Config.js';
-import { getDatabase } from '../../src/lib/Database.js';
 
 export function registerDashboardCommand(program: Command) {
   program
     .command('dashboard')
     .description('Open the Sigil UI dashboard in your default browser')
     .action(async () => {
+      const { getAuthToken } = await import('../../src/lib/Config.js');
+      const { getDatabase } = await import('../../src/lib/Database.js');
+      
       getDatabase();
       const token = getAuthToken();
 
       if (!token) {
-        console.error('No session token found. Have you run `sigil start`?');
+        clack.log.error('No session token found. Have you run `sigil start`?');
         process.exit(1);
       }
 
-      console.log('Opening Sigil Dashboard...');
+      const s = clack.spinner();
+      s.start('Opening Sigil Dashboard...');
       const url = `http://localhost:7445/#token=${token}`;
       await open(url);
+      s.stop('Dashboard opened.');
     });
 }

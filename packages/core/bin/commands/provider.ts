@@ -1,8 +1,5 @@
 import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
-import { encryptApiKey } from '../../src/lib/Auth.js';
-import { addProvider, getAllProviders, getDatabase, removeProvider, setPrimaryProvider } from '../../src/lib/Database.js';
-import { fetchModelsForProvider } from '../../src/lib/ModelFetcher.js';
 
 export function registerProviderCommand(program: Command) {
   const provider = program.command('provider').description('Manage LLM providers');
@@ -13,6 +10,9 @@ export function registerProviderCommand(program: Command) {
     .option('-m, --model <model>', 'Model name')
     .description('Add an LLM provider')
     .action(async (name?: string, opts?: { key?: string; model?: string }) => {
+      const { getDatabase, addProvider } = await import('../../src/lib/Database.js');
+      const { encryptApiKey } = await import('../../src/lib/Auth.js');
+      
       getDatabase();
 
       if (!name) {
@@ -41,6 +41,8 @@ export function registerProviderCommand(program: Command) {
 
         if (!opts?.model) {
           // Try to fetch models dynamically
+          const { fetchModelsForProvider } = await import('../../src/lib/ModelFetcher.js');
+          
           const s = clack.spinner();
           s.start(`Fetching available models from ${name}...`);
           const { models, error } = await fetchModelsForProvider(name, opts?.key ?? null);
@@ -92,16 +94,20 @@ export function registerProviderCommand(program: Command) {
   provider
     .command('list')
     .description('List all configured providers')
-    .action(() => {
+    .action(async () => {
+      const { getDatabase, getAllProviders } = await import('../../src/lib/Database.js');
+      
       getDatabase();
       const providers = getAllProviders();
       if (providers.length === 0) {
-        console.log('No providers configured. Run `sigil provider add` to add one.');
+        clack.log.info('No providers configured. Run `sigil provider add` to add one.');
         return;
       }
+      
+      clack.log.info('Configured LLM Providers');
       for (const p of providers) {
         const primary = p.is_primary ? ' ⭐ PRIMARY' : '';
-        console.log(`[${p.id}] ${p.name} — ${p.model}${primary}`);
+        clack.log.step(`[${p.id}] ${p.name} — ${p.model}${primary}`);
       }
     });
 
@@ -109,6 +115,8 @@ export function registerProviderCommand(program: Command) {
     .command('set-primary [id]')
     .description('Switch the active provider')
     .action(async (id?: string) => {
+      const { getDatabase, getAllProviders, setPrimaryProvider } = await import('../../src/lib/Database.js');
+      
       getDatabase();
 
       if (!id) {
@@ -138,6 +146,8 @@ export function registerProviderCommand(program: Command) {
     .command('remove [id]')
     .description('Remove a provider')
     .action(async (id?: string) => {
+      const { getDatabase, getAllProviders, removeProvider } = await import('../../src/lib/Database.js');
+      
       getDatabase();
 
       if (!id) {
@@ -177,6 +187,8 @@ export function registerProviderCommand(program: Command) {
     .option('-u, --url <url>', 'Base URL for custom/local providers')
     .description('List available models for a provider')
     .action(async (name?: string, opts?: { key?: string; url?: string }) => {
+      const { getDatabase } = await import('../../src/lib/Database.js');
+      
       getDatabase();
 
       if (!name) {
@@ -204,6 +216,8 @@ export function registerProviderCommand(program: Command) {
         opts = { ...opts, key: String(key) };
       }
 
+      const { fetchModelsForProvider } = await import('../../src/lib/ModelFetcher.js');
+      
       const s = clack.spinner();
       s.start(`Fetching models from ${name}...`);
       const { models, error } = await fetchModelsForProvider(name, opts?.key ?? null, opts?.url);
@@ -219,10 +233,10 @@ export function registerProviderCommand(program: Command) {
         process.exit(0);
       }
 
-      console.log('');
+      clack.log.message('');
       for (const m of models) {
-        console.log(`  ${m.id}${m.label !== m.id ? ` — ${m.label}` : ''}`);
+        clack.log.message(`  ${m.id}${m.label !== m.id ? ` — ${m.label}` : ''}`);
       }
-      console.log(`\n  Total: ${models.length} models`);
+      clack.log.message(`\n  Total: ${models.length} models`);
     });
 }

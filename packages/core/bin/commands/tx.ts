@@ -1,7 +1,5 @@
 import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
-import { agentManager } from '../../src/agent/AgentManager.js';
-import { getAgentTransactions, getDatabase } from '../../src/lib/Database.js';
 
 export function registerTxCommand(program: Command) {
   program
@@ -9,6 +7,9 @@ export function registerTxCommand(program: Command) {
     .option('-n, --limit <count>', 'Number of transactions', '20')
     .description('View an agent\'s transactions')
     .action(async (agent?: string, opts?: { limit: string }) => {
+      const { agentManager } = await import('../../src/agent/AgentManager.js');
+      const { getAgentTransactions, getDatabase } = await import('../../src/lib/Database.js');
+      
       getDatabase();
 
       if (!agent) {
@@ -31,12 +32,18 @@ export function registerTxCommand(program: Command) {
       }
 
       const a = agentManager.get(agent);
-      if (!a) { console.log(`Agent "${agent}" not found.`); return; }
+      if (!a) { clack.log.error(`Agent "${agent}" not found.`); return; }
+      
+      const s = clack.spinner();
+      s.start(`Fetching transactions for agent ${agent}...`);
       const txs = getAgentTransactions(a.id, Number(opts?.limit ?? '20'));
-      if (txs.length === 0) { console.log('No transactions yet.'); return; }
+      s.stop(`Fetched ${txs.length} transactions for ${agent}`);
+      
+      if (txs.length === 0) { clack.log.info('No transactions yet.'); return; }
+      
       for (const tx of txs.reverse()) {
         const sig = tx.signature ? tx.signature.slice(0, 16) + '...' : '(pending)';
-        console.log(`[${tx.timestamp}] ${tx.type} ${tx.amount ?? ''} ${tx.token ?? ''} → ${tx.status} | ${sig}`);
+        clack.log.message(`[${tx.timestamp}] ${tx.type} ${tx.amount ?? ''} ${tx.token ?? ''} → ${tx.status} | ${sig}`);
       }
     });
 }
