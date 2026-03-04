@@ -4,6 +4,7 @@ import http from 'http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Server as SocketIOServer } from 'socket.io';
+import { CONSTANTS } from '../lib/Constants.js';
 import { AppError } from '../lib/Errors.js';
 import { logger } from '../lib/Logger.js';
 import { authMiddleware } from './middleware/auth.js';
@@ -23,7 +24,7 @@ import { attachWebDashboard } from './web.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const API_PORT = 7445;
+const API_PORT = CONSTANTS.PORTS.API;
 
 /**
  * Create and configure the Express app + Socket.IO server.

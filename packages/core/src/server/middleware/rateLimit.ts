@@ -1,10 +1,11 @@
 import rateLimit from 'express-rate-limit';
+import { CONSTANTS } from '../../lib/Constants.js';
 
-// Global API limiter: 100 requests per 15 minutes per IP
+// General API Rate Limit
 export const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 100, 
-  message: { message: 'Too many requests, please try again later.', data: null },
+  windowMs: CONSTANTS.RATE_LIMITS.API_WINDOW_MS,
+  max: CONSTANTS.RATE_LIMITS.API_MAX_REQUESTS,
+  message: { message: 'Too many requests to the API, please try again later.', data: null },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -18,10 +19,10 @@ export const llmLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Auth endpoints: 5 requests per 15 minutes per IP
+// Authentication Endpoints Limiter
 export const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 5, 
+  windowMs: CONSTANTS.RATE_LIMITS.AUTH_WINDOW_MS,
+  max: CONSTANTS.RATE_LIMITS.AUTH_MAX_REQUESTS,
   message: { message: 'Too many authentication attempts, please try again later.', data: null },
   standardHeaders: true,
   legacyHeaders: false,

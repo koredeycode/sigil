@@ -1,6 +1,7 @@
 import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { MemorySaver } from '@langchain/langgraph';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { CONSTANTS } from '../lib/Constants.js';
 import { getAgent, getAgentChats, insertLog } from '../lib/Database.js';
 import { logger } from '../lib/Logger.js';
 import { LRUCache } from '../lib/LRUCache.js';
@@ -13,7 +14,7 @@ import { createTools } from './ToolRegistry.js';
 const checkpointer = new MemorySaver();
 
 // Cached agent graphs per agent ID
-const agentGraphCache = new LRUCache<string, ReturnType<typeof createReactAgent>>(50);
+const agentGraphCache = new LRUCache<string, ReturnType<typeof createReactAgent>>(CONSTANTS.CACHE.MAX_AGENT_GRAPHS);
 
 /**
  * Get or create a LangGraph ReAct agent for the given agent.
@@ -101,7 +102,7 @@ export async function invokeSolanaAgent(
 
     // AbortController for LLM timeout (60 seconds)
     const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(new Error('LLM Invocation timed out after 60s')), 60000);
+    const timeoutId = setTimeout(() => abortController.abort(new Error('LLM Invocation timed out')), CONSTANTS.TIMEOUTS.LLM_INVOKE_MS);
 
     let result;
     try {
