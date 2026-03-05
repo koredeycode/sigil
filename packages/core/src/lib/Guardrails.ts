@@ -1,10 +1,11 @@
 import {
-    getConfirmationThreshold,
-    getCooldownPeriod,
-    getDailyVolumeCap,
-    getPerTradeLimit,
-    getSlippageCap,
-    isKillSwitchActive,
+  getAllowlist,
+  getConfirmationThreshold,
+  getCooldownPeriod,
+  getDailyVolumeCap,
+  getPerTradeLimit,
+  getSlippageCap,
+  isKillSwitchActive,
 } from './Config.js';
 import { getAgentTransactions, getDailyVolume } from './Database.js';
 
@@ -17,10 +18,9 @@ export interface GuardrailResult {
 export interface TradeIntent {
   agentId: string;
   type: 'transfer' | 'swap' | 'mint' | 'burn' | 'airdrop' | 'create_token' | 'close_account' | 'create_pool' | 'stake' | 'memo';
-  amount?: number;        // in SOL equivalent
+  amount?: number;        // in SOL
   recipient?: string;
   slippage?: number;      // percentage for swaps
-  portfolioValue?: number; // total portfolio in SOL for % calculations
 }
 
 /**
@@ -63,14 +63,13 @@ export function validateIntent(
     return { passed: true };
   }
 
-  // 2. PER-TRADE LIMIT
-  if (intent.amount != null && intent.portfolioValue != null && intent.portfolioValue > 0) {
+  // 2. PER-TRADE LIMIT (flat SOL cap — devnet has no reliable token pricing)
+  if (intent.amount != null) {
     const limit = overrides?.perTradeLimit ?? getPerTradeLimit();
-    const tradePercent = (intent.amount / intent.portfolioValue) * 100;
-    if (tradePercent > limit) {
+    if (intent.amount > limit) {
       return {
         passed: false,
-        reason: `Trade amount (${tradePercent.toFixed(1)}% of portfolio) exceeds per-trade limit (${limit}%).`,
+        reason: `Trade amount (${intent.amount} SOL) exceeds per-trade limit (${limit} SOL).`,
       };
     }
   }
@@ -88,8 +87,9 @@ export function validateIntent(
   }
 
   // 4. RECIPIENT ALLOWLIST
-  if (intent.recipient && overrides?.allowlist && overrides.allowlist.length > 0) {
-    if (!overrides.allowlist.includes(intent.recipient)) {
+  const allowlist = overrides?.allowlist ?? getAllowlist();
+  if (intent.recipient && allowlist.length > 0) {
+    if (!allowlist.includes(intent.recipient)) {
       return {
         passed: false,
         reason: `Recipient ${intent.recipient} is not on the allowlist.`,

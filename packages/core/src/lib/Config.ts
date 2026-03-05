@@ -55,6 +55,21 @@ export function setConfirmationThreshold(sol: number): void {
   setConfig('confirmation_threshold', String(sol));
 }
 
+export function getAllowlist(): string[] {
+  const raw = getConfig('allowlist');
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function setAllowlist(addresses: string[]): void {
+  setConfig('allowlist', JSON.stringify(addresses));
+}
+
 export function getAuthToken(): string | undefined {
   return getConfig('auth_token');
 }

@@ -34,6 +34,7 @@ export const updateConfigSchema = z.object({
   rpc_url: z.string().url().optional(),
   main_agent_id: z.string().optional(),
   main_agent_name: z.string().optional(),
+  allowlist: z.string().optional(),
 });
 
 // cron.ts

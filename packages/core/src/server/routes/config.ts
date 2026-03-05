@@ -18,6 +18,7 @@ configRouter.get('/', (_req, res) => {
     'rpc_url',
     'main_agent_id',
     'main_agent_name',
+    'allowlist',
   ];
 
   const config: Record<string, string | undefined> = {};

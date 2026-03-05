@@ -41,17 +41,11 @@ export async function signAndSubmit(
   }
 
   // ─── GUARDRAILS CHECK ───────────────────────────────────────────────────
-  const connection = getConnection();
-  const keypair = await getKeypair(agentName);
-  const balance = await connection.getBalance(keypair.publicKey);
-  const portfolioValue = balance / 1e9;
-
   const intent: TradeIntent = {
     agentId,
     type: txType as any,
     amount: txMeta?.amount,
     recipient: txMeta?.recipient,
-    portfolioValue
   };
 
   const validation = validateIntent(intent);

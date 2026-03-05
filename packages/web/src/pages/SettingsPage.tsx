@@ -173,7 +173,8 @@ const GUARDRAIL_DEFAULTS = {
     daily_volume_cap: 10,
     slippage_cap: 1,
     cooldown_period: 30,
-    confirmation_threshold: 50
+    confirmation_threshold: 50,
+    allowlist: [] as string[],
 };
 
 function GuardrailSettings() {
@@ -182,6 +183,8 @@ function GuardrailSettings() {
     const [isSaving, setIsSaving] = useState(false);
     const [saved, setSaved] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [newAddress, setNewAddress] = useState('');
+    const [addressError, setAddressError] = useState<string | null>(null);
 
     const fetchConfig = useCallback(async () => {
         const token = localStorage.getItem('sigil_token');
@@ -190,13 +193,19 @@ function GuardrailSettings() {
             const client = new ApiClient(token);
             const res = await client.getConfig();
             if (res.data) {
+                let parsedAllowlist: string[] = [];
+                try {
+                    parsedAllowlist = res.data.allowlist ? JSON.parse(res.data.allowlist) : [];
+                } catch { parsedAllowlist = []; }
+
                 const fetched = {
                     kill_switch: res.data.kill_switch === 'true',
                     per_trade_limit: parseFloat(res.data.per_trade_limit || '5'),
                     daily_volume_cap: parseFloat(res.data.daily_volume_cap || '10'),
                     slippage_cap: parseFloat(res.data.slippage_cap || '1'),
                     cooldown_period: parseInt(res.data.cooldown_period || '30', 10),
-                    confirmation_threshold: parseFloat(res.data.confirmation_threshold || '50')
+                    confirmation_threshold: parseFloat(res.data.confirmation_threshold || '50'),
+                    allowlist: parsedAllowlist,
                 };
                 setConfig(fetched);
                 setOriginalConfig(fetched);
@@ -215,12 +224,33 @@ function GuardrailSettings() {
         setIsSaving(true);
         try {
             const client = new ApiClient(token);
-            await client.setConfig(config);
+            const { allowlist, ...rest } = config;
+            await client.setConfig({ ...rest, allowlist: JSON.stringify(allowlist) });
             setOriginalConfig(config);
             setSaved(true);
             setTimeout(() => setSaved(false), 2000);
         } catch (e) { console.error('Failed to save guardrails:', e); }
         finally { setIsSaving(false); }
+    };
+
+    const handleAddAddress = () => {
+        const addr = newAddress.trim();
+        if (!addr) return;
+        if (addr.length < 32 || addr.length > 44) {
+            setAddressError('Invalid Solana address (must be 32-44 characters)');
+            return;
+        }
+        if (config.allowlist.includes(addr)) {
+            setAddressError('Address already in allowlist');
+            return;
+        }
+        setConfig({ ...config, allowlist: [...config.allowlist, addr] });
+        setNewAddress('');
+        setAddressError(null);
+    };
+
+    const handleRemoveAddress = (addr: string) => {
+        setConfig({ ...config, allowlist: config.allowlist.filter((a: string) => a !== addr) });
     };
 
     const handleResetDefaults = () => {
@@ -260,20 +290,20 @@ function GuardrailSettings() {
                     </div>
 
                     {/* PER TRADE LIMIT */}
-                    <div className="p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-0.5">
-                                <h3 className="font-medium text-sm">Per-Trade Limit</h3>
-                                <p className="text-xs text-muted-foreground">Maximum percentage of portfolio value per trade.</p>
-                            </div>
-                            <span className="text-sm font-mono font-bold text-primary">{config.per_trade_limit}%</span>
+                    <div className="p-4 flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <h3 className="font-medium text-sm">Per-Trade Limit</h3>
+                            <p className="text-xs text-muted-foreground">Maximum SOL value per trade.</p>
                         </div>
-                        <input 
-                            type="range" min="0.1" max="100" step="0.1"
-                            value={config.per_trade_limit}
-                            onChange={(e) => setConfig({...config, per_trade_limit: parseFloat(e.target.value)})}
-                            className="w-full h-1.5 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
-                        />
+                        <div className="flex items-center gap-2">
+                            <input 
+                                type="number" 
+                                value={config.per_trade_limit}
+                                onChange={(e) => setConfig({...config, per_trade_limit: parseFloat(e.target.value)})}
+                                className="w-20 px-2 py-1 bg-secondary border border-border rounded text-sm font-mono text-right"
+                            />
+                            <span className="text-xs text-muted-foreground font-bold">SOL</span>
+                        </div>
                     </div>
 
                     {/* DAILY VOLUME CAP */}
@@ -342,6 +372,51 @@ function GuardrailSettings() {
                             />
                             <span className="text-xs text-muted-foreground font-bold">SOL</span>
                         </div>
+                    </div>
+
+                    {/* ALLOWLIST */}
+                    <div className="p-4 space-y-3">
+                        <div className="space-y-0.5">
+                            <h3 className="font-medium text-sm">Recipient Allowlist</h3>
+                            <p className="text-xs text-muted-foreground">Only allow transfers to these addresses. Leave empty to allow all.</p>
+                        </div>
+                        <div className="flex gap-2">
+                            <input 
+                                value={newAddress}
+                                onChange={(e) => { setNewAddress(e.target.value); setAddressError(null); }}
+                                placeholder="Solana address (base58)"
+                                className="flex-1 px-3 py-2 bg-secondary/50 border border-input rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-primary font-mono text-xs"
+                                onKeyDown={(e) => e.key === 'Enter' && handleAddAddress()}
+                            />
+                            <button
+                                onClick={handleAddAddress}
+                                className="px-3 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors flex items-center gap-1"
+                            >
+                                <Plus className="w-3.5 h-3.5" /> Add
+                            </button>
+                        </div>
+                        {addressError && (
+                            <p className="text-xs text-red-500 flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" /> {addressError}
+                            </p>
+                        )}
+                        {config.allowlist.length > 0 ? (
+                            <div className="space-y-1.5 mt-2">
+                                {config.allowlist.map((addr: string) => (
+                                    <div key={addr} className="flex items-center justify-between px-3 py-2 bg-secondary/30 border border-border rounded-md group">
+                                        <code className="text-xs font-mono text-muted-foreground truncate mr-2">{addr}</code>
+                                        <button
+                                            onClick={() => handleRemoveAddress(addr)}
+                                            className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-muted-foreground italic">No addresses — all recipients allowed.</p>
+                        )}
                     </div>
                 </div>
 
