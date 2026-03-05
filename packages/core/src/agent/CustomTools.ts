@@ -26,12 +26,11 @@ import { getKeypair } from '../wallet/Wallet.js';
 export function createCustomTools(agentId: string, agentName: string): DynamicStructuredTool[] {
   const connection = getConnection();
 
-  const tools: DynamicStructuredTool[] = [
     // ═══════════════════════════════════════════════════════════════════════
-    //  WALLET & BALANCE TOOLS (existing)
-    // ═══════════════════════════════════════════════════════════════════════
+  //  WALLET & BALANCE TOOLS
+  // ═══════════════════════════════════════════════════════════════════════
 
-    new DynamicStructuredTool({
+  const getBalanceTool = new DynamicStructuredTool({
       name: 'get_balance',
       description: 'Check SOL balance and all SPL token holdings for this agent\'s wallet.',
       schema: z.object({}),
@@ -61,9 +60,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error getting balance: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const requestAirdropTool = new DynamicStructuredTool({
       name: 'request_airdrop',
       description: 'Request SOL from the devnet faucet. Maximum 2 SOL per request.',
       schema: z.object({
@@ -82,9 +81,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error requesting airdrop: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const transferSolTool = new DynamicStructuredTool({
       name: 'transfer_sol',
       description: 'Send SOL to an address. Subject to guardrails.',
       schema: z.object({
@@ -113,9 +112,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const getTransactionHistoryTool = new DynamicStructuredTool({
       name: 'get_transaction_history',
       description: 'Fetch recent on-chain transactions for this wallet.',
       schema: z.object({
@@ -139,9 +138,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const getTokenAccountsTool = new DynamicStructuredTool({
       name: 'get_token_accounts',
       description: 'List all SPL token accounts owned by this wallet.',
       schema: z.object({}),
@@ -169,9 +168,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const getPortfolioSnapshotTool = new DynamicStructuredTool({
       name: 'get_portfolio_snapshot',
       description: 'Get a full breakdown of holdings with percentages of total portfolio.',
       schema: z.object({}),
@@ -213,9 +212,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const getAccountInfoTool = new DynamicStructuredTool({
       name: 'get_account_info',
       description: 'Fetch on-chain account metadata for any Solana address.',
       schema: z.object({
@@ -239,13 +238,13 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  STAKING TOOLS (new)
-    // ═══════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
+  //  STAKING TOOLS
+  // ═══════════════════════════════════════════════════════════════════════
 
-    new DynamicStructuredTool({
+  const stakeSolTool = new DynamicStructuredTool({
       name: 'stake_sol',
       description: 'Delegate SOL to a validator on devnet. Creates a stake account and delegates. Subject to guardrails.',
       schema: z.object({
@@ -274,9 +273,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const deactivateStakeTool = new DynamicStructuredTool({
       name: 'deactivate_stake',
       description: 'Deactivate a stake account so it can be withdrawn after the cool-down epoch.',
       schema: z.object({
@@ -301,13 +300,13 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  SPL TOKEN TOOLS (new)
-    // ═══════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
+  //  SPL TOKEN TOOLS
+  // ═══════════════════════════════════════════════════════════════════════
 
-    new DynamicStructuredTool({
+  const createTokenTool = new DynamicStructuredTool({
       name: 'create_token',
       description: 'Create a new SPL token mint on devnet with optional metadata (name, symbol, image URI). You become the mint authority. Subject to guardrails.',
       schema: z.object({
@@ -338,9 +337,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const mintTokensTool = new DynamicStructuredTool({
       name: 'mint_tokens',
       description: 'Mint SPL tokens to this wallet. You must be the mint authority. Subject to guardrails.',
       schema: z.object({
@@ -373,9 +372,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const burnTokensTool = new DynamicStructuredTool({
       name: 'burn_tokens',
       description: 'Burn SPL tokens from this wallet. Subject to guardrails.',
       schema: z.object({
@@ -407,9 +406,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const transferTokenTool = new DynamicStructuredTool({
       name: 'transfer_token',
       description: 'Send SPL tokens to another address. Creates the recipient\'s token account if needed. Subject to guardrails.',
       schema: z.object({
@@ -444,9 +443,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const closeEmptyTokenAccountsTool = new DynamicStructuredTool({
       name: 'close_empty_token_accounts',
       description: 'Close all zero-balance SPL token accounts to reclaim rent SOL. Subject to guardrails.',
       schema: z.object({}),
@@ -482,13 +481,13 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  SWAP TOOL (new — Jupiter API)
-    // ═══════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
+  //  SWAP TOOL (Jupiter API)
+  // ═══════════════════════════════════════════════════════════════════════
 
-    new DynamicStructuredTool({
+  const swapTokensTool = new DynamicStructuredTool({
       name: 'swap_tokens',
       description: 'Swap tokens using the Jupiter aggregator on devnet. Input/output are token mint addresses. Use "So11111111111111111111111111111111111111112" for native SOL. Subject to guardrails.',
       schema: z.object({
@@ -552,13 +551,13 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  MEMO TOOL (new)
-    // ═══════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
+  //  MEMO TOOL
+  // ═══════════════════════════════════════════════════════════════════════
 
-    new DynamicStructuredTool({
+  const sendMemoTool = new DynamicStructuredTool({
       name: 'send_memo',
       description: 'Send an on-chain memo message. Useful for tagging transactions with human-readable notes. Subject to guardrails.',
       schema: z.object({
@@ -580,13 +579,13 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  READ-ONLY DATA TOOLS (new — no guardrails, no signing)
-    // ═══════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
+  //  READ-ONLY DATA TOOLS
+  // ═══════════════════════════════════════════════════════════════════════
 
-    new DynamicStructuredTool({
+  const fetchPriceTool = new DynamicStructuredTool({
       name: 'fetch_price',
       description: 'Get the current USD price of a token by its mint address or well-known symbol (SOL, USDC, etc).',
       schema: z.object({
@@ -626,9 +625,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const getTpsTool = new DynamicStructuredTool({
       name: 'get_tps',
       description: 'Get the current transactions-per-second (TPS) on the Solana devnet cluster.',
       schema: z.object({}),
@@ -651,9 +650,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const getSlotInfoTool = new DynamicStructuredTool({
       name: 'get_slot_info',
       description: 'Get current slot, epoch, and block height information from the Solana devnet cluster.',
       schema: z.object({}),
@@ -674,13 +673,13 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  VALIDATOR & STAKE POSITION TOOLS (new)
-    // ═══════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
+  //  VALIDATOR & STAKE POSITION TOOLS
+  // ═══════════════════════════════════════════════════════════════════════
 
-    new DynamicStructuredTool({
+  const listValidatorsTool = new DynamicStructuredTool({
       name: 'list_validators',
       description: 'List active validators on the Solana devnet cluster with their vote accounts, stake, and commission. Useful for choosing a validator before staking.',
       schema: z.object({
@@ -715,9 +714,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
 
-    new DynamicStructuredTool({
+  const getStakePositionsTool = new DynamicStructuredTool({
       name: 'get_stake_positions',
       description: 'View all stake accounts owned by this wallet, their status (active/deactivating/inactive), validator, and balance.',
       schema: z.object({}),
@@ -770,7 +769,30 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       },
-    }),
+    });
+
+  const tools: DynamicStructuredTool[] = [
+    getBalanceTool,
+    requestAirdropTool,
+    transferSolTool,
+    getTransactionHistoryTool,
+    getTokenAccountsTool,
+    getPortfolioSnapshotTool,
+    getAccountInfoTool,
+    stakeSolTool,
+    deactivateStakeTool,
+    createTokenTool,
+    mintTokensTool,
+    burnTokensTool,
+    transferTokenTool,
+    closeEmptyTokenAccountsTool,
+    swapTokensTool,
+    sendMemoTool,
+    fetchPriceTool,
+    getTpsTool,
+    getSlotInfoTool,
+    listValidatorsTool,
+    getStakePositionsTool,
   ];
 
   return tools;
