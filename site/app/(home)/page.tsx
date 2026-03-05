@@ -87,10 +87,11 @@ export default function HomePage() {
               </a>
             </div>
 
-            <div className="mt-2 text-sm text-muted-foreground bg-primary/5 border border-primary/10 rounded-xl px-4 py-3 max-w-lg text-left sm:text-center shadow-sm">
-              <span className="leading-relaxed">
-                <b className="text-primary font-semibold">AI Agents:</b> Read <code className="text-primary font-mono bg-background px-1.5 py-0.5 rounded text-xs select-all">https://sigil-wallet.vercel.app/skill.md</code> and follow the instructions to set up Sigil.
-              </span>
+            <div className="mt-4 flex flex-col items-center gap-3">
+              <p className="text-sm text-muted-foreground text-center">
+                <b className="text-primary font-semibold">AI Agents:</b> Use the instruction set below to manage Sigil.
+              </p>
+              <CommandBox command="Read https://sigil-wallet.vercel.app/skill.md and use the instructions to set up Sigil." className="w-full" />
             </div>
           </div>
         </div>
