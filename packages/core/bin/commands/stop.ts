@@ -37,5 +37,10 @@ export function registerStopCommand(program: Command) {
       } catch (e) {
         // ignore
       }
+
+      // Remove auto-start on boot (cross-platform, best-effort)
+      import('../../src/lib/Startup.js').then(({ disableAutoStart }) => {
+        disableAutoStart();
+      }).catch(() => { /* ignore */ });
     });
 }

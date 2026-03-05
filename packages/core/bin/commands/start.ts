@@ -74,6 +74,10 @@ export function registerStartCommand(program: Command) {
         const cronInfo = cronScheduler.listActive();
         
         s.stop('All systems operational.');
+
+        // Register auto-start on boot (cross-platform, best-effort)
+        const { enableAutoStart } = await import('../../src/lib/Startup.js');
+        enableAutoStart();
         
         clack.log.step(`Session Token: ${token}`);
         clack.log.step(`Agents: ${agents.length} loaded`);
@@ -88,6 +92,11 @@ export function registerStartCommand(program: Command) {
         try {
           const pid = await spawnDaemon();
           s.stop(`Daemon spawned with PID ${pid}`);
+
+          // Register auto-start on boot (cross-platform, best-effort)
+          const { enableAutoStart } = await import('../../src/lib/Startup.js');
+          enableAutoStart();
+
           clack.log.step(`Run \`sigil dashboard\` to instantly access the UI in a few moments.`);
           clack.log.step(`Run \`sigil logs\` to view daemon output, or \`sigil stop\` to kill it.`);
         } catch (error) {
