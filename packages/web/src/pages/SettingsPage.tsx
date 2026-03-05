@@ -478,7 +478,6 @@ export function SettingsPage() {
     const [providerError, setProviderError] = useState<string | null>(null);
 
     const { theme, setTheme } = useTheme();
-    const isDarkMode = theme === 'dark';
 
     const fetchProviders = useCallback(async () => {
         const token = localStorage.getItem('sigil_token');
@@ -669,10 +668,10 @@ export function SettingsPage() {
                                         <h3 className="font-medium text-sm">Color Theme</h3>
                                         <p className="text-xs text-muted-foreground">Customize your dashboard aesthetic</p>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-3 gap-3">
                                         <button 
                                             onClick={() => setTheme('light')}
-                                            className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${!isDarkMode ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-secondary/20 hover:border-muted-foreground/50'}`}
+                                            className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${theme === 'light' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-secondary/20 hover:border-muted-foreground/50'}`}
                                         >
                                             <div className="w-8 h-8 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
                                                 <span className="w-4 h-4 rounded-full bg-blue-500"></span>
@@ -681,12 +680,21 @@ export function SettingsPage() {
                                         </button>
                                         <button 
                                             onClick={() => setTheme('dark')}
-                                            className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${isDarkMode ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-secondary/20 hover:border-muted-foreground/50'}`}
+                                            className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${theme === 'dark' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-secondary/20 hover:border-muted-foreground/50'}`}
                                         >
                                             <div className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 shadow-sm flex items-center justify-center">
                                                 <span className="w-4 h-4 rounded-full bg-purple-500"></span>
                                             </div>
                                             <span className="text-xs font-semibold">Dark Mode</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => setTheme('system')}
+                                            className={`flex flex-col items-center justify-center gap-2 p-3 rounded-lg border-2 transition-all ${theme === 'system' ? 'border-primary bg-primary/5 text-primary' : 'border-border bg-secondary/20 hover:border-muted-foreground/50'}`}
+                                        >
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-zinc-900 to-white border border-zinc-500 shadow-sm flex items-center justify-center">
+                                                <Monitor className="w-4 h-4 text-zinc-500 mix-blend-difference" />
+                                            </div>
+                                            <span className="text-xs font-semibold">System</span>
                                         </button>
                                     </div>
                                 </div>

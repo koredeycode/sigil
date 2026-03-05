@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink, Menu, Moon, Sun, X } from 'lucide-react';
+import { ExternalLink, Menu, Monitor, Moon, Sun, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,11 +15,17 @@ const links = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const { resolvedTheme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => setMounted(true), []);
+
+  const handleThemeToggle = () => {
+    if (theme === 'light') return setTheme('dark');
+    if (theme === 'dark') return setTheme('system');
+    return setTheme('light');
+  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-xl">
@@ -51,11 +57,11 @@ export function Navbar() {
           {/* Theme Toggle */}
           {mounted && (
             <button
-              onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+              onClick={handleThemeToggle}
               className="ml-2 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
               aria-label="Toggle theme"
             >
-              {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === 'system' ? <Monitor className="w-4 h-4" /> : theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </button>
           )}
         </div>
@@ -93,13 +99,13 @@ export function Navbar() {
             {mounted && (
               <button
                 onClick={() => {
-                  setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+                  handleThemeToggle();
                   setMobileOpen(false);
                 }}
                 className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
               >
-                {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                {resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode'}
+                {theme === 'system' ? <Monitor className="w-4 h-4" /> : theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                {theme === 'system' ? 'System Theme' : theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
               </button>
             )}
           </div>

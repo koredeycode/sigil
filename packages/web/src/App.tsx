@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { Activity, Brain, Clock, ExternalLink, LogOut, MessageSquare, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
+import { Activity, Brain, Clock, ExternalLink, LogOut, MessageSquare, Monitor, Moon, Settings, Sun, Terminal, Users } from 'lucide-react';
 import { useState } from 'react';
 import { Group, Panel, Separator, useDefaultLayout } from 'react-resizable-panels';
 import { Link, Route, Routes, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -180,7 +180,6 @@ const Dashboard = () => {
     const { agents } = useAgents();
     const location = useLocation();
     const { theme, toggleTheme } = useTheme();
-    const isDarkMode = theme === 'dark';
 
     const refreshAgents = () => {
         // Mock refresh
@@ -288,11 +287,11 @@ const Dashboard = () => {
                         className="w-full flex items-center justify-between px-3 py-2 rounded-md bg-secondary text-sm font-medium hover:bg-secondary/80 transition-colors mb-2"
                     >
                         <span className="flex items-center gap-2 text-muted-foreground">
-                            {isDarkMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                            {theme === 'system' ? <Monitor className="w-4 h-4" /> : theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
                             Theme
                         </span>
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-background text-foreground shadow-sm">
-                            {isDarkMode ? 'Dark' : 'Light'}
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-background text-foreground shadow-sm capitalize">
+                            {theme}
                         </span>
                     </button>
                     <button 
