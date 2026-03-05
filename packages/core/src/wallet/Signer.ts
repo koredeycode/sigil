@@ -45,6 +45,7 @@ export async function signAndSubmit(
     agentId,
     type: txType as any,
     amount: txMeta?.amount,
+    token: txMeta?.token,
     recipient: txMeta?.recipient,
   };
 

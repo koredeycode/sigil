@@ -363,6 +363,7 @@ export function getDailyVolume(agentId: string): number {
      FROM transactions
      WHERE agent_id = ?
        AND status = 'confirmed'
+       AND (token = 'SOL' OR token = 'So11111111111111111111111111111111111111112')
        AND timestamp > datetime('now', '-1 day')`
   ).get(agentId) as unknown as { total: number };
   return row.total;

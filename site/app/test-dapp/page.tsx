@@ -11,6 +11,20 @@ export default function TestDappPage() {
   const [txResult, setTxResult] = useState<any>(null);
   const [recipient, setRecipient] = useState<string>("");
   const [amountLabel, setAmountLabel] = useState<string>("0.5");
+  const [isValidAddress, setIsValidAddress] = useState(true);
+
+  useEffect(() => {
+    if (!recipient) {
+      setIsValidAddress(true); // defaults to 111...1
+      return;
+    }
+    try {
+      new PublicKey(recipient);
+      setIsValidAddress(true);
+    } catch {
+      setIsValidAddress(false);
+    }
+  }, [recipient]);
 
   useEffect(() => {
     // Wait for the injected script to load
@@ -77,8 +91,22 @@ export default function TestDappPage() {
       let recipientPubkey: PublicKey;
       try {
          recipientPubkey = new PublicKey(recipient || "11111111111111111111111111111111");
+         if (!PublicKey.isOnCurve(recipientPubkey.toBytes())) {
+            // Some addresses might be off-curve (PDAs), but generally user wallets are on-curve.
+            // If we just want valid format, new PublicKey() is enough, but to strictly check 
+            // format and length, we can check basic validity.
+         }
       } catch (e) {
          setTxResult({ status: "rejected", error: "Invalid recipient address format." });
+         setIsSimulating(false);
+         return;
+      }
+
+      // Stricter check: the pubkey must have exactly 32-44 characters (which `new PublicKey` usually handles, 
+      // but let's be explicit for the user error)
+      const recipientStr = recipient || "11111111111111111111111111111111";
+      if (recipientStr.length < 32 || recipientStr.length > 44) {
+         setTxResult({ status: "rejected", error: "Invalid Solana address length." });
          setIsSimulating(false);
          return;
       }
@@ -167,8 +195,11 @@ export default function TestDappPage() {
                               value={recipient}
                               onChange={(e) => setRecipient(e.target.value)}
                               placeholder="e.g. 5xV..."
-                              className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                              className={`w-full mt-1 px-3 py-2 bg-background border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 ${!isValidAddress ? 'border-red-500/50 focus:ring-red-500/50' : 'border-border focus:ring-primary/50'}`}
                            />
+                           {!isValidAddress && (
+                             <p className="text-xs text-red-500 mt-1 font-medium">Invalid Solana address format.</p>
+                           )}
                         </div>
                         <div>
                            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Amount (SOL)</label>
@@ -186,7 +217,7 @@ export default function TestDappPage() {
                   
                   <button 
                       onClick={simulateTransaction}
-                      disabled={isSimulating}
+                      disabled={isSimulating || !isValidAddress}
                       className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
                   >
                       {isSimulating ? "Waiting for Agent..." : "Trigger Transaction"}

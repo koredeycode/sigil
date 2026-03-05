@@ -1,11 +1,11 @@
 import {
-  getAllowlist,
-  getConfirmationThreshold,
-  getCooldownPeriod,
-  getDailyVolumeCap,
-  getPerTradeLimit,
-  getSlippageCap,
-  isKillSwitchActive,
+    getAllowlist,
+    getConfirmationThreshold,
+    getCooldownPeriod,
+    getDailyVolumeCap,
+    getPerTradeLimit,
+    getSlippageCap,
+    isKillSwitchActive,
 } from './Config.js';
 import { getAgentTransactions, getDailyVolume } from './Database.js';
 
@@ -18,7 +18,8 @@ export interface GuardrailResult {
 export interface TradeIntent {
   agentId: string;
   type: 'transfer' | 'swap' | 'mint' | 'burn' | 'airdrop' | 'create_token' | 'close_account' | 'create_pool' | 'stake' | 'memo';
-  amount?: number;        // in SOL
+  amount?: number;        // amount in units
+  token?: string;         // 'SOL' or mint address
   recipient?: string;
   slippage?: number;      // percentage for swaps
 }
@@ -63,8 +64,10 @@ export function validateIntent(
     return { passed: true };
   }
 
+  const isSol = intent.token === 'SOL' || intent.token === 'So11111111111111111111111111111111111111112';
+
   // 2. PER-TRADE LIMIT (flat SOL cap — devnet has no reliable token pricing)
-  if (intent.amount != null) {
+  if (intent.amount != null && isSol) {
     const limit = overrides?.perTradeLimit ?? getPerTradeLimit();
     if (intent.amount > limit) {
       return {
@@ -75,7 +78,7 @@ export function validateIntent(
   }
 
   // 3. DAILY VOLUME CAP
-  if (intent.amount != null) {
+  if (intent.amount != null && isSol) {
     const cap = overrides?.dailyVolumeCap ?? getDailyVolumeCap();
     const dailyTotal = getDailyVolume(intent.agentId);
     if (dailyTotal + intent.amount > cap) {
@@ -127,7 +130,7 @@ export function validateIntent(
   }
 
   // 7. CONFIRMATION THRESHOLD
-  if (intent.amount != null) {
+  if (intent.amount != null && isSol) {
     const threshold = overrides?.confirmationThreshold ?? getConfirmationThreshold();
     if (intent.amount > threshold) {
       return {

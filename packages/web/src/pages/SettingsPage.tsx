@@ -581,7 +581,7 @@ export function SettingsPage() {
     };
 
     return (
-        <div className="flex flex-col space-y-6 overflow-y-auto pr-2">
+        <div className="flex flex-col h-full space-y-6 overflow-y-auto pr-4 pb-12">
             <header className="flex flex-col space-y-2 shrink-0">
                 <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
                 <p className="text-muted-foreground">Manage system, appearance, blockchain, and AI provider configurations.</p>
@@ -606,7 +606,7 @@ export function SettingsPage() {
             </div>
 
             {/* Tab Content */}
-            <div className="flex-1 overflow-y-auto space-y-6">
+            <div className="flex-1 space-y-6">
 
                 {/* System Info Tab */}
                 {activeTab === 'system' && (
