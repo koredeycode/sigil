@@ -31,13 +31,14 @@ Sigil operates through three synchronized interfaces — the **CLI**, **TUI**, a
             direction TB
             AGENT["LangGraph Agent<br/>(LLM Reasoning)"]:::agent
             GUARDRAILS["Guardrails<br/>(Limit & Safety Checks)"]:::security
+            CRON["Cron Scheduler<br/>(Scheduled Tasks)"]:::agent
         end
         
         DB[("SQLite Database<br/>(State & Config)")]:::db
     end
 
     subgraph Execution ["Secure Execution"]
-        WALLET{"Wallet Layer<br/>(OS Keychain / Keytar)"}:::wallet
+        WALLET{"Wallet Layer<br/>(Encrypted Disk Storage)"}:::wallet
     end
 
     %% Connections
@@ -46,6 +47,8 @@ Sigil operates through three synchronized interfaces — the **CLI**, **TUI**, a
     WEB <-->|WS stream| SERVER
 
     SERVER <-->|User Context| AGENT
+    SERVER <-->|Schedules| CRON
+    CRON -->|Triggers| AGENT
     AGENT <-->|Read / Write State| DB
     
     AGENT -->|"Proposes Tool Call"| GUARDRAILS

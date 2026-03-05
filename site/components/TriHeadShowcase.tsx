@@ -1,5 +1,6 @@
 'use client';
 
+import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Globe, Monitor, TerminalSquare } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Terminal } from './Terminal';
@@ -41,20 +42,15 @@ export function TriHeadShowcase() {
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startAutoSwitch = useCallback(() => {
-    // Clear any existing timers
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (progressRef.current) clearInterval(progressRef.current);
 
-    // Reset progress
     setProgress(0);
-
-    // Progress bar updates every 50ms
     const progressStep = 50 / AUTO_SWITCH_INTERVAL;
     progressRef.current = setInterval(() => {
       setProgress(prev => Math.min(prev + progressStep, 1));
     }, 50);
 
-    // Auto advance
     intervalRef.current = setInterval(() => {
       setActive(prev => (prev + 1) % heads.length);
       setProgress(0);
@@ -84,7 +80,6 @@ export function TriHeadShowcase() {
     startAutoSwitch();
   }, [startAutoSwitch]);
 
-  // Swipe handling
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.touches[0].clientX);
   };
@@ -122,17 +117,24 @@ export function TriHeadShowcase() {
                 <button
                   key={head.id}
                   onClick={() => selectTab(i)}
-                  className={`relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all overflow-hidden ${
+                  className={`relative flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all group ${
                     active === i
-                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      ? 'text-primary-foreground'
                       : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
                   }`}
                 >
-                  <TabIcon className="w-4 h-4" />
-                  {head.title}
+                  {active === i && (
+                    <motion.div
+                      layoutId="active-tab"
+                      className="absolute inset-0 bg-primary rounded-lg shadow-sm"
+                      transition={{ type: 'spring', duration: 0.5 }}
+                    />
+                  )}
+                  <TabIcon className="w-4 h-4 relative z-10" />
+                  <span className="relative z-10">{head.title}</span>
                   {active === i && (
                     <span
-                      className="absolute bottom-0 left-0 h-0.5 bg-primary-foreground/40 transition-none"
+                      className="absolute bottom-0 left-0 h-0.5 bg-primary-foreground/40 z-20"
                       style={{ width: `${progress * 100}%` }}
                     />
                   )}
@@ -148,90 +150,112 @@ export function TriHeadShowcase() {
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            {/* Visual Panel */}
-            <div className="order-2 lg:order-1">
-              {active === 0 ? (
-                <Terminal />
-              ) : (
-                <div className="w-full rounded-xl border border-border bg-card overflow-hidden shadow-sm">
-                  <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-secondary/50">
-                    <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-red-400/60" />
-                      <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
-                      <div className="w-3 h-3 rounded-full bg-green-400/60" />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={active}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.4, ease: [0.21, 0.47, 0.32, 0.98] }}
+              className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start"
+            >
+              {/* Visual Panel */}
+              <div className="order-2 lg:order-1">
+                {active === 0 ? (
+                  <Terminal />
+                ) : (
+                  <div className="w-full rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+                    <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-secondary/50">
+                      <div className="flex gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-red-400/60" />
+                        <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
+                        <div className="w-3 h-3 rounded-full bg-green-400/60" />
+                      </div>
+                      <span className="text-xs text-muted-foreground font-mono ml-2">
+                        {active === 1 ? 'sigil tui' : 'localhost:7445'}
+                      </span>
                     </div>
-                    <span className="text-xs text-muted-foreground font-mono ml-2">
-                      {active === 1 ? 'sigil tui' : 'localhost:7445'}
-                    </span>
-                  </div>
-                  <div className="p-6 font-mono text-sm min-h-[220px] flex flex-col justify-center items-center gap-4 text-center">
-                    <Icon className="w-12 h-12 text-primary/40" />
-                    <div>
-                      <p className="text-foreground font-semibold mb-1">{current.title}</p>
-                      <p className="text-muted-foreground text-xs max-w-xs">
-                        {active === 1
-                          ? 'Live dashboard with agent status, logs, and balance monitoring'
-                          : 'Chat, analytics, and visual directive management in your browser'}
-                      </p>
+                    <div className="p-12 font-mono text-sm min-h-[300px] flex flex-col justify-center items-center gap-6 text-center">
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <Icon className="w-16 h-16 text-primary/40" />
+                      </motion.div>
+                      <div>
+                        <p className="text-foreground text-lg font-semibold mb-2">{current.title}</p>
+                        <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                          {active === 1
+                            ? 'Live dashboard with agent status, logs, and balance monitoring'
+                            : 'Chat, analytics, and visual directive management in your browser'}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Info Panel */}
-            <div className="order-1 lg:order-2 flex flex-col justify-center">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <span className="text-xs font-mono text-primary uppercase tracking-wider">{current.subtitle}</span>
-                  <h3 className="text-2xl font-bold tracking-tight">{current.title}</h3>
-                </div>
+                )}
               </div>
 
-              <p className="text-muted-foreground leading-relaxed mb-6">
-                {current.description}
-              </p>
+              {/* Info Panel */}
+              <div className="order-1 lg:order-2 flex flex-col justify-center pt-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Icon className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-mono text-primary uppercase tracking-widest">{current.subtitle}</span>
+                    <h3 className="text-3xl font-bold tracking-tight">{current.title}</h3>
+                  </div>
+                </div>
 
-              <ul className="space-y-2">
-                {current.features.map((feat) => (
-                  <li key={feat} className="flex items-center gap-2.5 text-sm">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                    <span className="text-muted-foreground">{feat}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+                <p className="text-lg text-muted-foreground leading-relaxed mb-8">
+                  {current.description}
+                </p>
+
+                <ul className="space-y-4">
+                  {current.features.map((feat, idx) => (
+                    <motion.li 
+                      key={feat}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.1 * idx }}
+                      className="flex items-center gap-3 text-base"
+                    >
+                      <div className="w-2 h-2 rounded-full bg-primary shrink-0 shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+                      <span className="text-muted-foreground">{feat}</span>
+                    </motion.li>
+                  ))}
+                </ul>
+              </div>
+            </motion.div>
+          </AnimatePresence>
 
           {/* Prev / Next arrows (mobile) */}
-          <div className="flex justify-center gap-3 mt-8 lg:hidden">
+          <div className="flex justify-center gap-4 mt-8 lg:hidden">
             <button
               onClick={goPrev}
-              className="p-2 rounded-lg border border-border hover:bg-secondary transition-colors"
+              className="p-3 rounded-xl border border-border hover:bg-secondary transition-colors"
               aria-label="Previous"
             >
-              <ChevronLeft className="w-5 h-5 text-muted-foreground" />
+              <ChevronLeft className="w-6 h-6 text-muted-foreground" />
             </button>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {heads.map((_, i) => (
-                <div
+                <button
                   key={i}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    i === active ? 'bg-primary' : 'bg-border'
+                  onClick={() => selectTab(i)}
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                    i === active ? 'bg-primary w-6' : 'bg-border'
                   }`}
                 />
               ))}
             </div>
             <button
               onClick={goNext}
-              className="p-2 rounded-lg border border-border hover:bg-secondary transition-colors"
+              className="p-3 rounded-xl border border-border hover:bg-secondary transition-colors"
               aria-label="Next"
             >
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              <ChevronRight className="w-6 h-6 text-muted-foreground" />
             </button>
           </div>
         </div>
@@ -239,3 +263,4 @@ export function TriHeadShowcase() {
     </section>
   );
 }
+
