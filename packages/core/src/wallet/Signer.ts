@@ -40,6 +40,11 @@ export async function signAndSubmit(
     );
   }
 
+  // Token validation for value transfers
+  if (['transfer', 'swap', 'stake'].includes(txType) && !txMeta?.token) {
+    throw new Error(`Transaction type '${txType}' requires 'token' field in metadata`);
+  }
+
   // ─── GUARDRAILS CHECK ───────────────────────────────────────────────────
   const intent: TradeIntent = {
     agentId,

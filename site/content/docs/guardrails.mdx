@@ -9,12 +9,14 @@ Guardrails are **hard-coded safety checks** that validate every proposed action 
 
 | Guardrail | Default | Description |
 |---|---|---|
-| Per-trade limit | 5% of portfolio | Maximum value of any single trade |
-| Daily volume cap | Configurable | Total trading volume in a 24-hour window |
+| Per-trade limit | 5 SOL | Maximum value of any single **SOL** trade (SPL tokens not limited) |
+| Daily volume cap | 10 SOL | Total **SOL** trading volume in a 24-hour window |
 | Slippage cap | 1% | Maximum price deviation for swaps |
 | Recipient allowlist | Disabled | Restrict transfers to known addresses |
-| Cool-down period | Configurable | Minimum wait between consecutive trades |
-| Airdrop rate limit | 1 per hour | Prevents spamming the Devnet faucet |
+| Cool-down period | 30s | Minimum wait between consecutive trades |
+| Confirmation threshold | 50 SOL | Transactions above this value require manual approval |
+
+> **Note**: Financial guardrails (per-trade limit, daily volume cap, confirmation threshold) currently **only apply to native SOL** transactions. SPL token transfers are not subject to these limits on devnet, as there is no reliable on-chain price oracle.
 
 ## How Validation Works
 

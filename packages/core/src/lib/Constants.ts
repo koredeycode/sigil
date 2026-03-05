@@ -21,3 +21,16 @@ export const CONSTANTS = {
     MAX_AGENT_GRAPHS: 50,
   }
 };
+
+export const NATIVE_SOL_MINT = 'So11111111111111111111111111111111111111112';
+export const SOL_TOKEN_IDENTIFIER = 'SOL';
+
+/**
+ * Checks if a given token identifier represents native SOL.
+ * @param token The token identifier string (e.g., 'SOL', a mint address, or null/undefined)
+ * @returns boolean true if the token is SOL or the wrapped SOL mint
+ */
+export function isSolToken(token: string | null | undefined): boolean {
+  if (!token) return false;
+  return token === SOL_TOKEN_IDENTIFIER || token === NATIVE_SOL_MINT;
+}

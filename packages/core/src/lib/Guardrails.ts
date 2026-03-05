@@ -7,6 +7,7 @@ import {
     getSlippageCap,
     isKillSwitchActive,
 } from './Config.js';
+import { isSolToken } from './Constants.js';
 import { getAgentTransactions, getDailyVolume } from './Database.js';
 
 export interface GuardrailResult {
@@ -64,7 +65,15 @@ export function validateIntent(
     return { passed: true };
   }
 
-  const isSol = intent.token === 'SOL' || intent.token === 'So11111111111111111111111111111111111111112';
+  // Token type MUST be specified for value transfers (security defense)
+  if (intent.amount != null && !intent.token) {
+    return {
+      passed: false,
+      reason: 'Token type must be specified for value transfers.',
+    };
+  }
+
+  const isSol = isSolToken(intent.token);
 
   // 2. PER-TRADE LIMIT (flat SOL cap — devnet has no reliable token pricing)
   if (intent.amount != null && isSol) {

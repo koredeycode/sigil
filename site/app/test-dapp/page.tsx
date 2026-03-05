@@ -91,22 +91,8 @@ export default function TestDappPage() {
       let recipientPubkey: PublicKey;
       try {
          recipientPubkey = new PublicKey(recipient || "11111111111111111111111111111111");
-         if (!PublicKey.isOnCurve(recipientPubkey.toBytes())) {
-            // Some addresses might be off-curve (PDAs), but generally user wallets are on-curve.
-            // If we just want valid format, new PublicKey() is enough, but to strictly check 
-            // format and length, we can check basic validity.
-         }
       } catch (e) {
-         setTxResult({ status: "rejected", error: "Invalid recipient address format." });
-         setIsSimulating(false);
-         return;
-      }
-
-      // Stricter check: the pubkey must have exactly 32-44 characters (which `new PublicKey` usually handles, 
-      // but let's be explicit for the user error)
-      const recipientStr = recipient || "11111111111111111111111111111111";
-      if (recipientStr.length < 32 || recipientStr.length > 44) {
-         setTxResult({ status: "rejected", error: "Invalid Solana address length." });
+         setTxResult({ status: "rejected", error: "Invalid Solana address. Please enter a valid base58-encoded address." });
          setIsSimulating(false);
          return;
       }

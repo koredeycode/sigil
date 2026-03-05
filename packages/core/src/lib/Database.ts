@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
+import { NATIVE_SOL_MINT, SOL_TOKEN_IDENTIFIER } from './Constants.js';
+
 
 const SIGIL_DIR = path.join(os.homedir(), '.sigil');
 const DB_PATH = path.join(SIGIL_DIR, 'sigil.db');
@@ -117,6 +119,10 @@ function initializeTables(db: DatabaseSync): void {
       created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (agent_id) REFERENCES agents(id)
     );
+
+    -- Index for optimized volume queries
+    CREATE INDEX IF NOT EXISTS idx_transactions_agent_token_status 
+    ON transactions(agent_id, token, status, timestamp);
   `);
 }
 
@@ -363,9 +369,9 @@ export function getDailyVolume(agentId: string): number {
      FROM transactions
      WHERE agent_id = ?
        AND status = 'confirmed'
-       AND (token = 'SOL' OR token = 'So11111111111111111111111111111111111111112')
+       AND token IN (?, ?)
        AND timestamp > datetime('now', '-1 day')`
-  ).get(agentId) as unknown as { total: number };
+  ).get(agentId, SOL_TOKEN_IDENTIFIER, NATIVE_SOL_MINT) as unknown as { total: number };
   return row.total;
 }
 
