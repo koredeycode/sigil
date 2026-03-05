@@ -1,46 +1,69 @@
-import * as clack from '@clack/prompts';
-import type { Command } from 'commander';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
+import * as clack from "@clack/prompts";
+import type { Command } from "commander";
 
 export function registerStopCommand(program: Command) {
   program
-    .command('stop')
-    .description('Stop the background Sigil Wallet daemon')
-    .action(() => {
-      const pidFile = path.join(os.homedir(), '.sigil', 'run.pid');
-      
-      if (!fs.existsSync(pidFile)) {
-        clack.log.warn('No background agent is currently running (pidfile not found).');
+    .command("stop")
+    .description("Stop the background Sigil Wallet daemon")
+    .action(async () => {
+      const { getRunningPid, removePid } =
+        await import("../../src/lib/Daemon.js");
+
+      const pid = getRunningPid();
+      if (!pid) {
+        clack.log.warn("No background daemon is currently running.");
         return;
       }
 
-      const pid = parseInt(fs.readFileSync(pidFile, 'utf8'), 10);
       try {
         const s = clack.spinner();
-        s.start(`Stopping process ${pid}...`);
-        process.kill(pid); // Sending SIGTERM
-        s.stop(`Sigil Wallet background process (PID ${pid}) stopped.`);
+        s.start(`Stopping daemon (PID ${pid})...`);
+
+        // Send SIGTERM to gracefully shutdown
+        process.kill(pid, "SIGTERM");
+
+        // Wait for process to actually stop (with timeout)
+        let stopped = false;
+        for (let i = 0; i < 50; i++) {
+          try {
+            process.kill(pid, 0);
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          } catch {
+            stopped = true;
+            break;
+          }
+        }
+
+        if (!stopped) {
+          // Force kill if graceful shutdown failed
+          s.message("Graceful shutdown timed out, forcing...");
+          try {
+            process.kill(pid, "SIGKILL");
+          } catch {
+            // Already dead
+          }
+        }
+
+        s.stop(`Sigil Wallet daemon (PID ${pid}) stopped.`);
       } catch (err: any) {
-        // ESRCH = No such process
-        if (err.code === 'ESRCH') {
-          clack.log.info(`Process ${pid} is not running. Cleaning up stale pidfile.`);
+        if (err.code === "ESRCH") {
+          clack.log.info(
+            `Process ${pid} is not running. Cleaning up stale pidfile.`,
+          );
         } else {
           clack.log.error(`Failed to stop process ${pid}: ${err.message}`);
         }
       }
 
       // Always remove the PID file
-      try {
-        fs.unlinkSync(pidFile);
-      } catch (e) {
-        // ignore
-      }
+      removePid();
 
       // Remove auto-start on boot (cross-platform, best-effort)
-      import('../../src/lib/Startup.js').then(({ disableAutoStart }) => {
+      try {
+        const { disableAutoStart } = await import("../../src/lib/Startup.js");
         disableAutoStart();
-      }).catch(() => { /* ignore */ });
+      } catch {
+        // Ignore errors from startup script
+      }
     });
 }

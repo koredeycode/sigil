@@ -789,8 +789,8 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
     swapTokensTool,
     sendMemoTool,
     fetchPriceTool,
-    getTpsTool,
-    getSlotInfoTool,
+    // getTpsTool,
+    // getSlotInfoTool,
     listValidatorsTool,
     getStakePositionsTool,
   ];

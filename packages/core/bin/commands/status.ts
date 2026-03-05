@@ -1,33 +1,44 @@
-import * as clack from '@clack/prompts';
-import type { Command } from 'commander';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
+import * as clack from "@clack/prompts";
+import type { Command } from "commander";
+import fs from "node:fs";
 
 export function registerStatusCommand(program: Command) {
   program
-    .command('status')
-    .description('Check if the Sigil Wallet background daemon is running')
-    .action(() => {
-      const pidFile = path.join(os.homedir(), '.sigil', 'run.pid');
-      
-      if (!fs.existsSync(pidFile)) {
-        clack.log.warn('Sigil Wallet is NOT running (no pidfile).');
+    .command("status")
+    .description("Check if the Sigil Wallet background daemon is running")
+    .action(async () => {
+      const { getRunningPid, getLogFile, removePid } =
+        await import("../../src/lib/Daemon.js");
+
+      const pid = getRunningPid();
+
+      if (!pid) {
+        clack.log.warn("Sigil Wallet is NOT running.");
+        clack.log.info("Start it with: sigil start");
         return;
       }
 
-      const pidStr = fs.readFileSync(pidFile, 'utf8');
-      const pid = parseInt(pidStr, 10);
-      
+      // Check if process is actually running
       try {
-        // Sending signal 0 checks if the process exists without killing it
-        process.kill(pid, 0); 
-        clack.log.success(`Sigil Wallet is running (PID: ${pid}).`);
+        process.kill(pid, 0);
+        clack.log.success(`✓ Sigil Wallet is running (PID: ${pid})`);
+        clack.log.step(`API Server: http://localhost:7445`);
+        clack.log.step(`Log file: ${getLogFile()}`);
+
+        // Show last few lines of log if available
+        const logFile = getLogFile();
+        if (fs.existsSync(logFile)) {
+          const stats = fs.statSync(logFile);
+          const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
+          clack.log.step(`Log size: ${sizeMB} MB`);
+        }
       } catch (e: any) {
-        if (e.code === 'ESRCH') {
-          clack.log.warn(`Sigil Wallet is NOT running (PID ${pid} is stale).`);
+        if (e.code === "ESRCH") {
+          clack.log.warn(`✗ Sigil Wallet is NOT running (stale PID ${pid}).`);
+          clack.log.info("Cleaning up stale pidfile...");
+          removePid();
         } else {
-          clack.log.error(`Sigil Wallet status unknown (Error: ${e.message})`);
+          clack.log.error(`Status check failed: ${e.message}`);
         }
       }
     });
