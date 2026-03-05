@@ -7,12 +7,12 @@ import path from 'node:path';
 export function registerStatusCommand(program: Command) {
   program
     .command('status')
-    .description('Check if the Sigil background daemon is running')
+    .description('Check if the Sigil Wallet background daemon is running')
     .action(() => {
       const pidFile = path.join(os.homedir(), '.sigil', 'run.pid');
       
       if (!fs.existsSync(pidFile)) {
-        clack.log.warn('Sigil is NOT running (no pidfile).');
+        clack.log.warn('Sigil Wallet is NOT running (no pidfile).');
         return;
       }
 
@@ -22,12 +22,12 @@ export function registerStatusCommand(program: Command) {
       try {
         // Sending signal 0 checks if the process exists without killing it
         process.kill(pid, 0); 
-        clack.log.success(`Sigil is running (PID: ${pid}).`);
+        clack.log.success(`Sigil Wallet is running (PID: ${pid}).`);
       } catch (e: any) {
         if (e.code === 'ESRCH') {
-          clack.log.warn(`Sigil is NOT running (PID ${pid} is stale).`);
+          clack.log.warn(`Sigil Wallet is NOT running (PID ${pid} is stale).`);
         } else {
-          clack.log.error(`Sigil status unknown (Error: ${e.message})`);
+          clack.log.error(`Sigil Wallet status unknown (Error: ${e.message})`);
         }
       }
     });

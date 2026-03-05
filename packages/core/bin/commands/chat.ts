@@ -4,7 +4,7 @@ import type { Command } from 'commander';
 export function registerChatCommand(program: Command) {
   program
     .command('chat [message]')
-    .description('Chat with the main Sigil agent')
+    .description('Chat with the main Sigil Wallet agent')
     .action(async (message?: string) => {
       const { agentManager } = await import('../../src/agent/AgentManager.js');
       const { getDatabase, insertChat } = await import('../../src/lib/Database.js');

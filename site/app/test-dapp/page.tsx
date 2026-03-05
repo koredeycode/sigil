@@ -238,7 +238,7 @@ export default function TestDappPage() {
                     >
                         <div className="flex items-center gap-3">
                             <img src="/logo.png" alt="Sigil" className="w-10 h-10 rounded-full shadow-sm" />
-                            <span className="font-semibold text-lg text-foreground">Sigil Extension</span>
+                            <span className="font-semibold text-lg text-foreground">Sigil Wallet Extension</span>
                         </div>
                         {isConnecting ? (
                              <span className="text-xs text-muted-foreground animate-pulse font-medium">Connecting...</span>

@@ -274,28 +274,28 @@ function GuardrailSettings() {
                     <Shield className="w-4 h-4" />
                     Security Guardrails
                 </h2>
-                <div className="bg-card border border-border rounded-xl divide-y divide-border shadow-sm overflow-hidden">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* KILL SWITCH */}
-                    <div className="p-4 flex items-center justify-between bg-red-500/5">
+                    <div className="p-4 flex items-center justify-between bg-red-500/5 border border-red-500/20 rounded-xl shadow-sm">
                         <div className="space-y-0.5">
                             <h3 className="font-semibold text-sm text-red-500">Global Kill Switch</h3>
-                            <p className="text-xs text-muted-foreground">Immediately halt all transaction signing across all agents.</p>
+                            <p className="text-xs text-muted-foreground mr-4">Immediately halt all transaction signing across all agents.</p>
                         </div>
                         <button
                             onClick={() => setConfig({...config, kill_switch: !config.kill_switch})}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${config.kill_switch ? 'bg-red-500' : 'bg-secondary'}`}
+                            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${config.kill_switch ? 'bg-red-500' : 'bg-secondary'}`}
                         >
                             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${config.kill_switch ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
                     </div>
 
                     {/* PER TRADE LIMIT */}
-                    <div className="p-4 flex items-center justify-between">
+                    <div className="p-4 flex items-center justify-between bg-card border border-border rounded-xl shadow-sm">
                         <div className="space-y-0.5">
                             <h3 className="font-medium text-sm">Per-Trade Limit</h3>
-                            <p className="text-xs text-muted-foreground">Maximum SOL value per trade.</p>
+                            <p className="text-xs text-muted-foreground mr-4">Maximum SOL value per trade.</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                             <input 
                                 type="number" 
                                 value={config.per_trade_limit}
@@ -307,12 +307,12 @@ function GuardrailSettings() {
                     </div>
 
                     {/* DAILY VOLUME CAP */}
-                    <div className="p-4 flex items-center justify-between">
+                    <div className="p-4 flex items-center justify-between bg-card border border-border rounded-xl shadow-sm">
                         <div className="space-y-0.5">
                             <h3 className="font-medium text-sm">Daily Volume Cap</h3>
-                            <p className="text-xs text-muted-foreground">Total SOL volume allowed per 24h window.</p>
+                            <p className="text-xs text-muted-foreground mr-4">Total SOL volume allowed per 24h window.</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                             <input 
                                 type="number" 
                                 value={config.daily_volume_cap}
@@ -324,12 +324,12 @@ function GuardrailSettings() {
                     </div>
 
                     {/* SLIPPAGE CAP */}
-                    <div className="p-4 flex items-center justify-between">
+                    <div className="p-4 flex items-center justify-between bg-card border border-border rounded-xl shadow-sm">
                         <div className="space-y-0.5">
                             <h3 className="font-medium text-sm">Slippage Cap</h3>
-                            <p className="text-xs text-muted-foreground">Maximum slippage % allowed for DEX swaps.</p>
+                            <p className="text-xs text-muted-foreground mr-4">Maximum slippage % allowed for DEX swaps.</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                              <input 
                                 type="number" 
                                 value={config.slippage_cap}
@@ -341,12 +341,12 @@ function GuardrailSettings() {
                     </div>
 
                     {/* COOLDOWN */}
-                    <div className="p-4 flex items-center justify-between">
+                    <div className="p-4 flex items-center justify-between bg-card border border-border rounded-xl shadow-sm">
                         <div className="space-y-0.5">
                             <h3 className="font-medium text-sm">Cooldown Period</h3>
-                            <p className="text-xs text-muted-foreground">Minimum seconds between transactions.</p>
+                            <p className="text-xs text-muted-foreground mr-4">Minimum seconds between transactions.</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                              <input 
                                 type="number" 
                                 value={config.cooldown_period}
@@ -358,12 +358,12 @@ function GuardrailSettings() {
                     </div>
 
                     {/* CONFIRMATION THRESHOLD */}
-                    <div className="p-4 flex items-center justify-between">
+                    <div className="p-4 flex items-center justify-between bg-card border border-border rounded-xl shadow-sm">
                         <div className="space-y-0.5">
                             <h3 className="font-medium text-sm">Confirmation Threshold</h3>
-                            <p className="text-xs text-muted-foreground">Trades above this SOL value require manual signing.</p>
+                            <p className="text-xs text-muted-foreground mr-4">Trades above this SOL value require manual signing.</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                              <input 
                                 type="number" 
                                 value={config.confirmation_threshold}
@@ -375,7 +375,7 @@ function GuardrailSettings() {
                     </div>
 
                     {/* ALLOWLIST */}
-                    <div className="p-4 space-y-3">
+                    <div className="p-4 space-y-3 bg-card border border-border rounded-xl shadow-sm md:col-span-2">
                         <div className="space-y-0.5">
                             <h3 className="font-medium text-sm">Recipient Allowlist</h3>
                             <p className="text-xs text-muted-foreground">Only allow transfers to these addresses. Leave empty to allow all.</p>
@@ -390,7 +390,7 @@ function GuardrailSettings() {
                             />
                             <button
                                 onClick={handleAddAddress}
-                                className="px-3 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors flex items-center gap-1"
+                                className="px-3 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md text-sm font-medium transition-colors flex items-center gap-1 shrink-0"
                             >
                                 <Plus className="w-3.5 h-3.5" /> Add
                             </button>
@@ -407,7 +407,7 @@ function GuardrailSettings() {
                                         <code className="text-xs font-mono text-muted-foreground truncate mr-2">{addr}</code>
                                         <button
                                             onClick={() => handleRemoveAddress(addr)}
-                                            className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100"
+                                            className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 shrink-0"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
@@ -781,8 +781,16 @@ export function SettingsPage() {
             </div>
              {/* Add Provider Modal */}
              {isAddingProvider && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <div className="w-full max-w-md bg-card border border-border rounded-xl shadow-lg overflow-hidden flex flex-col max-h-[90vh]">
+                <div 
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+                    onMouseDown={(e) => {
+                        if (e.target === e.currentTarget) {
+                            setIsAddingProvider(false);
+                            setProviderError(null);
+                        }
+                    }}
+                >
+                    <div className="w-full max-w-2xl bg-card border border-border rounded-xl shadow-lg overflow-hidden flex flex-col max-h-[90vh]">
                         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
                             <h3 className="text-lg font-semibold">Add AI Provider</h3>
                             <button onClick={() => {

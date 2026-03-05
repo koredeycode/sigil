@@ -4,7 +4,7 @@ import type { Command } from 'commander';
 export function registerHealthCommand(program: Command) {
   program
     .command('health')
-    .description('Check the API health of the Sigil backend')
+    .description('Check the API health of the Sigil Wallet backend')
     .action(async () => {
       try {
         const controller = new AbortController();
@@ -21,13 +21,13 @@ export function registerHealthCommand(program: Command) {
 
         if (res.ok) {
           const data = await res.json();
-          s.stop(`Sigil API is healthy (Agents: ${data.data.agents.total})`);
+          s.stop(`Sigil Wallet API is healthy (Agents: ${data.data.agents.total})`);
         } else {
-          s.stop(`Sigil API responded with status: ${res.status}`);
-          clack.log.warn(`Sigil API responded with status: ${res.status}`);
+          s.stop(`Sigil Wallet API responded with status: ${res.status}`);
+          clack.log.warn(`Sigil Wallet API responded with status: ${res.status}`);
         }
       } catch (error: any) {
-        clack.log.error(`Sigil API is unreachable (${error.message || 'Connection refused'}).`);
+        clack.log.error(`Sigil Wallet API is unreachable (${error.message || 'Connection refused'}).`);
       }
     });
 }

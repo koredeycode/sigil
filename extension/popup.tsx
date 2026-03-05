@@ -682,14 +682,14 @@ export default function IndexPopup() {
                                     </span>
                                 </div>
                                 
-                                <p style={{ margin: 0, fontSize: "13px", color: theme === 'dark' ? "#d4d4d8" : "#3f3f46", lineHeight: "1.5" }}>
+                                <p style={{ margin: 0, fontSize: "13px", color: theme === 'dark' ? "#d4d4d8" : "#3f3f46", lineHeight: "1.5", wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
                                     {sim?.analysis || "The agent could not analyze this transaction."}
                                 </p>
                             </div>
                             {sim?.error && (
                                  <div style={{ padding: "12px", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", borderRadius: "8px" }}>
                                     <p style={{ margin: "0 0 4px 0", fontSize: "12px", color: "#fca5a5", textTransform: "uppercase", fontWeight: "500" }}>Error</p>
-                                    <code style={{ fontSize: "12px", color: "#fca5a5", fontFamily: "monospace" }}>{sim.error}</code>
+                                    <code style={{ fontSize: "12px", color: "#fca5a5", fontFamily: "monospace", wordBreak: "break-all", whiteSpace: "pre-wrap" }}>{sim.error}</code>
                                 </div>
                             )}
                         </div>

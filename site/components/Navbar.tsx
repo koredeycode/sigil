@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, Moon, Sun, X } from 'lucide-react';
+import { ExternalLink, Menu, Moon, Sun, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,8 +8,8 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const links = [
-  { href: '/docs', label: 'Docs' },
   { href: '/blog', label: 'Blog' },
+  { href: '/docs', label: 'Docs', external: true },
   { href: 'https://github.com/koredeycode/sigil', label: 'GitHub', external: true },
 ];
 
@@ -26,8 +26,8 @@ export function Navbar() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <Image src="/logo.png" alt="Sigil" width={28} height={28} className="object-contain" />
-          <span className="text-lg font-bold tracking-tight">Sigil</span>
+          <Image src="/logo.png" alt="Sigil Wallet" width={28} height={28} className="object-contain" />
+          <span className="text-lg font-bold tracking-tight">Sigil Wallet</span>
         </Link>
 
         {/* Desktop Links */}
@@ -37,13 +37,14 @@ export function Navbar() {
               key={link.href}
               href={link.href}
               {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 pathname.startsWith(link.href) && !link.external
-                  ? 'text-foreground bg-secondary'
+                  ? 'text-primary bg-primary/10'
                   : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
               }`}
             >
               {link.label}
+              {link.external && <ExternalLink className="w-3.5 h-3.5 opacity-70" />}
             </Link>
           ))}
 
@@ -79,13 +80,14 @@ export function Navbar() {
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
                 {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                className={`px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center justify-between px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   pathname.startsWith(link.href) && !link.external
-                    ? 'text-foreground bg-secondary'
+                    ? 'text-primary bg-primary/10'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
                 }`}
               >
                 {link.label}
+                {link.external && <ExternalLink className="w-4 h-4 opacity-70" />}
               </Link>
             ))}
             {mounted && (

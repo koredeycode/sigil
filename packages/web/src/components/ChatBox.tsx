@@ -235,7 +235,7 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
                                         <ReactMarkdown
                                             remarkPlugins={[remarkGfm]}
                                             components={{
-                                                p: ({node, ...props}) => <p className="mb-2 last:mb-0 whitespace-pre-wrap" {...props} />,
+                                                p: ({node, ...props}) => <p className="mb-2 last:mb-0 whitespace-pre-wrap break-words" {...props} />,
                                                 a: ({node, ...props}) => <a className="text-primary hover:underline font-medium break-all" target="_blank" rel="noopener noreferrer" {...props} />,
                                                 strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
                                                 ul: ({node, ...props}) => <ul className="list-disc list-inside mb-2 space-y-1" {...props} />,
@@ -244,13 +244,17 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
                                                 h1: ({node, ...props}) => <h1 className="text-xl font-bold mb-2 mt-4" {...props} />,
                                                 h2: ({node, ...props}) => <h2 className="text-lg font-bold mb-2 mt-3" {...props} />,
                                                 h3: ({node, ...props}) => <h3 className="text-base font-bold mb-2 mt-3" {...props} />,
+                                                table: ({node, ...props}) => <div className="overflow-x-auto my-4 rounded-md border border-border/50"><table className="min-w-full divide-y divide-border/50 bg-background/30 text-sm" {...props} /></div>,
+                                                th: ({node, ...props}) => <th className="px-3 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wider bg-background/50 border-b border-border/50" {...props} />,
+                                                td: ({node, ...props}) => <td className="px-3 py-2 border-t border-border/50 break-words max-w-[200px]" {...props} />,
                                                 code({node, className, children, ...props}: any) {
                                                     const match = /language-(\w+)/.exec(className || '');
                                                     const isInline = !match;
                                                     return isInline ? (
-                                                        <code className="bg-background/50 rounded px-1 py-0.5 text-[0.9em]" {...props}>
+                                                        <code className="bg-background/50 rounded px-1.5 py-0.5 text-[0.9em] break-all" {...props}>
                                                             {children}
                                                         </code>
+
                                                     ) : (
                                                         <pre className="bg-background/50 rounded-md p-3 my-2 overflow-x-auto text-[0.9em]">
                                                             <code className={className} {...props}>

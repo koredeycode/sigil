@@ -11,8 +11,8 @@ export function baseOptions(): BaseLayoutProps {
     nav: {
       title: (
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="Sigil Logo" className="w-6 h-6 object-contain" />
-          <span className="font-bold">Sigil</span>
+          <img src="/logo.png" alt="Sigil Wallet Logo" className="w-6 h-6 object-contain" />
+          <span className="font-bold">Sigil Wallet</span>
         </div>
       ),
     },

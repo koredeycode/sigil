@@ -65,7 +65,7 @@ const Login = ({ onLogin }: { onLogin: (token: string) => void }) => {
                         disabled={!input}
                         className="w-full py-2 px-4 bg-primary text-primary-foreground hover:bg-primary/90 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Connect to Sigil
+                        Connect to Sigil Wallet
                     </button>
                 </div>
             </div>
@@ -203,8 +203,8 @@ const Dashboard = () => {
             <aside className="w-64 bg-card border-r border-border flex flex-col">
                 <div className="p-6">
                     <h2 className="text-xl font-bold tracking-tight flex items-center gap-2">
-                        <img src="/logo.png" alt="Sigil Logo" className="w-6 h-6 object-contain" />
-                        Sigil
+                        <img src="/logo.png" alt="Sigil Wallet Logo" className="w-6 h-6 object-contain" />
+                        Sigil Wallet
                     </h2>
                 </div>
                 

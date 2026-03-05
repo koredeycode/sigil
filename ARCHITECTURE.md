@@ -1,6 +1,6 @@
 # Architecture Overview
 
-Sigil operates on a **Tri-Head Architecture** (CLI, TUI, Web Dashboard) connected to a unified Node.js backend (`core`). Agents run continuous autonomous loops (powered by LangGraph) to manage SPL tokens, rebalance portfolios, and execute natural-language directives.
+Sigil Wallet operates on a **Tri-Head Architecture** (CLI, TUI, Web Dashboard) connected to a unified Node.js backend (`core`). Agents run continuous autonomous loops (powered by LangGraph) to manage SPL tokens, rebalance portfolios, and execute natural-language directives.
 
 ## System Diagram
 
@@ -20,7 +20,7 @@ graph TB
         WEB["Web Dashboard<br/>(React/Vite)"]:::interface
     end
 
-    subgraph Core ["Sigil Core System"]
+    subgraph Core ["Sigil Wallet Core System"]
         direction TB
         SERVER["API & WebSocket Server<br/>(Port 7445)"]:::api
         

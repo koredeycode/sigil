@@ -2,7 +2,7 @@ import * as clack from '@clack/prompts';
 import type { Command } from 'commander';
 
 export function registerAgentCommand(program: Command) {
-  const agent = program.command('agent').description('Manage the Sigil agent');
+  const agent = program.command('agent').description('Manage the Sigil Wallet agent');
 
   // sigil agent init — initialize (or show) the main agent
   agent

@@ -1,9 +1,9 @@
 ---
 title: Tri-Head Architecture
-description: How Sigil's three interfaces share a single brain.
+description: How Sigil Wallet's three interfaces share a single brain.
 ---
 
-Sigil operates through three synchronized interfaces — the **CLI**, **TUI**, and **Web Dashboard** — all connected to a shared core backend via WebSockets. We call this the **Tri-Head Architecture**.
+Sigil Wallet operates through three synchronized interfaces — the **CLI**, **TUI**, and **Web Dashboard** — all connected to a shared core backend via WebSockets. We call this the **Tri-Head Architecture**.
 
 ## System Overview
 
@@ -23,7 +23,7 @@ Sigil operates through three synchronized interfaces — the **CLI**, **TUI**, a
         WEB["Web Dashboard<br/>(React/Vite)"]:::interface
     end
 
-    subgraph Core ["Sigil Core System"]
+    subgraph Core ["Sigil Wallet Core System"]
         direction TB
         SERVER["API & WebSocket Server<br/>(Port 7445)"]:::api
         

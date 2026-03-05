@@ -81,7 +81,7 @@ export function HomeClient() {
               className="mb-8 object-contain"
             />
 
-            <motion.div 
+            {/* <motion.div 
               variants={itemVariants}
               className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold mb-8"
             >
@@ -90,14 +90,14 @@ export function HomeClient() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
               </span>
               Local-First Autonomous Agent
-            </motion.div>
+            </motion.div> */}
 
             <motion.h1 
               variants={itemVariants}
               className="text-5xl sm:text-7xl font-bold tracking-tight mb-6 leading-[1.1]"
             >
               The wallet that&apos;s<br />
-              actually <span className="text-primary">alive</span>.
+              actually <span className="text-primary animate-pulse">alive</span>.
             </motion.h1>
 
             <motion.p 

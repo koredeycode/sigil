@@ -11,14 +11,14 @@ export function registerStartCommand(program: Command) {
 
       const existingPid = getRunningPid();
       if (existingPid) {
-        clack.log.warn(`Sigil is already running (PID: ${existingPid}).`);
+        clack.log.warn(`Sigil Wallet is already running (PID: ${existingPid}).`);
         clack.log.info(`Run \`sigil stop\` first, or \`sigil dashboard\` to open the UI.`);
         process.exit(0);
       }
 
       if (options.fg) {
         // Run in foreground
-        clack.log.info('Sigil — Starting in foreground...');
+        clack.log.info('Sigil Wallet — Starting in foreground...');
 
         const { agentManager } = await import('../../src/agent/AgentManager.js');
         const { cronScheduler } = await import('../../src/agent/CronScheduler.js');
@@ -84,7 +84,7 @@ export function registerStartCommand(program: Command) {
         clack.log.step(`Cron Jobs: ${cronInfo.cronJobs} active, ${cronInfo.autonomousCycles} autonomous cycles`);
       } else {
         // Spawn background daemon
-        clack.log.info('Sigil — Starting background process...');
+        clack.log.info('Sigil Wallet — Starting background process...');
 
         const s = clack.spinner();
         s.start('Spawning daemon...');

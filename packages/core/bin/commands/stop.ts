@@ -7,7 +7,7 @@ import path from 'node:path';
 export function registerStopCommand(program: Command) {
   program
     .command('stop')
-    .description('Stop the background Sigil daemon')
+    .description('Stop the background Sigil Wallet daemon')
     .action(() => {
       const pidFile = path.join(os.homedir(), '.sigil', 'run.pid');
       
@@ -21,7 +21,7 @@ export function registerStopCommand(program: Command) {
         const s = clack.spinner();
         s.start(`Stopping process ${pid}...`);
         process.kill(pid); // Sending SIGTERM
-        s.stop(`Sigil background process (PID ${pid}) stopped.`);
+        s.stop(`Sigil Wallet background process (PID ${pid}) stopped.`);
       } catch (err: any) {
         // ESRCH = No such process
         if (err.code === 'ESRCH') {

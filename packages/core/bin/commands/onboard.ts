@@ -151,7 +151,7 @@ export function registerOnboardCommand(program: Command) {
 
       // 2. Initialize main agent
       const createFirst = await clack.confirm({
-        message: 'Initialize the main Sigil agent now?',
+        message: 'Initialize the main Sigil Wallet agent now?',
       });
 
       if (clack.isCancel(createFirst) || !createFirst) {
@@ -165,7 +165,7 @@ export function registerOnboardCommand(program: Command) {
       }
 
       // 4. Start Sigil Daemon
-      clack.log.info('Onboarding complete! Starting Sigil now...');
+      clack.log.info('Onboarding complete! Starting Sigil Wallet now...');
 
       s.start('Starting background daemon...');
       try {
@@ -185,7 +185,7 @@ export function registerOnboardCommand(program: Command) {
           process.exit(0);
         }
 
-        s.stop('Sigil backend is now running in the background.');
+        s.stop('Sigil Wallet backend is now running in the background.');
 
         // 5. Interface Selection
         const uiChoice = await clack.select({
@@ -202,7 +202,7 @@ export function registerOnboardCommand(program: Command) {
         }
 
         if (uiChoice === 'web') {
-          clack.log.info('Opening Sigil Dashboard...');
+          clack.log.info('Opening Sigil Wallet Dashboard...');
           await open(`http://localhost:7445/#token=${token}`);
           clack.outro('Enjoy your autonomous agent! 🚀');
         } else {
@@ -211,7 +211,7 @@ export function registerOnboardCommand(program: Command) {
           const { startTui } = await import('sigil-tui');
           const app = startTui(7445, token);
           await app.waitUntilExit();
-          clack.outro('Sigil is still running in the background. See you soon!');
+          clack.outro('Sigil Wallet is still running in the background. See you soon!');
         }
 
       } catch (err) {

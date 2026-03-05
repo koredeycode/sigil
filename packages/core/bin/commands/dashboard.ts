@@ -5,7 +5,7 @@ import open from 'open';
 export function registerDashboardCommand(program: Command) {
   program
     .command('dashboard')
-    .description('Open the Sigil UI dashboard in your default browser')
+    .description('Open the Sigil Wallet UI dashboard in your default browser')
     .action(async () => {
       const { getAuthToken } = await import('../../src/lib/Config.js');
       const { getDatabase } = await import('../../src/lib/Database.js');
@@ -19,7 +19,7 @@ export function registerDashboardCommand(program: Command) {
       }
 
       const s = clack.spinner();
-      s.start('Opening Sigil Dashboard...');
+      s.start('Opening Sigil Wallet Dashboard...');
       const url = `http://localhost:7445/#token=${token}`;
       await open(url);
       s.stop('Dashboard opened.');
