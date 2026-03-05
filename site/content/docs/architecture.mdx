@@ -1,0 +1,101 @@
+---
+title: Tri-Head Architecture
+description: How Sigil's three interfaces share a single brain.
+---
+
+Sigil operates through three synchronized interfaces — the **CLI**, **TUI**, and **Web Dashboard** — all connected to a shared core backend via WebSockets. We call this the **Tri-Head Architecture**.
+
+## System Overview
+
+<Mermaid
+  chart={`graph TB
+    classDef interface fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
+    classDef api fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    classDef agent fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
+    classDef db fill:#0f172a,stroke:#334155,stroke-width:2px,color:#fff
+    classDef security fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
+    classDef wallet fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
+
+    subgraph Interfaces ["Tri-Head Interfaces"]
+        direction LR
+        CLI["Terminal CLI<br/>(Commander)"]:::interface
+        TUI["Terminal UI<br/>(Ink)"]:::interface
+        WEB["Web Dashboard<br/>(React/Vite)"]:::interface
+    end
+
+    subgraph Core ["Sigil Core System"]
+        direction TB
+        SERVER["API & WebSocket Server<br/>(Port 7445)"]:::api
+        
+        subgraph AgentLoop ["Autonomous Loop"]
+            direction TB
+            AGENT["LangGraph Agent<br/>(LLM Reasoning)"]:::agent
+            GUARDRAILS["Guardrails<br/>(Limit & Safety Checks)"]:::security
+        end
+        
+        DB[("SQLite Database<br/>(State & Config)")]:::db
+    end
+
+    subgraph Execution ["Secure Execution"]
+        WALLET{"Wallet Layer<br/>(OS Keychain / Keytar)"}:::wallet
+    end
+
+    %% Connections
+    CLI <-->|REST / WS| SERVER
+    TUI <-->|WS stream| SERVER
+    WEB <-->|WS stream| SERVER
+
+    SERVER <-->|User Context| AGENT
+    AGENT <-->|Read / Write State| DB
+    
+    AGENT -->|"Proposes Tool Call"| GUARDRAILS
+    GUARDRAILS -->|"Failed (Blocks)"| AGENT
+    GUARDRAILS -->|"Passed (Safe)"| WALLET
+    WALLET -.->|"Broadcasts Tx"| SERVER`}
+/>
+
+## The Three Heads
+
+### CLI — Headless Automation
+
+The CLI (`sigil <command>`) is designed for scripting and background operation. It communicates with the core server via REST API calls to `localhost:7445`.
+
+Use cases:
+- Cron jobs and scheduled operations
+- CI/CD pipeline integration
+- Scriptable agent management
+- Quick one-off commands
+
+### TUI — Interactive Terminal
+
+The TUI is a full-screen terminal dashboard built with [Ink](https://github.com/vadimdemedes/ink) (React for CLI). It connects to the core over WebSocket for real-time updates.
+
+Features:
+- Live agent status and heartbeats
+- Real-time log streaming
+- Agent switching with keyboard navigation
+- Guardrail management
+
+### Web Dashboard — Visual Interface
+
+The Dashboard is a React application served locally on port `7445`. It provides a graphical interface for users who prefer a browser-based experience.
+
+Features:
+- Chat interface for agent interaction
+- Transaction history and analytics
+- Guardrail creation and management
+- Provider configuration
+
+## Real-Time Synchronization
+
+All three interfaces receive the same WebSocket events from the core:
+
+| Event | Payload |
+|---|---|
+| `agent:thought` | `{ agentId, text, timestamp }` |
+| `agent:action_pending` | `{ agentId, toolName, params }` |
+| `agent:guardrail_status` | `{ agentId, status, reason? }` |
+| `agent:transaction_success` | `{ agentId, signature, amount, token }` |
+| `system:killed` | `{}` (broadcast to all) |
+
+This means starting an agent from the CLI is immediately reflected in both the TUI and Dashboard — no refresh needed.

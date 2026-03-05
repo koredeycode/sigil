@@ -12,7 +12,7 @@ Every agent is a completely isolated entity:
 | Resource | Isolation |
 |---|---|
 | **Wallet** | Each agent has its own unique Ed25519 keypair |
-| **Directives** | Rules for Agent A never affect Agent B |
+| **Guardrails** | Rules for Agent A never affect Agent B |
 | **Logs** | Reasoning traces are stored separately per agent |
 | **Guardrails** | Each agent has independent safety limits |
 | **Loop** | Each agent runs its own `setInterval` cycle |
@@ -47,7 +47,7 @@ sigil agent destroy treasury
 sigil agent info treasury
 ```
 
-Shows the agent's wallet address, status, directive count, and last activity.
+Shows the agent's wallet address, status, and last activity.
 
 ## Monitoring Multiple Agents
 
@@ -65,7 +65,7 @@ The Dashboard displays a grid of all active agents with real-time heartbeats, st
 
 ```bash
 sigil start
-# Open http://localhost:74446
+# Open http://localhost:7445
 ```
 
 ### CLI
@@ -90,7 +90,7 @@ sigil logs --all --follow
 
 ### The Watcher
 
-A dedicated agent with a single directive:
+A dedicated agent with a single instruction:
 
 ```text
 "Close any token account with zero balance and reclaim rent"

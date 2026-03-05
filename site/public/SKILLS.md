@@ -33,6 +33,6 @@ This manifest provides a machine-readable description of Sigil's capabilities fo
 
 ## API Integration
 
-- **API**: `http://localhost:74445`
-- **WebSocket**: `ws://localhost:74445`
+- **API**: `http://localhost:7445`
+- **WebSocket**: `ws://localhost:7445`
 - **Documentation**: `https://sigil.ai/docs`

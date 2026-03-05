@@ -10,11 +10,13 @@ The Sigil CLI is the primary management interface for agents, providers, directi
 | Command | Description |
 |---|---|
 | `sigil init` | Start the step-by-step onboarding wizard |
-| `sigil start` | Boot the API server and all active agent loops |
-| `sigil stop` | Halt all agents and shut down the server |
+| `sigil onboard` | Alias for init, runs the setup flow |
+| `sigil start` | Boot the API server, Web Dashboard, and all active agent loops |
+| `sigil stop` | Halt all running agent intervals gracefully |
 | `sigil status` | Show server and agent status |
-| `sigil kill` | Emergency halt — stop all signing, wipe keys from memory |
-| `sigil kill <agent>` | Kill a specific agent |
+| `sigil kill` | Emergency halt — stop all signing, wipe keys from memory globally |
+| `sigil kill [agent]` | Kill a specific agent by ID |
+| `sigil health` | Check database validity and connection health |
 
 ## Agent Management
 
@@ -25,50 +27,41 @@ The Sigil CLI is the primary management interface for agents, providers, directi
 | `sigil agent pause <name>` | Temporarily stop an agent (key stays in memory) |
 | `sigil agent destroy <name>` | Delete an agent and all associated data |
 | `sigil agent list` | Show all agents and their current status |
-| `sigil agent info <name>` | Show detailed agent info (address, directives, activity) |
+| `sigil agent info <name>` | Show detailed agent info (address, directives, activity, token holdings) |
 
-## Chat & Logs
+## Chat, Logs & Transactions
 
 | Command | Description |
 |---|---|
-| `sigil chat <agent> "<message>"` | Send a message to a specific agent |
-| `sigil logs <agent>` | View agent logs |
+| `sigil chat <agent> "<message>"` | Send a message to a specific agent's context window |
+| `sigil logs <agent>` | View agent logs (Reasoning, Actions, Errors) |
 | `sigil logs <agent> --follow` | Stream real-time logs |
-| `sigil logs --all` | View merged logs from all agents |
-| `sigil tx list <agent>` | View transaction history |
+| `sigil logs --all` | View merged logs from all agents simultaneously |
+| `sigil tx list <agent>` | View transaction history and swap records |
 
-## Directives
-
-| Command | Description |
-|---|---|
-| `sigil directive add --agent <name>` | Add a new directive (interactive) |
-| `sigil directive list --agent <name>` | List all directives for an agent |
-| `sigil directive toggle --agent <name> --id <id>` | Enable/disable a directive |
-| `sigil directive remove --agent <name> --id <id>` | Remove a directive |
-
-## Providers
+## Providers (LLM)
 
 | Command | Description |
 |---|---|
-| `sigil provider add <name>` | Configure a new LLM provider |
+| `sigil provider add <name>` | Configure a new LLM provider (OpenAI, Anthropic, Ollama, etc) |
 | `sigil provider set-primary <name>` | Switch the active provider |
 | `sigil provider list` | View all configured providers |
 | `sigil provider remove <name>` | Remove a provider |
 | `sigil provider models <name> --api-key <key>` | List available models |
 
-## Configuration
+## Configuration & Auth
 
 | Command | Description |
 |---|---|
 | `sigil config set --loop-interval <seconds>` | Adjust global loop timing |
-| `sigil auth rotate` | Regenerate the API session token |
+| `sigil auth rotate` | Regenerate the API session token (Requires restart) |
 
 ## UI Launchers
 
 | Command | Description |
 |---|---|
-| `sigil tui` | Launch the interactive terminal dashboard |
-| `sigil start` | Start the API server (Web Dashboard at `:74446`) |
+| `sigil tui` | Launch the interactive terminal dashboard (Ink-based) |
+| `sigil dashboard` | Start the Web API and UI server headlessly |
 
 ## Examples
 
@@ -78,9 +71,6 @@ The Sigil CLI is the primary management interface for agents, providers, directi
 sigil init
 sigil agent create --name "alpha"
 sigil agent start "alpha"
-sigil directive add --agent "alpha" \
-  --condition "If SOL balance is below 1" \
-  --action "Request an airdrop"
 sigil logs alpha --follow
 ```
 

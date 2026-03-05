@@ -2,8 +2,6 @@ import { CommandBox } from '@/components/CommandBox';
 import { TriHeadShowcase } from '@/components/TriHeadShowcase';
 import { ArrowRight, Cpu, Github, Globe, Layers, Shield, Terminal as TerminalIcon, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
-import Image from 'next/image';
-import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Sigil — Autonomous AI Agents for Solana',
@@ -52,13 +50,12 @@ export default function HomePage() {
       <section className="relative overflow-hidden">
         <div className="mx-auto max-w-6xl px-6 pt-20 pb-24 sm:pt-28 sm:pb-32">
           <div className="flex flex-col items-center text-center">
-            <Image
+            <img
               src="/logo.png"
               alt="Sigil"
               width={72}
               height={72}
               className="mb-8 object-contain"
-              priority
             />
 
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-semibold mb-8">
@@ -81,13 +78,19 @@ export default function HomePage() {
 
             <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
               <CommandBox command="npm i -g sigil" className="w-72" />
-              <Link
+              <a
                 href="/docs"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-opacity"
               >
                 Read the docs
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </a>
+            </div>
+
+            <div className="mt-2 text-sm text-muted-foreground bg-primary/5 border border-primary/10 rounded-xl px-4 py-3 max-w-lg text-left sm:text-center shadow-sm">
+              <span className="leading-relaxed">
+                <b className="text-primary font-semibold">AI Agents:</b> Read <code className="text-primary font-mono bg-background px-1.5 py-0.5 rounded text-xs select-all">https://sigil-wallet.vercel.app/skill.md</code> and follow the instructions to set up Sigil.
+              </span>
             </div>
           </div>
         </div>
@@ -139,7 +142,7 @@ export default function HomePage() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <CommandBox command="npm i -g sigil" className="max-w-sm w-full" />
-              <Link
+              <a
                 href="https://github.com/koredeycode/sigil"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -147,7 +150,7 @@ export default function HomePage() {
               >
                 <Github className="w-4 h-4" />
                 View on GitHub
-              </Link>
+              </a>
             </div>
 
             {/* Decorative glow */}

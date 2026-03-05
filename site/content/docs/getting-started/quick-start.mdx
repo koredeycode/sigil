@@ -38,24 +38,12 @@ sigil agent start "alpha"
 The agent begins its reasoning loop:
 
 1. **Fetch** — Reads SOL balance, SPL token holdings, and recent transactions
-2. **Evaluate** — Loads your directives and passes context to the LLM
+2. **Evaluate** — Passes context to the LLM
 3. **Validate** — Proposed actions are checked against Guardrails
 4. **Execute** — Approved transactions are signed and submitted to Devnet
 5. **Log** — Reasoning traces are saved to the local database
 
-## 4. Add a Directive
-
-Give your agent a rule to follow:
-
-```bash
-sigil directive add --agent "alpha" \
-  --condition "If my SOL balance is below 1" \
-  --action "Request an airdrop"
-```
-
-The agent will evaluate this directive on every loop cycle and act when the condition is met.
-
-## 5. Monitor Activity
+## 4. Monitor Activity
 
 View real-time logs:
 
@@ -75,13 +63,12 @@ Or start the web dashboard:
 sigil start
 ```
 
-Then open `http://localhost:74446` in your browser.
+Then open `http://localhost:7445` in your browser.
 
 ## Next Steps
 
 <Cards>
   <Card title="Configuration" href="/docs/getting-started/configuration" />
   <Card title="Agent Loop" href="/docs/concepts/agent-loop" />
-  <Card title="Directives" href="/docs/directives/engine" />
-  <Card title="CLI Reference" href="/docs/cli/reference" />
+  <Card title="CLI Reference" href="/docs/cli" />
 </Cards>

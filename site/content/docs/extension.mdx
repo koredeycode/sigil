@@ -9,29 +9,26 @@ The difference: every signature request passes through your agent's **Guardrails
 
 ## How It Works
 
-```text
-dApp calls window.sigil.signTransaction(tx)
-         │
-         ▼
-  Extension intercepts
-         │
-         ▼
-  Forwards to localhost:74445/api/extension/simulate
-         │
-         ▼
-  Agent decodes + analyzes transaction
-         │
-         ├─ Guardrail failure → Blocked immediately
-         │
-         └─ Guardrail pass → LLM generates risk analysis
-                │
-                ▼
-         Popup shows analysis to user
-                │
-                ├─ User approves → Key retrieved, tx signed, returned to dApp
-                │
-                └─ User rejects → Transaction cancelled
-```
+<Mermaid
+  chart={`graph TB
+    classDef dapp fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
+    classDef ext fill:#0f172a,stroke:#334155,stroke-width:2px,color:#fff
+    classDef agent fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
+    classDef check fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
+    classDef approve fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+
+    A[dApp calls signTransaction]:::dapp --> B[Extension intercepts]:::ext
+    B --> C[Forwards to Core API]:::ext
+    C --> D[Agent decodes & analyzes]:::agent
+    
+    D --> E{Guardrail check}:::check
+    E -->|Failure| F[Blocked immediately]:::check
+    E -->|Pass| G[LLM generates risk analysis]:::agent
+    
+    G --> H[Popup shows analysis]:::ext
+    H -->|Approve| I[Key retrieved, tx signed]:::approve
+    H -->|Reject| J[Transaction cancelled]:::ext`}
+/>
 
 ## Key Features
 

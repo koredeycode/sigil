@@ -7,7 +7,7 @@ const footerLinks = {
   Product: [
     { href: '/docs', label: 'Documentation' },
     { href: '/docs/getting-started/quick-start', label: 'Quick Start' },
-    { href: '/docs/cli/reference', label: 'CLI Reference' },
+    { href: '/docs/cli', label: 'CLI Reference' },
   ],
   Resources: [
     { href: '/blog', label: 'Blog' },

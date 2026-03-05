@@ -7,25 +7,21 @@ Every Sigil agent runs an independent, continuous loop powered by [LangGraph](ht
 
 ## The Loop Cycle
 
-```text
-┌──────────────────────────────────────────────────────────┐
-│                                                          │
-│  gather_context ──▶ agent_reasoning ──┬──▶ (no action)  │
-│        ▲                              │      loop back   │
-│        │                              │                  │
-│        │                    (tool call proposed)          │
-│        │                              │                  │
-│        │                              ▼                  │
-│        │                  guardrail_validation            │
-│        │                       │           │             │
-│        │                   passed        failed          │
-│        │                       │           │             │
-│        │                       ▼        (log + skip)     │
-│        │                  execute_tool                    │
-│        │                       │                         │
-│        └───────────────────────┘                         │
-└──────────────────────────────────────────────────────────┘
-```
+<Mermaid
+  chart={`graph LR
+    classDef process fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff
+    classDef check fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
+    classDef execute fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    classDef alert fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
+
+    A[Gather Context]:::process --> B[Agent Reasoning]:::process
+    B -->|No Action| A
+    B -.->|Tool Intent| C{Guardrail Validation}:::check
+    C -->|Passed| D[Execute Tool]:::execute
+    D --> A
+    C -->|Failed| E[Log & Skip]:::alert
+    E --> A`}
+/>
 
 ## Node Details
 
@@ -35,11 +31,10 @@ The agent fetches its current state from Solana Devnet:
 - SOL balance
 - SPL token holdings and associated accounts
 - Recent transaction history
-- Active directives from the database
 
 ### 2. Agent Reasoning
 
-The gathered context is sent to the configured LLM alongside the agent's directives. The model evaluates whether any action is needed.
+The gathered context is sent to the configured LLM. The model evaluates whether any action is needed.
 
 If the model determines no action is required, the loop sleeps until the next cycle (default: 60 seconds).
 

@@ -1,45 +1,14 @@
-# site
+# Sigil Documentation & Platform Site
 
-This is a Next.js application generated with
-[Create Fumadocs](https://github.com/fuma-nama/fumadocs).
+This is the public-facing documentation and landing page for Sigil, built with Next.js App Router and [Fumadocs](https://fumadocs.dev).
 
-Run development server:
+It includes detailed documentation on architecture, agent capabilities, and a blog to broadcast updates. It also serves as the host for machine-readable manifests (`skill.md`), allowing external agents to autonomously download and install Sigil skills.
 
+## Development
+
+To spin up the documentation site locally:
 ```bash
-npm run dev
-# or
-pnpm dev
-# or
-yarn dev
+pnpm run dev
 ```
 
-Open http://localhost:3000 with your browser to see the result.
-
-## Explore
-
-In the project, you can see:
-
-- `lib/source.ts`: Code for content source adapter, [`loader()`](https://fumadocs.dev/docs/headless/source-api) provides the interface to access your content.
-- `lib/layout.shared.tsx`: Shared options for layouts, optional but preferred to keep.
-
-| Route                     | Description                                            |
-| ------------------------- | ------------------------------------------------------ |
-| `app/(home)`              | The route group for your landing page and other pages. |
-| `app/docs`                | The documentation layout and pages.                    |
-| `app/api/search/route.ts` | The Route Handler for search.                          |
-
-### Fumadocs MDX
-
-A `source.config.ts` config file has been included, you can customise different options like frontmatter schema.
-
-Read the [Introduction](https://fumadocs.dev/docs/mdx) for further details.
-
-## Learn More
-
-To learn more about Next.js and Fumadocs, take a look at the following
-resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js
-  features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [Fumadocs](https://fumadocs.dev) - learn about Fumadocs
+Visit `http://localhost:3000`. The site features both dark and light modes.

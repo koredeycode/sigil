@@ -4,7 +4,7 @@
 export const CONSTANTS = {
   PORTS: {
     API: 7445,
-    WEB: 7446,
+    WEB: 7445,
   },
   TIMEOUTS: {
     LLM_INVOKE_MS: 60 * 1000,

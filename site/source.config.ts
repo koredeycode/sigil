@@ -30,8 +30,10 @@ export const blog = defineDocs({
   },
 });
 
+import { remarkMdxMermaid } from 'fumadocs-core/mdx-plugins';
+
 export default defineConfig({
   mdxOptions: {
-    // MDX options
+    remarkPlugins: [remarkMdxMermaid],
   },
 });

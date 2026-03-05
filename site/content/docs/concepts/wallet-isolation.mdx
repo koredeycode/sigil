@@ -7,31 +7,34 @@ Sigil enforces strict separation between the agent's "brain" and its ability to 
 
 ## The Three Layers
 
-```text
-┌─────────────────────────────────────────────┐
-│           Agent Layer (Brain)               │
-│  LLM Reasoning · Directive Engine · Loop    │
-│  "Decides WHAT to do"                       │
-│                                             │
-│  ✗ Cannot import keytar                     │
-│  ✗ Cannot access private keys               │
-│  ✗ Cannot call signTransaction              │
-├─────────────────────────────────────────────┤
-│         Guardrails Layer (Gate)             │
-│  Per-trade limits · Allowlists · Caps       │
-│  "Validates WHETHER it's allowed"           │
-│                                             │
-│  ✗ Cannot access private keys               │
-│  ✓ Can block any action                     │
-├─────────────────────────────────────────────┤
-│         Wallet Layer (Signer)               │
-│  Key Storage · Tx Building · Signing        │
-│  "Executes HOW to do it"                    │
-│                                             │
-│  ✓ Only layer with keytar access            │
-│  ✓ Only layer that can sign                 │
-└─────────────────────────────────────────────┘
-```
+<Mermaid
+  chart={`graph TB
+    classDef agent fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
+    classDef guardrail fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
+    classDef wallet fill:#7c3aed,stroke:#6d28d9,stroke-width:2px,color:#fff
+    classDef block fill:#0f172a,stroke:#334155,stroke-width:1px,color:#fff
+
+    subgraph agentLayer ["Brain (Agent Layer)"]
+        direction LR
+        A[LLM Reasoning]:::agent --> B[Intent Generation]:::agent
+        C["No Keys"]:::block
+    end
+
+    subgraph guardrailsLayer ["Gate (Guardrails Layer)"]
+        direction LR
+        F[Limits & Allowlists]:::guardrail --> G[Validation Logic]:::guardrail
+        H["No Keys"]:::block
+    end
+
+    subgraph walletLayer ["Signer (Wallet Layer)"]
+        direction LR
+        J[Key Storage / Keytar]:::wallet --> K[Tx Builder]:::wallet
+        L["Tx Signing"]:::block
+    end
+
+    agentLayer -->|Tool Intents| guardrailsLayer
+    guardrailsLayer -.->|Passed Intents| walletLayer`}
+/>
 
 ## Implementation Rules
 
@@ -39,7 +42,7 @@ These rules are enforced at the code level — they are not guidelines, they are
 
 1. **The Agent Layer** (`/core/src/agent/`) produces **intents** (tool calls). It cannot import `keytar` or access `@solana/web3.js` Keypair objects.
 
-2. **The Guardrails Layer** (`/core/src/lib/Guardrails.ts`) evaluates intents against the directive database. It returns `passed` or `failed`. It has no access to keys.
+2. **The Guardrails Layer** (`/core/src/lib/Guardrails.ts`) evaluates intents against the guardrails configuration. It returns `passed` or `failed`. It has no access to keys.
 
 3. **The Wallet Layer** (`/core/src/wallet/`) is the **only** module permitted to:
    - Import and call `keytar`

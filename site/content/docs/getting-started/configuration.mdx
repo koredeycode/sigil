@@ -14,7 +14,6 @@ All configuration is stored in a local SQLite database at `~/.sigil/sigil.db`. T
 | `config` | Global settings (loop interval, kill switch state) |
 | `providers` | LLM provider credentials and model selection |
 | `agents` | Agent metadata, status, and wallet references |
-| `directives` | Natural language rules per agent |
 | `transactions` | Transaction history and signatures |
 | `logs` | Agent reasoning traces and events |
 
@@ -46,7 +45,7 @@ OpenAI, Anthropic, Google Gemini, Groq, Fireworks, Together, Mistral, xAI, Cereb
 
 ### Loop Interval
 
-Control how often agents check their directives (default: 60 seconds):
+Control how often agents run their reasoning loop (default: 60 seconds):
 
 ```bash
 sigil config set --loop-interval 30
@@ -64,14 +63,14 @@ sigil auth rotate
 
 | Service | Port | Purpose |
 |---|---|---|
-| API Server | `74445` | REST API + WebSocket |
-| Web Dashboard | `74446` | React UI |
+| API Server | `7445` | REST API + WebSocket |
+| Web Dashboard | `7445` | React UI |
 
-> The port `74445` spells **SIGIL** on a phone keypad (S=7, I=4, G=4, I=4, L=5).
+> The port `7445` spells **SIGIL** on a phone keypad (S=7, I=4, G=4, I=4, L=5).
 
 ## Next Steps
 
 <Cards>
   <Card title="Agent Loop" href="/docs/concepts/agent-loop" />
-  <Card title="Safety Guardrails" href="/docs/guardrails/safety" />
+  <Card title="Safety Guardrails" href="/docs/guardrails" />
 </Cards>

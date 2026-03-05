@@ -13,13 +13,12 @@ Sigil agents can fully manage SPL (Solana Program Library) tokens through the bu
 | `mint_tokens` | Mint tokens to a recipient (requires mint authority) |
 | `burn_tokens` | Burn tokens from the agent's wallet |
 | `get_token_accounts` | List all associated token accounts |
-| `create_token_account` | Initialize a token account for a specific mint |
-| `close_token_account` | Close an empty account and reclaim rent |
-| `set_token_authority` | Transfer mint or freeze authority |
+| `transfer_token` | Transfer SPL tokens to another wallet |
+| `close_empty_token_accounts` | Close zero-balance accounts and reclaim rent |
 
-## Example Directives
+## Example Scenarios
 
-These directives leverage the SPL token tools:
+These scenarios leverage the SPL token tools:
 
 ```text
 "If a token account has zero balance, close it and reclaim rent"
@@ -33,11 +32,10 @@ These directives leverage the SPL token tools:
 A typical token workflow:
 
 1. **Create** a new token mint with `create_token`
-2. **Create** associated token accounts for recipients with `create_token_account`
-3. **Mint** initial supply with `mint_tokens`
-4. **Transfer** tokens between wallets (see DeFi tools)
-5. **Burn** unwanted tokens with `burn_tokens`
-6. **Close** empty accounts to reclaim rent with `close_token_account`
+2. **Mint** initial supply with `mint_tokens`
+3. **Transfer** tokens between wallets using `transfer_token`
+4. **Burn** unwanted tokens with `burn_tokens`
+5. **Close** empty accounts to reclaim rent with `close_empty_token_accounts`
 
 ## Guardrail Integration
 
@@ -45,7 +43,7 @@ All token operations pass through the Guardrails layer:
 
 - `mint_tokens` — Checked against daily volume limits
 - `burn_tokens` — Checked against per-trade value limits
-- `close_token_account` — Always allowed (reclaiming rent is never risky)
-- `set_token_authority` — Requires explicit allowlist approval
+- `transfer_token` — Validates recipient allowlists
+- `close_empty_token_accounts` — Always allowed (reclaiming rent is never risky)
 
-See [Safety & Guardrails](/docs/guardrails/safety) for details.
+See [Safety & Guardrails](/docs/guardrails) for details.

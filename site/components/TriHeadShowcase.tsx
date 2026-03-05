@@ -26,7 +26,7 @@ const heads = [
     icon: Globe,
     title: 'Dashboard',
     subtitle: 'Visual',
-    description: 'A local React web application for chat, analytics, and visual directive management. Access everything through your browser at localhost:74446.',
+    description: 'A local React web application for chat, analytics, and visual directive management. Access everything through your browser at localhost:7445.',
     features: ['Chat interface', 'Transaction analytics', 'Directive management'],
   },
 ];
@@ -162,7 +162,7 @@ export function TriHeadShowcase() {
                       <div className="w-3 h-3 rounded-full bg-green-400/60" />
                     </div>
                     <span className="text-xs text-muted-foreground font-mono ml-2">
-                      {active === 1 ? 'sigil tui' : 'localhost:74446'}
+                      {active === 1 ? 'sigil tui' : 'localhost:7445'}
                     </span>
                   </div>
                   <div className="p-6 font-mono text-sm min-h-[220px] flex flex-col justify-center items-center gap-4 text-center">
