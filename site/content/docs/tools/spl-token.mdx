@@ -9,12 +9,12 @@ Sigil Wallet agents can fully manage SPL (Solana Program Library) tokens through
 
 | Tool | Description |
 |---|---|
-| `create_token` | Create a new SPL token mint |
-| `mint_tokens` | Mint tokens to a recipient (requires mint authority) |
+| `create_token` | Create a new SPL token mint with optional metadata (name, symbol, URI) |
+| `mint_tokens` | Mint tokens to this wallet (requires mint authority) |
 | `burn_tokens` | Burn tokens from the agent's wallet |
-| `get_token_accounts` | List all associated token accounts |
-| `transfer_token` | Transfer SPL tokens to another wallet |
-| `close_empty_token_accounts` | Close zero-balance accounts and reclaim rent |
+| `get_token_accounts` | List all SPL token accounts owned by this wallet |
+| `transfer_token` | Transfer SPL tokens to another wallet (creates recipient account if needed) |
+| `close_empty_token_accounts` | Close all zero-balance accounts and reclaim rent SOL |
 
 ## Example Scenarios
 
@@ -27,13 +27,28 @@ These scenarios leverage the SPL token tools:
 "Burn any SPAM tokens that appear in my wallet"
 ```
 
+## Token Creation with Metadata
+
+The `create_token` tool supports optional metadata to create fully-featured tokens:
+
+```text
+"Create a token with 9 decimals, name 'Sigil Test Token', symbol 'SGT'"
+"Create a new token called 'AgentCoin' with symbol 'AGNT' and 6 decimals"
+```
+
+Metadata parameters:
+- **name** — Token name (max 32 characters)
+- **symbol** — Token ticker/symbol (max 10 characters)  
+- **uri** — Optional URI pointing to a JSON file with image and description
+- **decimals** — Precision (0-9, default 9)
+
 ## Token Lifecycle
 
 A typical token workflow:
 
-1. **Create** a new token mint with `create_token`
-2. **Mint** initial supply with `mint_tokens`
-3. **Transfer** tokens between wallets using `transfer_token`
+1. **Create** a new token mint with `create_token` (specifying name, symbol, decimals)
+2. **Mint** initial supply with `mint_tokens` (you become the mint authority)
+3. **Transfer** tokens between wallets using `transfer_token` (recipient account created automatically)
 4. **Burn** unwanted tokens with `burn_tokens`
 5. **Close** empty accounts to reclaim rent with `close_empty_token_accounts`
 

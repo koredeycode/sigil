@@ -1,33 +1,44 @@
 ---
 title: DeFi Tools
-description: On-chain trading, liquidity pools, and portfolio management on Solana Devnet.
+description: Token swaps and portfolio management using Jupiter aggregator on Solana Devnet.
 ---
 
-Sigil Wallet agents can interact with real on-chain DeFi protocols on Solana Devnet, enabling autonomous trading, liquidity provision, and portfolio rebalancing.
+Sigil Wallet agents can execute token swaps and monitor portfolios on Solana Devnet using the Jupiter aggregator API.
 
-## Protocol: SPL Token Swap
+## Jupiter Integration
 
-Sigil Wallet uses the **SPL Token Swap** reference program for on-chain DeFi operations.
+Sigil uses the **Jupiter Aggregator** for all token swap operations. Jupiter automatically finds the best rates across multiple DEXes on Solana.
 
 ### Trading Tools
 
-| Tool | Description |
-|---|---|
-| `swap_tokens` | Execute a token swap using the Jupiter API aggregator |
-| `fetch_price` | Retrieve the USD price for SOL, USDC, or custom tokens |
+| Tool          | Description                                                              |
+| ------------- | ------------------------------------------------------------------------ |
+| `swap_tokens` | Execute a token swap using Jupiter aggregator with configurable slippage |
+| `fetch_price` | Retrieve real-time USD price for SOL, USDC, BONK, or any token mint      |
 
 ### Portfolio Tools
 
-| Tool | Description |
-|---|---|
-| `get_portfolio_snapshot` | Full breakdown of holdings with value percentages |
+| Tool                     | Description                                                          |
+| ------------------------ | -------------------------------------------------------------------- |
+| `get_portfolio_snapshot` | Full breakdown of holdings with percentages of total portfolio value |
+
+## Swap Parameters
+
+The `swap_tokens` tool accepts:
+
+- **inputMint** — Input token mint address (use `So11111111111111111111111111111111111111112` for native SOL)
+- **outputMint** — Output token mint address
+- **amount** — Amount of input token to swap (in UI units)
+- **slippageBps** — Slippage tolerance in basis points (default 50 = 0.5%, max 5000 = 50%)
 
 ## Example Scenarios
 
 ```text
 "Swap 50% of my USDC to SOL if SOL drops below $20"
+"Swap 1 SOL to USDC with 1% slippage tolerance"
 "Check portfolio allocation every 5 minutes"
 "Fetch the current USD price of BONK"
+"If BONK price is above $0.00003, swap half my position to USDC"
 ```
 
 ## Slippage Protection
@@ -39,8 +50,22 @@ All swap operations are subject to **slippage guardrails**:
 - The agent logs the block reason and retries on the next loop cycle
 
 ## Portfolio Assessment
+
 The portfolio snapshot workflow empowers the agent to reason about asset distribution:
+
 1. `get_portfolio_snapshot` — Agent reads current holdings and percentages
-2. The agent uses this snapshot within its LangGraph reasoning step to decide if it should generate a `swap_tokens` intent to simulate rebalancing behavior.
+2. The agent analyzes the distribution within its LangGraph reasoning step
+3. If rebalancing is needed, it generates a `swap_tokens` intent
+4. The swap passes through guardrails before execution
+
+## Jupiter Quote Process
+
+Each swap follows this flow:
+
+1. **Quote** — Fetch best route from Jupiter API
+2. **Transaction** — Receive serialized swap transaction
+3. **Deserialize** — Convert to Solana transaction
+4. **Guardrails** — Validate against safety rules
+5. **Sign & Submit** — Execute if approved
 
 See [Safety & Guardrails](/docs/guardrails) for configuration options.

@@ -15,11 +15,12 @@ Each agent runs on an isolated `setInterval` (configured via `sigil config set -
 
 ## Tool Registry
 
-The Agent layer does *not* know how to sign transactions. It simply possesses a registry of capabilities mapping to custom on-chain handlers. The agent possesses exactly 21 tools restricted to **Devnet only**. Tool categories include:
-- **System & SOL**: `get_balance`, `request_airdrop`, `transfer_sol`, `get_transaction_history`, `get_account_info`
-- **SPL Tokens**: `get_token_accounts`, `create_token`, `mint_tokens`, `burn_tokens`, `transfer_token`, `close_empty_token_accounts`
-- **DeFi**: `swap_tokens`, `fetch_price`, `get_portfolio_snapshot`
-- **Staking**: `stake_sol`, `deactivate_stake`, `get_stake_positions`, `list_validators`
-- **Utility**: `send_memo`, `get_tps`, `get_slot_info`
+The Agent layer does *not* know how to sign transactions. It simply possesses a registry of capabilities mapping to custom on-chain handlers. The agent possesses exactly **19 tools** restricted to **Devnet only**. Tool categories include:
+
+- **Wallet & Balance** (7 tools): `get_balance`, `request_airdrop`, `transfer_sol`, `get_transaction_history`, `get_token_accounts`, `get_portfolio_snapshot`, `get_account_info`
+- **SPL Tokens** (5 tools): `create_token`, `mint_tokens`, `burn_tokens`, `transfer_token`, `close_empty_token_accounts`
+- **Staking** (4 tools): `stake_sol`, `deactivate_stake`, `list_validators`, `get_stake_positions`
+- **DeFi** (2 tools): `swap_tokens`, `fetch_price`
+- **Utilities** (1 tool): `send_memo`
 
 All tools run exclusively on **Solana Devnet**.

@@ -1,0 +1,75 @@
+---
+title: Utility Tools
+description: Memo transactions and data queries for on-chain interactions.
+---
+
+Sigil agents have access to utility tools for writing on-chain memos and querying market data.
+
+## On-Chain Memo
+
+| Tool | Description |
+|---|---|
+| `send_memo` | Write a human-readable message on-chain (max 566 bytes, subject to guardrails) |
+
+The memo tool uses the SPL Memo program to record text messages on the blockchain. This is useful for:
+
+- Tagging transactions with notes or references
+- Recording agent decisions or reasoning on-chain
+- Creating an immutable audit trail
+- Adding context to automated operations
+
+## Market Data
+
+| Tool | Description |
+|---|---|
+| `fetch_price` | Get the current USD price of a token by mint address or symbol (SOL, USDC, BONK, etc) |
+
+The price tool uses the Jupiter Price API to fetch real-time market data from mainnet. Supported tokens include:
+
+- **SOL** — Native Solana token
+- **USDC** — USD Coin stablecoin
+- **USDT** — Tether stablecoin
+- **BONK** — Popular meme token
+- **Custom tokens** — Any token mint address
+
+Note: Price data comes from mainnet markets even though agents operate on devnet.
+
+## Example Scenarios
+
+```text
+"Record a memo saying 'Daily rebalance complete' on-chain"
+"Check the current USD price of SOL"
+"Get the price of BONK in USD"
+"Write a memo with my reasoning for this trade"
+"Fetch price for token mint EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+```
+
+## Use Cases
+
+### Audit Trail with Memos
+
+Agents can create transparent audit trails by writing memos before or after significant actions:
+
+```text
+1. Fetch current SOL price
+2. If price > $25, prepare to sell
+3. Send memo: "Executing rebalance: SOL price at $26.50"
+4. Execute swap
+5. Send memo: "Rebalance complete"
+```
+
+### Price-Based Decisions
+
+Combine price fetching with conditional logic:
+
+```text
+"Check SOL price every hour. If it drops below $20, swap 50% of USDC to SOL"
+"Fetch BONK price. If it's above $0.00003, sell half my position"
+```
+
+## Guardrail Integration
+
+- `send_memo` — Subject to transaction frequency limits (prevents spam)
+- `fetch_price` — Read-only, no guardrails required
+
+See [Safety & Guardrails](/docs/guardrails) for configuration options.

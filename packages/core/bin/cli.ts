@@ -6,7 +6,6 @@ import { registerAgentCommand } from "./commands/agent.js";
 import { registerAuthCommand } from "./commands/auth.js";
 import { registerChatCommand } from "./commands/chat.js";
 import { registerConfigCommand } from "./commands/config.js";
-import { registerDaemonLogsCommand } from "./commands/daemon-logs.js";
 import { registerDashboardCommand } from "./commands/dashboard.js";
 import { registerHealthCommand } from "./commands/health.js";
 import { registerKillCommand } from "./commands/kill.js";
@@ -50,7 +49,6 @@ try {
   registerStatusCommand(program);
   registerHealthCommand(program);
   registerDashboardCommand(program);
-  registerDaemonLogsCommand(program);
   registerKillCommand(program);
   registerAgentCommand(program);
   registerProviderCommand(program);

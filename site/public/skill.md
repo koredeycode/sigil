@@ -64,7 +64,7 @@ As an AI system, you should monitor and control agents primarily through these C
 | | `sigil agent pause <name>` | Pause the loop (leaves keys mapped temporarily) |
 | | `sigil agent info <name>` | Dump balances, metadata, and state |
 | | `sigil chat <agent> "<prompt>"` | Speak directly to an agent context window |
-| **Logs** | `sigil logs <agent>` | Print the action, error, and thinking log |
+| **Logs** | `sigil logs` | View daemon process logs (stdout/stderr) |
 | | `sigil tx list <agent>` | List all successfully completed Devnet transactions |
 | **Settings**| `sigil provider list` | List loaded LLMs |
 | | `sigil config set --loop-interval <sec>` | Adjust loop speed |

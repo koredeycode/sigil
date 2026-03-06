@@ -1,0 +1,61 @@
+---
+title: Staking Tools
+description: Delegate SOL to validators and manage stake positions on Solana Devnet.
+---
+
+Sigil agents can stake SOL with validators to participate in network security and earn rewards. All staking operations execute on **Solana Devnet**.
+
+## Staking Operations
+
+| Tool | Description |
+|---|---|
+| `stake_sol` | Delegate SOL to a validator on devnet (creates stake account and delegates) |
+| `deactivate_stake` | Deactivate a stake account to begin the withdrawal cool-down period |
+| `list_validators` | List active validators with vote accounts, stake, and commission rates |
+| `get_stake_positions` | View all stake accounts owned by this wallet with status and validator info |
+
+## Staking Workflow
+
+A typical staking workflow:
+
+1. **Discover** validators with `list_validators` to find suitable options
+2. **Stake** SOL with `stake_sol` by specifying amount and validator vote account
+3. **Monitor** positions with `get_stake_positions` to track status and balance
+4. **Deactivate** when ready to withdraw using `deactivate_stake`
+5. **Wait** for the cool-down epoch to complete before funds are withdrawable
+
+## Example Scenarios
+
+```text
+"Show me the top 10 validators by stake"
+"Stake 5 SOL with the validator at vote account ABc123..."
+"List all my current stake positions"
+"Deactivate my stake account at DEf456..."
+```
+
+## Stake Account States
+
+Stake accounts can be in several states:
+
+- **Active** — Currently delegated and earning rewards
+- **Activating** — Delegation is being activated (takes ~2 epochs)
+- **Deactivating** — Withdrawal requested, cooling down
+- **Inactive** — Deactivated and ready to withdraw
+
+## Validator Selection
+
+The `list_validators` tool provides key metrics for choosing a validator:
+
+- **Vote Account** — The address to use when staking
+- **Activated Stake** — Total SOL currently delegated to this validator
+- **Commission** — Percentage of rewards taken by the validator
+- **Last Vote** — Recent activity indicator
+
+## Guardrail Integration
+
+Staking operations pass through the Guardrails layer:
+
+- `stake_sol` — Subject to per-trade value limits
+- `deactivate_stake` — Always allowed (no risk in deactivating)
+
+See [Safety & Guardrails](/docs/guardrails) for details.

@@ -1,66 +1,58 @@
 import * as clack from "@clack/prompts";
 import type { Command } from "commander";
+import { spawn } from "node:child_process";
+import fs from "node:fs";
 
 export function registerLogsCommand(program: Command) {
   program
-    .command("logs [agent]")
-    .option("-n, --tail <count>", "Number of log entries", "20")
-    .description(
-      "View agent activity logs from database (use daemon-logs for system logs)",
-    )
-    .action(async (agent?: string, opts?: { tail: string }) => {
-      const { agentManager } = await import("../../src/agent/AgentManager.js");
-      const { getAgentLogs, getDatabase } =
-        await import("../../src/lib/Database.js");
+    .command("logs")
+    .option("-f, --follow", "Follow log output (like tail -f)")
+    .option("-n, --lines <count>", "Number of lines to show", "50")
+    .description("View daemon process logs (stdout/stderr)")
+    .action(async (opts: { follow?: boolean; lines: string }) => {
+      const { getLogFile, getRunningPid } =
+        await import("../../src/lib/Daemon.js");
 
-      getDatabase();
+      const logFile = getLogFile();
 
-      if (!agent) {
-        const agents = agentManager.list();
-        if (agents.length === 0) {
-          clack.log.warning("No agents found. Run `sigil agent create` first.");
-          process.exit(0);
-        }
+      if (!fs.existsSync(logFile)) {
+        clack.log.warn("No daemon log file found.");
+        clack.log.info(`Expected location: ${logFile}`);
+        clack.log.info("Start the daemon with: sigil start");
+        return;
+      }
 
-        const selected = await clack.select({
-          message: "View logs for which agent?",
-          options: agents.map((a) => ({
-            value: a.name,
-            label: a.name,
-            hint: `${a.status}`,
-          })),
+      const pid = getRunningPid();
+      if (pid) {
+        clack.log.info(`Daemon is running (PID: ${pid})`);
+      } else {
+        clack.log.warn("Daemon is not currently running.");
+      }
+
+      clack.log.info(`Log file: ${logFile}\n`);
+
+      if (opts.follow) {
+        // Stream logs in real-time
+        clack.log.info("Following logs... (Press Ctrl+C to stop)\n");
+        const tail = spawn("tail", ["-f", "-n", opts.lines, logFile], {
+          stdio: "inherit",
         });
-        if (clack.isCancel(selected)) {
-          clack.cancel("Cancelled.");
+
+        process.on("SIGINT", () => {
+          tail.kill();
           process.exit(0);
-        }
-        agent = String(selected);
-      }
+        });
+      } else {
+        // Show last N lines
+        const tail = spawn("tail", ["-n", opts.lines, logFile], {
+          stdio: "inherit",
+        });
 
-      const a = agentManager.get(agent);
-      if (!a) {
-        clack.log.error(`Agent "${agent}" not found.`);
-        return;
+        tail.on("close", () => {
+          clack.log.info(
+            `\n\nShowing last ${opts.lines} lines. Use --follow to stream logs.`,
+          );
+        });
       }
-
-      const s = clack.spinner();
-      s.start(`Fetching logs for agent ${agent}...`);
-      const logs = getAgentLogs(a.id, Number(opts?.tail ?? "20"));
-      s.stop(`Fetched ${logs.length} logs for ${agent}`);
-
-      if (logs.length === 0) {
-        clack.log.info("No logs yet.");
-        return;
-      }
-      for (const log of logs.reverse()) {
-        clack.log.message(
-          `[${log.timestamp}] ${log.action}: ${log.result ?? ""}`,
-        );
-      }
-
-      clack.log.info("");
-      clack.log.info(
-        "Tip: Use `sigil daemon-logs` to view system logs (stdout/stderr)",
-      );
     });
 }

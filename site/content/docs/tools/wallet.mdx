@@ -1,0 +1,54 @@
+---
+title: Wallet Tools
+description: Balance checks, transfers, and account management on Solana Devnet.
+---
+
+Sigil agents have access to core wallet operations for managing SOL and viewing account information.
+
+## Balance & Account Tools
+
+| Tool | Description |
+|---|---|
+| `get_balance` | Check SOL balance and all SPL token holdings for this agent's wallet |
+| `get_account_info` | Fetch on-chain account metadata for any Solana address |
+| `get_token_accounts` | List all SPL token accounts owned by this wallet |
+| `get_portfolio_snapshot` | Get a full breakdown of holdings with percentages of total portfolio |
+
+## Transfer Tools
+
+| Tool | Description |
+|---|---|
+| `transfer_sol` | Send SOL to a recipient address (subject to guardrails) |
+| `transfer_token` | Send SPL tokens to another address (creates recipient's token account if needed) |
+
+## Devnet Airdrop
+
+| Tool | Description |
+|---|---|
+| `request_airdrop` | Request SOL from the devnet faucet (maximum 2 SOL per request) |
+
+## Transaction History
+
+| Tool | Description |
+|---|---|
+| `get_transaction_history` | Fetch recent on-chain transactions for this wallet |
+
+## Example Scenarios
+
+```text
+"Check my current SOL balance"
+"Request 2 SOL from the devnet faucet"
+"Send 0.5 SOL to 8xKz...abc"
+"Show me my last 20 transactions"
+"Get a portfolio snapshot with all my holdings"
+```
+
+## Guardrail Integration
+
+Transfer operations are subject to safety checks:
+
+- `transfer_sol` — Validates against per-trade limits and recipient allowlists
+- `transfer_token` — Checks token transfer limits and validates recipients
+- `request_airdrop` — No guardrails (always safe on devnet)
+
+See [Safety & Guardrails](/docs/guardrails) for configuration options.

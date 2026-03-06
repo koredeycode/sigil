@@ -29,14 +29,14 @@ The Sigil Wallet CLI is the primary management interface for agents, providers, 
 | `sigil agent list` | Show all agents and their current status |
 | `sigil agent info <name>` | Show detailed agent info (address, directives, activity, token holdings) |
 
-## Chat, Logs & Transactions
+## Logs & Transactions
 
 | Command | Description |
 |---|---|
 | `sigil chat <agent> "<message>"` | Send a message to a specific agent's context window |
-| `sigil logs <agent>` | View agent logs (Reasoning, Actions, Errors) |
-| `sigil logs <agent> --follow` | Stream real-time logs |
-| `sigil logs --all` | View merged logs from all agents simultaneously |
+| `sigil logs` | View daemon process logs (stdout/stderr) |
+| `sigil logs --follow` | Stream daemon logs in real-time |
+| `sigil logs --lines <count>` | Show last N lines of daemon logs (default: 50) |
 | `sigil tx list <agent>` | View transaction history and swap records |
 
 ## Providers (LLM)
@@ -71,7 +71,7 @@ The Sigil Wallet CLI is the primary management interface for agents, providers, 
 sigil init
 sigil agent create --name "alpha"
 sigil agent start "alpha"
-sigil logs alpha --follow
+sigil logs --follow
 ```
 
 ### Switch LLM provider
