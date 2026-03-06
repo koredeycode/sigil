@@ -1,16 +1,46 @@
 {
-  "name": "sigil-core",
+  "name": "sigil-wallet",
   "version": "0.1.0",
   "type": "module",
-  "description": "Sigil core — agents, API, wallet, directives",
+  "description": "The Local-First Autonomous Agentic Wallet for Solana",
+  "author": "Yusuf Akorede <koredey4u@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://sigil-wallet.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koredeycode/sigil.git"
+  },
+  "bugs": {
+    "url": "https://github.com/koredeycode/sigil/issues"
+  },
+  "keywords": [
+    "solana",
+    "agent",
+    "autonomous",
+    "ai",
+    "blockchain",
+    "crypto",
+    "wallet",
+    "langchain"
+  ],
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "bin": {
     "sigil": "dist/bin/cli.js"
   },
+  "files": [
+    "dist/",
+    "bundled/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "bundle": "tsx scripts/bundle.ts",
+    "prepublishOnly": "pnpm run bundle",
     "start": "node dist/src/index.js",
     "test": "vitest run",
     "db:reset": "tsx scripts/reset-db.ts",
@@ -28,15 +58,20 @@
     "@solana/spl-token": "^0.4.12",
     "@solana/web3.js": "^1.98.0",
     "bs58": "^6.0.0",
+    "cli-md": "^1.2.0",
     "commander": "^13.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^8.2.1",
+    "ink": "^4.4.1",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
     "node-cron": "^4.2.1",
     "open": "^11.0.0",
-    "sigil-tui": "workspace:*",
+    "react": "^18.3.1",
     "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "solana-agent-kit": "^1.4.5",
     "uuid": "^11.1.0",
     "zod": "^3.25.76"
@@ -46,7 +81,9 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.4",
     "@types/node-cron": "^3.0.11",
+    "@types/react": "^18.3.18",
     "@types/uuid": "^10.0.0",
+    "sigil-tui": "workspace:*",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"

@@ -1,6 +1,7 @@
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { getConfig, setConfig } from './Database.js';
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { getConfig, setConfig } from "./Database.js";
 
 /**
  * Read/write helpers for the config table.
@@ -8,55 +9,55 @@ import { getConfig, setConfig } from './Database.js';
  */
 
 export function isKillSwitchActive(): boolean {
-  return getConfig('kill_switch') === 'true';
+  return getConfig("kill_switch") === "true";
 }
 
 export function setKillSwitch(active: boolean): void {
-  setConfig('kill_switch', active ? 'true' : 'false');
+  setConfig("kill_switch", active ? "true" : "false");
 }
 
 export function getPerTradeLimit(): number {
-  return parseFloat(getConfig('per_trade_limit') ?? '5');
+  return parseFloat(getConfig("per_trade_limit") ?? "5");
 }
 
 export function setPerTradeLimit(percent: number): void {
-  setConfig('per_trade_limit', String(percent));
+  setConfig("per_trade_limit", String(percent));
 }
 
 export function getDailyVolumeCap(): number {
-  return parseFloat(getConfig('daily_volume_cap') ?? '10');
+  return parseFloat(getConfig("daily_volume_cap") ?? "10");
 }
 
 export function setDailyVolumeCap(sol: number): void {
-  setConfig('daily_volume_cap', String(sol));
+  setConfig("daily_volume_cap", String(sol));
 }
 
 export function getSlippageCap(): number {
-  return parseFloat(getConfig('slippage_cap') ?? '1');
+  return parseFloat(getConfig("slippage_cap") ?? "1");
 }
 
 export function setSlippageCap(percent: number): void {
-  setConfig('slippage_cap', String(percent));
+  setConfig("slippage_cap", String(percent));
 }
 
 export function getCooldownPeriod(): number {
-  return parseInt(getConfig('cooldown_period') ?? '30', 10);
+  return parseInt(getConfig("cooldown_period") ?? "30", 10);
 }
 
 export function setCooldownPeriod(seconds: number): void {
-  setConfig('cooldown_period', String(seconds));
+  setConfig("cooldown_period", String(seconds));
 }
 
 export function getConfirmationThreshold(): number {
-  return parseFloat(getConfig('confirmation_threshold') ?? '50');
+  return parseFloat(getConfig("confirmation_threshold") ?? "50");
 }
 
 export function setConfirmationThreshold(sol: number): void {
-  setConfig('confirmation_threshold', String(sol));
+  setConfig("confirmation_threshold", String(sol));
 }
 
 export function getAllowlist(): string[] {
-  const raw = getConfig('allowlist');
+  const raw = getConfig("allowlist");
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw);
@@ -67,27 +68,31 @@ export function getAllowlist(): string[] {
 }
 
 export function setAllowlist(addresses: string[]): void {
-  setConfig('allowlist', JSON.stringify(addresses));
+  setConfig("allowlist", JSON.stringify(addresses));
 }
 
 export function getAuthToken(): string | undefined {
-  return getConfig('auth_token');
+  return getConfig("auth_token");
 }
 
 export function setAuthToken(token: string): void {
-  setConfig('auth_token', token);
+  setConfig("auth_token", token);
 }
 
 export function getRpcUrl(): string {
-  return getConfig('rpc_url') || process.env.RPC_URL || 'https://api.devnet.solana.com';
+  return (
+    getConfig("rpc_url") ||
+    process.env.RPC_URL ||
+    "https://api.devnet.solana.com"
+  );
 }
 
 export function setRpcUrl(url: string): void {
-  setConfig('rpc_url', url);
-  
+  setConfig("rpc_url", url);
+
   // Invalidate connection pool when RPC URL changes
   // Import is done lazily to avoid circular dependency issues
-  import('../wallet/TransactionBuilder.js')
+  import("../wallet/TransactionBuilder.js")
     .then(({ invalidateConnectionPool }) => {
       invalidateConnectionPool();
     })
@@ -97,20 +102,20 @@ export function setRpcUrl(url: string): void {
 }
 
 export function getMainAgentId(): string | undefined {
-  const val = getConfig('main_agent_id');
+  const val = getConfig("main_agent_id");
   return val || undefined;
 }
 
 export function setMainAgentId(id: string): void {
-  setConfig('main_agent_id', id);
+  setConfig("main_agent_id", id);
 }
 
 export function getMainAgentName(): string {
-  return getConfig('main_agent_name') || 'sigil';
+  return getConfig("main_agent_name") || "sigil";
 }
 
 export function setMainAgentName(name: string): void {
-  setConfig('main_agent_name', name);
+  setConfig("main_agent_name", name);
 }
 
 /**
@@ -121,19 +126,33 @@ export function getWebDistPath(): string {
   const currentFilename = fileURLToPath(import.meta.url);
   const currentDirname = path.dirname(currentFilename);
 
-  const isDev = currentDirname.includes(`src${path.sep}lib`) && !currentDirname.includes('dist');
-  const isCompiled = currentDirname.includes(`dist${path.sep}src${path.sep}lib`);
+  const isDev =
+    currentDirname.includes(`src${path.sep}lib`) &&
+    !currentDirname.includes("dist");
+  const isCompiled = currentDirname.includes(
+    `dist${path.sep}src${path.sep}lib`,
+  );
 
-  let monoRepoRoot = '';
+  // Check for bundled web assets first (npm package)
   if (isCompiled) {
-    // packages/core/dist/src/lib -> root
-    monoRepoRoot = path.resolve(currentDirname, '../../../../..');
-  } else if (isDev) {
-    // packages/core/src/lib -> root
-    monoRepoRoot = path.resolve(currentDirname, '../../../..');
-  } else {
-    monoRepoRoot = path.resolve(currentDirname, '../..');
+    // In compiled package: dist/src/lib -> ../../bundled/web
+    const bundledPath = path.resolve(currentDirname, "../../bundled/web");
+    if (fs.existsSync(bundledPath)) {
+      return bundledPath;
+    }
   }
 
-  return path.join(monoRepoRoot, 'packages', 'web', 'dist');
+  // Fallback to monorepo structure (development)
+  let monoRepoRoot = "";
+  if (isCompiled) {
+    // packages/core/dist/src/lib -> root
+    monoRepoRoot = path.resolve(currentDirname, "../../../../..");
+  } else if (isDev) {
+    // packages/core/src/lib -> root
+    monoRepoRoot = path.resolve(currentDirname, "../../../..");
+  } else {
+    monoRepoRoot = path.resolve(currentDirname, "../..");
+  }
+
+  return path.join(monoRepoRoot, "packages", "web", "dist");
 }

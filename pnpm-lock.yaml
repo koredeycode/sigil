@@ -79,7 +79,7 @@ importers:
         version: 0.1.3(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@langchain/langgraph':
         specifier: ^0.2.42
-        version: 0.2.74(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(zod-to-json-schema@3.25.1(zod@3.25.76))
+        version: 0.2.74(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(zod-to-json-schema@3.25.1(zod@3.25.76))
       '@langchain/openai':
         specifier: ^0.4.4
         version: 0.4.9(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))
@@ -92,6 +92,9 @@ importers:
       bs58:
         specifier: ^6.0.0
         version: 6.0.0
+      cli-md:
+        specifier: ^1.2.0
+        version: 1.2.0
       commander:
         specifier: ^13.1.0
         version: 13.1.0
@@ -107,21 +110,33 @@ importers:
       express-rate-limit:
         specifier: ^8.2.1
         version: 8.2.1(express@4.22.1)
+      ink:
+        specifier: ^4.4.1
+        version: 4.4.1(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10)
+      ink-spinner:
+        specifier: ^5.0.0
+        version: 5.0.0(ink@4.4.1(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)
+      ink-text-input:
+        specifier: ^6.0.0
+        version: 6.0.0(ink@4.4.1(@types/react@18.3.28)(bufferutil@4.1.0)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)
       node-cron:
         specifier: ^4.2.1
         version: 4.2.1
       open:
         specifier: ^11.0.0
         version: 11.0.0
-      sigil-tui:
-        specifier: workspace:*
-        version: link:../tui
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
       socket.io:
+        specifier: ^4.8.1
+        version: 4.8.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      socket.io-client:
         specifier: ^4.8.1
         version: 4.8.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       solana-agent-kit:
         specifier: ^1.4.5
-        version: 1.4.9(@cfworker/json-schema@4.1.1)(@langchain/anthropic@0.3.34(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(zod@3.25.76))(@langchain/google-genai@0.1.12(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(zod@3.25.76))(@noble/hashes@1.8.0)(@opentelemetry/api@1.9.0)(@solana/buffer-layout@4.0.1)(@swc/core@1.15.18(@swc/helpers@0.5.18))(@types/node@22.19.11)(arweave@1.15.7)(borsh@2.0.0)(buffer@6.0.3)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(google-protobuf@3.21.4)(got@14.4.6)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sodium-native@3.4.1)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod-to-json-schema@3.25.1(zod@3.25.76))
+        version: 1.4.9(@cfworker/json-schema@4.1.1)(@langchain/anthropic@0.3.34(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(zod@3.25.76))(@langchain/google-genai@0.1.12(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(zod@3.25.76))(@noble/hashes@1.8.0)(@opentelemetry/api@1.9.0)(@solana/buffer-layout@4.0.1)(@swc/core@1.15.18(@swc/helpers@0.5.18))(@types/node@22.19.11)(arweave@1.15.7)(borsh@2.0.0)(buffer@6.0.3)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(google-protobuf@3.21.4)(got@14.4.6)(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(sodium-native@3.4.1)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod-to-json-schema@3.25.1(zod@3.25.76))
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -141,9 +156,15 @@ importers:
       '@types/node-cron':
         specifier: ^3.0.11
         version: 3.0.11
+      '@types/react':
+        specifier: ^18.3.18
+        version: 18.3.28
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0
+      sigil-tui:
+        specifier: workspace:*
+        version: link:../tui
       tsx:
         specifier: ^4.19.3
         version: 4.21.0
@@ -11558,12 +11579,12 @@ snapshots:
     dependencies:
       json-schema: 0.4.0
 
-  '@ai-sdk/react@1.2.12(react@19.2.4)(zod@3.25.76)':
+  '@ai-sdk/react@1.2.12(react@18.3.1)(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider-utils': 2.2.8(zod@3.25.76)
       '@ai-sdk/ui-utils': 1.2.11(zod@3.25.76)
-      react: 19.2.4
-      swr: 2.4.0(react@19.2.4)
+      react: 18.3.1
+      swr: 2.4.0(react@18.3.1)
       throttleit: 2.1.0
     optionalDependencies:
       zod: 3.25.76
@@ -13994,7 +14015,7 @@ snapshots:
       '@langchain/core': 0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76))
       uuid: 10.0.0
 
-  '@langchain/langgraph-sdk@0.0.112(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@langchain/langgraph-sdk@0.0.112(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(react-dom@19.2.4(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@types/json-schema': 7.0.15
       p-queue: 6.6.2
@@ -14002,14 +14023,14 @@ snapshots:
       uuid: 9.0.1
     optionalDependencies:
       '@langchain/core': 0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76))
-      react: 19.2.4
-      react-dom: 19.2.4(react@19.2.4)
+      react: 18.3.1
+      react-dom: 19.2.4(react@18.3.1)
 
-  '@langchain/langgraph@0.2.74(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(zod-to-json-schema@3.25.1(zod@3.25.76))':
+  '@langchain/langgraph@0.2.74(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(zod-to-json-schema@3.25.1(zod@3.25.76))':
     dependencies:
       '@langchain/core': 0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76))
       '@langchain/langgraph-checkpoint': 0.0.18(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))
-      '@langchain/langgraph-sdk': 0.0.112(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@langchain/langgraph-sdk': 0.0.112(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(react-dom@19.2.4(react@18.3.1))(react@18.3.1)
       uuid: 10.0.0
       zod: 3.25.76
     optionalDependencies:
@@ -19791,17 +19812,17 @@ snapshots:
     dependencies:
       humanize-ms: 1.2.1
 
-  ai@4.3.19(react@19.2.4)(zod@3.25.76):
+  ai@4.3.19(react@18.3.1)(zod@3.25.76):
     dependencies:
       '@ai-sdk/provider': 1.1.3
       '@ai-sdk/provider-utils': 2.2.8(zod@3.25.76)
-      '@ai-sdk/react': 1.2.12(react@19.2.4)(zod@3.25.76)
+      '@ai-sdk/react': 1.2.12(react@18.3.1)(zod@3.25.76)
       '@ai-sdk/ui-utils': 1.2.11(zod@3.25.76)
       '@opentelemetry/api': 1.9.0
       jsondiffpatch: 0.6.0
       zod: 3.25.76
     optionalDependencies:
-      react: 19.2.4
+      react: 18.3.1
 
   ajv-formats@3.0.1(ajv@8.18.0):
     optionalDependencies:
@@ -24632,6 +24653,12 @@ snapshots:
       react: 18.2.0
       scheduler: 0.23.2
 
+  react-dom@19.2.4(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      scheduler: 0.27.0
+    optional: true
+
   react-dom@19.2.4(react@19.2.4):
     dependencies:
       react: 19.2.4
@@ -25463,7 +25490,7 @@ snapshots:
       typedarray-to-buffer: 3.1.5
       xsalsa20: 1.2.0
 
-  solana-agent-kit@1.4.9(@cfworker/json-schema@4.1.1)(@langchain/anthropic@0.3.34(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(zod@3.25.76))(@langchain/google-genai@0.1.12(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(zod@3.25.76))(@noble/hashes@1.8.0)(@opentelemetry/api@1.9.0)(@solana/buffer-layout@4.0.1)(@swc/core@1.15.18(@swc/helpers@0.5.18))(@types/node@22.19.11)(arweave@1.15.7)(borsh@2.0.0)(buffer@6.0.3)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(google-protobuf@3.21.4)(got@14.4.6)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sodium-native@3.4.1)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod-to-json-schema@3.25.1(zod@3.25.76)):
+  solana-agent-kit@1.4.9(@cfworker/json-schema@4.1.1)(@langchain/anthropic@0.3.34(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(zod@3.25.76))(@langchain/google-genai@0.1.12(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(zod@3.25.76))(@noble/hashes@1.8.0)(@opentelemetry/api@1.9.0)(@solana/buffer-layout@4.0.1)(@swc/core@1.15.18(@swc/helpers@0.5.18))(@types/node@22.19.11)(arweave@1.15.7)(borsh@2.0.0)(buffer@6.0.3)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(google-protobuf@3.21.4)(got@14.4.6)(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(sodium-native@3.4.1)(typescript@5.9.3)(utf-8-validate@5.0.10)(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod-to-json-schema@3.25.1(zod@3.25.76)):
     dependencies:
       '@3land/listings-sdk': 0.0.7(@swc/core@1.15.18(@swc/helpers@0.5.18))(@types/node@22.19.11)(arweave@1.15.7)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(got@14.4.6)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@ai-sdk/openai': 1.3.24(zod@3.25.76)
@@ -25475,7 +25502,7 @@ snapshots:
       '@drift-labs/vaults-sdk': 0.4.53(@swc/core@1.15.18(@swc/helpers@0.5.18))(@types/node@22.19.11)(arweave@1.15.7)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(utf-8-validate@5.0.10)
       '@langchain/core': 0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76))
       '@langchain/groq': 0.1.3(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))
-      '@langchain/langgraph': 0.2.74(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(zod-to-json-schema@3.25.1(zod@3.25.76))
+      '@langchain/langgraph': 0.2.74(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(zod-to-json-schema@3.25.1(zod@3.25.76))
       '@langchain/openai': 0.3.17(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))(zod@3.25.76)))(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@lightprotocol/compressed-token': 0.17.1(@lightprotocol/stateless.js@0.17.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10))(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@lightprotocol/stateless.js': 0.17.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
@@ -25510,7 +25537,7 @@ snapshots:
       '@tiplink/api': 0.3.1(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(sodium-native@3.4.1)(utf-8-validate@5.0.10)
       '@voltr/vault-sdk': 0.1.6(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@wormhole-foundation/sdk': 1.24.1(bufferutil@4.1.0)(google-protobuf@3.21.4)(got@14.4.6)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
-      ai: 4.3.19(react@19.2.4)(zod@3.25.76)
+      ai: 4.3.19(react@18.3.1)(zod@3.25.76)
       axios: 1.13.5
       bn.js: 5.2.3
       bs58: 6.0.0
@@ -25836,11 +25863,11 @@ snapshots:
       picocolors: 1.1.1
       stable: 0.1.8
 
-  swr@2.4.0(react@19.2.4):
+  swr@2.4.0(react@18.3.1):
     dependencies:
       dequal: 2.0.3
-      react: 19.2.4
-      use-sync-external-store: 1.6.0(react@19.2.4)
+      react: 18.3.1
+      use-sync-external-store: 1.6.0(react@18.3.1)
 
   symbol-observable@2.0.3: {}
 
@@ -26348,9 +26375,9 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
-  use-sync-external-store@1.6.0(react@19.2.4):
+  use-sync-external-store@1.6.0(react@18.3.1):
     dependencies:
-      react: 19.2.4
+      react: 18.3.1
 
   utf-8-validate@5.0.10:
     dependencies:

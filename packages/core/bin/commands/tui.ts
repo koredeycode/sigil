@@ -17,8 +17,8 @@ export function registerTuiCommand(program: Command) {
       const API_PORT = 7445;
       // Clear screen before starting TUI
       console.clear();
-      const { startTui } = await import("sigil-tui");
-      const app = startTui(API_PORT, token);
+      const { startTui } = await import("../../src/lib/TuiLoader.js");
+      const app = await startTui(API_PORT, token);
       await app.waitUntilExit();
     });
 }

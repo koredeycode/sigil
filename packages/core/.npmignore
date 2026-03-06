@@ -1,0 +1,26 @@
+# Source files (built versions in dist/ will be included)
+src/
+bin/
+tests/
+scripts/
+
+# Configuration files
+tsconfig.json
+vitest.config.ts
+
+# Development files
+*.test.ts
+*.spec.ts
+.env
+.env.*
+.DS_Store
+
+# Documentation (except README)
+*.md
+!README.md
+
+# Development artifacts
+node_modules/
+pnpm-lock.yaml
+.git/
+.github/
