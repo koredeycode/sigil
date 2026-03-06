@@ -10,7 +10,7 @@ export async function generateMetadata(props: { params: Promise<{ slug?: string[
   }
   const page = blog.getPage(params.slug);
   if (!page) return { title: 'Blog | Sigil' };
-  return { title: `${page.data.title} | Sigil Blog` };
+  return { title: page.data.title };
 }
 
 export default async function BlogPage(props: { params: Promise<{ slug?: string[] }> }) {

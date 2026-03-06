@@ -1,7 +1,7 @@
-import { HumanMessage } from '@langchain/core/messages';
-import { EventEmitter } from 'events';
-import { v4 as uuidv4 } from 'uuid';
-import { setMainAgentId, setMainAgentName } from '../lib/Config.js';
+import { HumanMessage } from "@langchain/core/messages";
+import { EventEmitter } from "events";
+import { v4 as uuidv4 } from "uuid";
+import { setMainAgentId, setMainAgentName } from "../lib/Config.js";
 import {
   AgentRow,
   createAgent as dbCreateAgent,
@@ -10,24 +10,35 @@ import {
   getAllAgents,
   updateAgentProfile,
   updateAgentStatus,
-} from '../lib/Database.js';
-import { logger } from '../lib/Logger.js';
-import { createWallet, deleteWallet, getKeypair, importWallet, renameWallet, wipeFromMemory } from '../wallet/Wallet.js';
-import { invalidateAgentGraph, invokeSolanaAgent, setAgentManager } from './AgentLoop.js';
-import { getPrimaryModel } from './LLMChain.js';
-import { clearAgentKit } from './ToolRegistry.js';
+} from "../lib/Database.js";
+import { logger } from "../lib/Logger.js";
+import {
+  createWallet,
+  deleteWallet,
+  getKeypair,
+  importWallet,
+  renameWallet,
+  wipeFromMemory,
+} from "../wallet/Wallet.js";
+import {
+  invalidateAgentGraph,
+  invokeSolanaAgent,
+  setAgentManager,
+} from "./AgentLoop.js";
+import { cronScheduler } from "./CronScheduler.js";
+import { getPrimaryModel } from "./LLMChain.js";
+import { clearAgentKit } from "./ToolRegistry.js";
 
-const MAIN_AGENT_NAME = 'sigil';
+const MAIN_AGENT_NAME = "sigil";
 
 /**
  * AgentManager — manages a single main Sigil agent.
- * 
+ *
  * The system uses one primary agent ("sigil") that handles all
  * chat interactions, tool calls, and directive evaluations.
  * Future sub-agents can be layered on top.
  */
 export class AgentManager extends EventEmitter {
-
   constructor() {
     super();
     // Register this instance with AgentLoop to break circular dependency
@@ -67,7 +78,7 @@ export class AgentManager extends EventEmitter {
     setMainAgentName(MAIN_AGENT_NAME);
 
     const agent = getAgent(id)!;
-    this.emit('agent:created', { agent: MAIN_AGENT_NAME, pubkey, id });
+    this.emit("agent:created", { agent: MAIN_AGENT_NAME, pubkey, id });
 
     // Auto-start the main agent
     await this.start(id);
@@ -78,7 +89,12 @@ export class AgentManager extends EventEmitter {
   /**
    * Create a named agent (for future sub-agent support).
    */
-  async create(name: string, loopInterval = 60000, privateKey?: string, prompt?: string): Promise<AgentRow> {
+  async create(
+    name: string,
+    loopInterval = 60000,
+    privateKey?: string,
+    prompt?: string,
+  ): Promise<AgentRow> {
     const existing = getAgent(name);
     if (existing) {
       throw new Error(`Agent "${name}" already exists`);
@@ -96,7 +112,7 @@ export class AgentManager extends EventEmitter {
     dbCreateAgent(id, name, pubkey, loopInterval, prompt || null);
 
     const agent = getAgent(id)!;
-    this.emit('agent:created', { agent: name, pubkey, id });
+    this.emit("agent:created", { agent: name, pubkey, id });
 
     // Auto-start the agent
     await this.start(id);
@@ -106,13 +122,17 @@ export class AgentManager extends EventEmitter {
 
   /**
    * Invoke the main agent with a message.
+   * @deprecated Use invokeMainAgent() or invokeAgent() for clarity
    * If no agentNameOrId is given, uses the main agent.
    */
   async invoke(
     nameOrId?: string,
     message?: string,
-    opts?: { includeHistory?: boolean }
-  ): Promise<{ response: string; toolResults: Array<{ tool: string; result: string }> }> {
+    opts?: { includeHistory?: boolean },
+  ): Promise<{
+    response: string;
+    toolResults: Array<{ tool: string; result: string }>;
+  }> {
     if (!message && nameOrId) {
       // If only one string arg, treat it as the message to the main agent
       message = nameOrId;
@@ -120,9 +140,53 @@ export class AgentManager extends EventEmitter {
     }
 
     const agent = nameOrId ? getAgent(nameOrId) : this.getMainAgent();
-    if (!agent) throw new Error(nameOrId ? `Agent "${nameOrId}" not found` : 'Main agent not initialized. Run `sigil agent init` first.');
-    if (!message) throw new Error('Message is required');
+    if (!agent)
+      throw new Error(
+        nameOrId
+          ? `Agent "${nameOrId}" not found`
+          : "Main agent not initialized. Run `sigil agent init` first.",
+      );
+    if (!message) throw new Error("Message is required");
 
+    return invokeSolanaAgent(agent.id, agent.name, message, opts);
+  }
+
+  /**
+   * Invoke the main "sigil" agent with a message.
+   * @param message The message to send to the main agent
+   * @param opts Options like includeHistory
+   */
+  async invokeMainAgent(
+    message: string,
+    opts?: { includeHistory?: boolean },
+  ): Promise<{
+    response: string;
+    toolResults: Array<{ tool: string; result: string }>;
+  }> {
+    const agent = this.getMainAgent();
+    if (!agent)
+      throw new Error(
+        "Main agent not initialized. Run `sigil agent init` first.",
+      );
+    return invokeSolanaAgent(agent.id, agent.name, message, opts);
+  }
+
+  /**
+   * Invoke a specific agent by name or ID with a message.
+   * @param agentNameOrId The agent's name or ID
+   * @param message The message to send to the agent
+   * @param opts Options like includeHistory
+   */
+  async invokeAgent(
+    agentNameOrId: string,
+    message: string,
+    opts?: { includeHistory?: boolean },
+  ): Promise<{
+    response: string;
+    toolResults: Array<{ tool: string; result: string }>;
+  }> {
+    const agent = getAgent(agentNameOrId);
+    if (!agent) throw new Error(`Agent "${agentNameOrId}" not found`);
     return invokeSolanaAgent(agent.id, agent.name, message, opts);
   }
 
@@ -133,9 +197,14 @@ export class AgentManager extends EventEmitter {
    */
   async analyze(prompt: string): Promise<string> {
     const model = getPrimaryModel();
-    logger.info(`[AgentManager] Running tool-free analysis (${prompt.length} chars)...`);
+    logger.info(
+      `[AgentManager] Running tool-free analysis (${prompt.length} chars)...`,
+    );
     const result = await model.invoke([new HumanMessage(prompt)]);
-    const text = typeof result.content === 'string' ? result.content : JSON.stringify(result.content);
+    const text =
+      typeof result.content === "string"
+        ? result.content
+        : JSON.stringify(result.content);
     logger.info(`[AgentManager] Analysis complete (${text.length} chars).`);
     return text;
   }
@@ -145,11 +214,19 @@ export class AgentManager extends EventEmitter {
    */
   async start(nameOrId?: string): Promise<void> {
     const agent = nameOrId ? getAgent(nameOrId) : this.getMainAgent();
-    if (!agent) throw new Error('Agent not found');
+    if (!agent) throw new Error("Agent not found");
 
     await getKeypair(agent.name);
-    updateAgentStatus(agent.id, 'running');
-    this.emit('agent:status', { agent: agent.name, status: 'running' });
+    updateAgentStatus(agent.id, "running");
+
+    // Start autonomous evaluation cycle
+    cronScheduler.startAutonomousCycle(
+      agent.id,
+      agent.name,
+      agent.loop_interval,
+    );
+
+    this.emit("agent:status", { agent: agent.name, status: "running" });
   }
 
   /**
@@ -157,16 +234,24 @@ export class AgentManager extends EventEmitter {
    */
   pause(nameOrId?: string): void {
     const agent = nameOrId ? getAgent(nameOrId) : this.getMainAgent();
-    if (!agent) throw new Error('Agent not found');
+    if (!agent) throw new Error("Agent not found");
 
-    updateAgentStatus(agent.id, 'paused');
-    this.emit('agent:status', { agent: agent.name, status: 'paused' });
+    updateAgentStatus(agent.id, "paused");
+
+    // Stop autonomous evaluation cycle
+    cronScheduler.stopAutonomousCycle(agent.id);
+
+    this.emit("agent:status", { agent: agent.name, status: "paused" });
   }
 
   /**
    * Update agent profile.
    */
-  async update(nameOrId: string, newName: string, newInterval: number): Promise<AgentRow> {
+  async update(
+    nameOrId: string,
+    newName: string,
+    newInterval: number,
+  ): Promise<AgentRow> {
     const agent = getAgent(nameOrId);
     if (!agent) throw new Error(`Agent "${nameOrId}" not found`);
 
@@ -179,10 +264,21 @@ export class AgentManager extends EventEmitter {
       clearAgentKit(agent.name);
     }
 
+    const intervalChanged = newInterval !== agent.loop_interval;
     updateAgentProfile(agent.id, newName, newInterval);
     invalidateAgentGraph(agent.id);
 
-    return getAgent(agent.id)!;
+    // Restart autonomous cycle if running and interval changed
+    const updatedAgent = getAgent(agent.id)!;
+    if (intervalChanged && updatedAgent.status === "running") {
+      cronScheduler.startAutonomousCycle(
+        updatedAgent.id,
+        updatedAgent.name,
+        updatedAgent.loop_interval,
+      );
+    }
+
+    return updatedAgent;
   }
 
   /**
@@ -190,14 +286,14 @@ export class AgentManager extends EventEmitter {
    */
   kill(nameOrId?: string): void {
     const agent = nameOrId ? getAgent(nameOrId) : this.getMainAgent();
-    if (!agent) throw new Error('Agent not found');
+    if (!agent) throw new Error("Agent not found");
 
     wipeFromMemory(agent.name);
     clearAgentKit(agent.name);
     invalidateAgentGraph(agent.id);
 
-    updateAgentStatus(agent.id, 'paused');
-    this.emit('agent:status', { agent: agent.name, status: 'paused' });
+    updateAgentStatus(agent.id, "paused");
+    this.emit("agent:status", { agent: agent.name, status: "paused" });
   }
 
   /**
@@ -213,7 +309,7 @@ export class AgentManager extends EventEmitter {
     await deleteWallet(agent.name);
     dbDeleteAgent(agent.id);
 
-    this.emit('agent:destroyed', { agent: agent.name });
+    this.emit("agent:destroyed", { agent: agent.name });
   }
 
   /**
@@ -222,7 +318,7 @@ export class AgentManager extends EventEmitter {
   killAll(): void {
     const agents = getAllAgents();
     for (const agent of agents) {
-      if (agent.status === 'running') {
+      if (agent.status === "running") {
         this.kill(agent.id);
       }
     }
@@ -234,11 +330,11 @@ export class AgentManager extends EventEmitter {
   async startAll(): Promise<void> {
     const agents = getAllAgents();
     for (const agent of agents) {
-      if (agent.status === 'running') {
+      if (agent.status === "running") {
         try {
           await this.start(agent.id);
         } catch (error) {
-          this.emit('agent:error', {
+          this.emit("agent:error", {
             agent: agent.name,
             error: `Failed to auto-start: ${error instanceof Error ? error.message : String(error)}`,
             timestamp: new Date().toISOString(),
@@ -268,7 +364,7 @@ export class AgentManager extends EventEmitter {
   shutdown(): void {
     const agents = getAllAgents();
     for (const agent of agents) {
-      if (agent.status === 'running') {
+      if (agent.status === "running") {
         wipeFromMemory(agent.name);
         clearAgentKit(agent.name);
         invalidateAgentGraph(agent.id);

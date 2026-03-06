@@ -152,10 +152,12 @@ export function registerOnboardCommand(program: Command) {
       // 2. Initialize main agent
       const createFirst = await clack.confirm({
         message: 'Initialize the main Sigil Wallet agent now?',
+        initialValue: true,
       });
 
       if (clack.isCancel(createFirst) || !createFirst) {
-        clack.log.info('You can initialize the main agent later by running `sigil agent init`.');
+        clack.log.warn('⚠️ WARNING: Without an agent, Sigil cannot execute transactions or interact with the blockchain.');
+        clack.log.info('You must initialize the main agent later by running `sigil agent init` before using Sigil.');
       } else {
         s.start('Initializing main agent and wallet...');
         const agent = await agentManager.initMainAgent();
