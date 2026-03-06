@@ -5,8 +5,8 @@ This guide explains how to publish the bundled Sigil package (with TUI and Web U
 ## Prerequisites
 
 1. **npm account**: Create at account at https://www.npmjs.com/signup
-2. **Check package name availability**: Visit https://www.npmjs.com/package/sigil
-   - If taken, update the `name` field in `package.json`
+2. **Package name**: Published as `sigil-wallet` on npm (https://www.npmjs.com/package/sigil-wallet)
+   - If changing the name, update the `name` field in `package.json`
 3. **Add package metadata**: Update these fields in `package.json`:
    - `author`: Your name and email
    - `homepage`: Your GitHub repo URL
@@ -52,7 +52,7 @@ sigil --help
 sigil start
 
 # Unlink when done
-npm unlink -g sigil
+npm unlink -g sigil-wallet
 ```
 
 ### 4. Login to npm
@@ -75,7 +75,7 @@ Or create an actual tarball to inspect:
 
 ```bash
 npm pack
-tar -tzf sigil-0.1.0.tgz
+tar -tzf sigil-wallet-0.1.0.tgz
 ```
 
 ### 6. Publish to npm
@@ -84,7 +84,7 @@ tar -tzf sigil-0.1.0.tgz
 npm publish
 ```
 
-For scoped packages (e.g., `@yourorg/sigil`):
+For scoped packages (e.g., `@yourorg/sigil-wallet`):
 
 ```bash
 npm publish --access public
@@ -94,7 +94,7 @@ npm publish --access public
 
 ```bash
 # Install globally from npm
-npm install -g sigil
+npm install -g sigil-wallet
 
 # Verify it works
 sigil --version
@@ -147,11 +147,11 @@ npm publish
 ### Package name already taken
 
 - Change `name` in `package.json` to something unique
-- Consider using a scoped package: `@yourorg/sigil`
+- Consider using a scoped package: `@yourorg/sigil-wallet`
 
 ### Bundle script fails
 
-- Ensure all dependencies are installed: `pnpm install --filter sigil-tui --filter sigil-web --filter sigil`
+- Ensure all dependencies are installed: `pnpm install --filter sigil-tui --filter sigil-web --filter sigil-wallet`
 - Check that TUI and Web packages build successfully independently
 
 ### TUI or Web UI not loading after install

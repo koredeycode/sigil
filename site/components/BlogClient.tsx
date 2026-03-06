@@ -207,7 +207,7 @@ export function BlogPostClient({
                 Sigil isn&apos;t just a wallet. It&apos;s a personal quantitative fund that runs on your machine.
               </p>
               <div className="flex flex-col items-center gap-6">
-                <CommandBox command="npm i -g sigil" className="max-w-md w-full" />
+                <CommandBox command="npm i -g sigil-wallet" className="max-w-md w-full" />
                 <Link
                   href="/docs"
                   className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest"

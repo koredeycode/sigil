@@ -64,7 +64,7 @@ console.log(`   - TUI: ${BUNDLED_TUI_DIR}`);
 console.log(`   - Web: ${BUNDLED_WEB_DIR}`);
 console.log("\nNext steps:");
 console.log("  1. npm publish");
-console.log("  2. npm install -g sigil");
+console.log('  2. npm install -g sigil-wallet');
 
 function copyRecursive(src: string, dest: string) {
   if (!fs.existsSync(src)) {

@@ -112,7 +112,7 @@ export function HomeClient() {
               variants={itemVariants}
               className="flex flex-col sm:flex-row items-center gap-4 mb-6"
             >
-              <CommandBox command="npm i -g sigil" className="w-72" />
+              <CommandBox command="npm i -g sigil-wallet" className="w-72" />
               <a
                 href="/docs"
                 className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -215,7 +215,7 @@ export function HomeClient() {
               Install Sigil and deploy your first autonomous agent in under two minutes.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <CommandBox command="npm i -g sigil" className="max-w-sm w-full" />
+              <CommandBox command="npm i -g sigil-wallet" className="max-w-sm w-full" />
               <a
                 href="https://github.com/koredeycode/sigil"
                 target="_blank"

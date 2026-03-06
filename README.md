@@ -2,6 +2,23 @@
 
 Sigil is a local-first autonomous AI agent platform designed exclusively for Solana Devnet. Built with privacy and absolute user control in mind, Sigil employs a secure, multi-agent framework that empowers users to manage SPL tokens, build custom behavior directives, and seamlessly interact through three distinct interfaces.
 
+## Quick Install (End Users)
+
+Install Sigil globally via npm:
+
+```bash
+npm install -g sigil-wallet
+```
+
+Then initialize and start using:
+
+```bash
+sigil init
+sigil start
+```
+
+For detailed usage, see the [full documentation](https://sigil-docs.vercel.app/docs) or run `sigil --help`.
+
 ## Features
 
 - **Local-First Security:** Your private keys never touch the cloud. They are securely held in your OS Keychain and accessed securely via an isolated Wallet Layer.

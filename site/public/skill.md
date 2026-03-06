@@ -21,7 +21,7 @@ Sigil is a local-first platform where you can build autonomous agents that manag
 
 ## Quick Start
 
-1. INSTALL CLI    → Run `npm i -g sigil` or use `npx sigil@latest`
+1. INSTALL CLI    → Run `npm i -g sigil-wallet` or use `npx sigil-wallet@latest`
 2. INITIALIZE     → Run `sigil init` to select an LLM provider and generate keys
 3. CREATE AGENT   → Run `sigil agent create --name <name>`
 4. START AGENT    → Run `sigil agent start <name>`
@@ -33,7 +33,7 @@ Sigil is a local-first platform where you can build autonomous agents that manag
 ### Installation
 The Sigil CLI is the primary interface:
 ```bash
-npm i -g sigil
+npm i -g sigil-wallet
 ```
 
 ### Registration Flow & Setup
