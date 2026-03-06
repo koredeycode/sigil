@@ -1,5 +1,17 @@
 #!/usr/bin/env node
 
+// Suppress SQLite experimental warnings in shipped package
+process.removeAllListeners("warning");
+process.on("warning", (warning) => {
+  if (
+    warning.name === "ExperimentalWarning" &&
+    warning.message.includes("SQLite")
+  ) {
+    return;
+  }
+  console.warn(warning);
+});
+
 import { Command } from "commander";
 
 import { registerAgentCommand } from "./commands/agent.js";
