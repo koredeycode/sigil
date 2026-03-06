@@ -84,6 +84,16 @@ export function getRpcUrl(): string {
 
 export function setRpcUrl(url: string): void {
   setConfig('rpc_url', url);
+  
+  // Invalidate connection pool when RPC URL changes
+  // Import is done lazily to avoid circular dependency issues
+  import('../wallet/TransactionBuilder.js')
+    .then(({ invalidateConnectionPool }) => {
+      invalidateConnectionPool();
+    })
+    .catch(() => {
+      // Silently fail if TransactionBuilder is not available
+    });
 }
 
 export function getMainAgentId(): string | undefined {

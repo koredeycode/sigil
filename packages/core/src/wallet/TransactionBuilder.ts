@@ -22,6 +22,8 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js';
+import { getRpcUrl } from '../lib/Config.js';
+import { logger } from '../lib/Logger.js';
 
 const DEVNET_URL = 'https://api.devnet.solana.com';
 
@@ -29,10 +31,48 @@ const DEVNET_URL = 'https://api.devnet.solana.com';
 const MEMO_PROGRAM_ID = new PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 
 /**
- * Get a connection to Solana Devnet.
+ * Connection pool to avoid creating new Connection objects on every call.
+ * Key: RPC URL, Value: Connection instance
+ */
+const connectionPool = new Map<string, Connection>();
+
+/**
+ * Get a cached connection to Solana RPC.
+ * Creates and caches a new connection if one doesn't exist for the configured RPC URL.
+ * This significantly improves performance by reusing connections across tool calls.
  */
 export function getConnection(): Connection {
-  return new Connection(DEVNET_URL, 'confirmed');
+  const rpcUrl = getRpcUrl() || DEVNET_URL;
+  
+  let conn = connectionPool.get(rpcUrl);
+  if (!conn) {
+    conn = new Connection(rpcUrl, {
+      commitment: 'confirmed',
+      confirmTransactionInitialTimeout: 60000,
+      wsEndpoint: rpcUrl.replace('https://', 'wss://').replace('http://', 'ws://'),
+    });
+    connectionPool.set(rpcUrl, conn);
+    logger.info(`[TransactionBuilder] Created new RPC connection: ${rpcUrl}`);
+  }
+  
+  return conn;
+}
+
+/**
+ * Invalidate the connection pool.
+ * Call this when RPC URL changes or when connections need to be refreshed.
+ */
+export function invalidateConnectionPool(): void {
+  for (const [url, conn] of connectionPool.entries()) {
+    // Close WebSocket connections if available
+    try {
+      (conn as any)._rpcWebSocket?.close();
+    } catch (err) {
+      logger.warn(`[TransactionBuilder] Error closing WebSocket for ${url}:`, err);
+    }
+  }
+  connectionPool.clear();
+  logger.info('[TransactionBuilder] Connection pool invalidated');
 }
 
 /**

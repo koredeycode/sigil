@@ -13,19 +13,26 @@ let db: DatabaseSync | null = null;
 /**
  * Ensures ~/.sigil/ directory exists and opens the SQLite database.
  * Creates all tables on first run.
+ * 
+ * For testing: Set process.env.SIGIL_DB_PATH to ':memory:' to use an in-memory database.
  */
 export function getDatabase(): DatabaseSync {
   if (db) return db;
 
-  // Ensure ~/.sigil/ exists
-  if (!fs.existsSync(SIGIL_DIR)) {
+  // Support in-memory database for tests
+  const dbPath = process.env.SIGIL_DB_PATH || DB_PATH;
+  
+  // Ensure ~/.sigil/ exists (skip for in-memory)
+  if (dbPath !== ':memory:' && !fs.existsSync(SIGIL_DIR)) {
     fs.mkdirSync(SIGIL_DIR, { recursive: true });
   }
 
-  db = new DatabaseSync(DB_PATH);
+  db = new DatabaseSync(dbPath);
 
-  // Enable WAL mode for better concurrent read performance
-  db.exec('PRAGMA journal_mode = WAL');
+  // Enable WAL mode for better concurrent read performance (skip for in-memory)
+  if (dbPath !== ':memory:') {
+    db.exec('PRAGMA journal_mode = WAL');
+  }
   db.exec('PRAGMA foreign_keys = ON');
 
   initializeTables(db);
