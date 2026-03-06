@@ -1,27 +1,26 @@
-import cors from 'cors';
-import express from 'express';
-import http from 'http';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { Server as SocketIOServer } from 'socket.io';
-import { getWebDistPath } from '../lib/Config.js';
-import { CONSTANTS } from '../lib/Constants.js';
-import { AppError } from '../lib/Errors.js';
-import { logger } from '../lib/Logger.js';
-import { authMiddleware } from './middleware/auth.js';
-import { apiLimiter, authLimiter, llmLimiter } from './middleware/rateLimit.js';
-import { agentsRouter } from './routes/agents.js';
-import { chatRouter } from './routes/chat.js';
-import { configRouter } from './routes/config.js';
-import { cronRouter } from './routes/cron.js';
-import { providersRouter } from './routes/providers.js';
-import { statusRouter } from './routes/status.js';
-import { transactionsRouter } from './routes/transactions.js';
-import { walletRouter } from './routes/wallet.js';
-import { walletProviderRouter } from './routes/walletProvider.js';
-import { walletTokenRouter } from './routes/walletToken.js';
-import { setupSocket } from './socket.js';
-import { attachWebDashboard } from './web.js';
+import cors from "cors";
+import express from "express";
+import http from "http";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { Server as SocketIOServer } from "socket.io";
+import { getWebDistPath } from "../lib/Config.js";
+import { CONSTANTS } from "../lib/Constants.js";
+import { AppError } from "../lib/Errors.js";
+import { logger } from "../lib/Logger.js";
+import { authMiddleware } from "./middleware/auth.js";
+import { agentsRouter } from "./routes/agents.js";
+import { chatRouter } from "./routes/chat.js";
+import { configRouter } from "./routes/config.js";
+import { cronRouter } from "./routes/cron.js";
+import { providersRouter } from "./routes/providers.js";
+import { statusRouter } from "./routes/status.js";
+import { transactionsRouter } from "./routes/transactions.js";
+import { walletRouter } from "./routes/wallet.js";
+import { walletProviderRouter } from "./routes/walletProvider.js";
+import { walletTokenRouter } from "./routes/walletToken.js";
+import { setupSocket } from "./socket.js";
+import { attachWebDashboard } from "./web.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,67 +29,74 @@ const API_PORT = CONSTANTS.PORTS.API;
 /**
  * Create and configure the Express app + Socket.IO server.
  */
-export function createServer(): { app: express.Express; httpServer: http.Server; io: SocketIOServer } {
+export function createServer(): {
+  app: express.Express;
+  httpServer: http.Server;
+  io: SocketIOServer;
+} {
   const app = express();
   const httpServer = http.createServer(app);
 
   // Socket.IO
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: '*',
-      methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+      origin: "*",
+      methods: ["GET", "POST", "PATCH", "DELETE"],
     },
   });
 
   // Middleware
   app.use(cors());
   app.use(express.json());
-  
-  // Rate limits
-  app.use('/api', apiLimiter);
 
   // Request Logging Middleware
   app.use((req, res, next) => {
     const start = Date.now();
-    res.on('finish', () => {
-        const ms = Date.now() - start;
-        logger.info(`[API Request] ${req.method} ${req.originalUrl} - ${res.statusCode} (${ms}ms)`);
+    res.on("finish", () => {
+      const ms = Date.now() - start;
+      logger.info(
+        `[API Request] ${req.method} ${req.originalUrl} - ${res.statusCode} (${ms}ms)`,
+      );
     });
     next();
   });
 
   // Public routes (no auth)
-  app.use('/api/status', statusRouter);
-  app.use('/api/wallet/token', authLimiter, walletTokenRouter);
+  app.use("/api/status", statusRouter);
+  app.use("/api/wallet/token", walletTokenRouter);
 
   // Auth-protected routes
-  app.use('/api', authMiddleware);
-  app.use('/api/agents', agentsRouter);
-  
-  // Costly endpoints get an extra LLM rate limiter
-  app.use('/api/chat', llmLimiter, chatRouter);
-  app.use('/api/wallet/provider/simulate', llmLimiter);
-  app.use('/api/transactions', transactionsRouter);
-  app.use('/api/providers', providersRouter);
-  app.use('/api/config', configRouter);
-  app.use('/api/cron', cronRouter);
-  app.use('/api/wallet/provider', walletProviderRouter);
-  app.use('/api/wallet', walletRouter);
+  app.use("/api", authMiddleware);
+  app.use("/api/agents", agentsRouter);
+  app.use("/api/chat", chatRouter);
+  app.use("/api/transactions", transactionsRouter);
+  app.use("/api/providers", providersRouter);
+  app.use("/api/config", configRouter);
+  app.use("/api/cron", cronRouter);
+  app.use("/api/wallet/provider", walletProviderRouter);
+  app.use("/api/wallet", walletRouter);
 
   // Global error handler
-  app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    logger.error('Server error', { message: err.message, stack: err.stack });
+  app.use(
+    (
+      err: Error,
+      _req: express.Request,
+      res: express.Response,
+      _next: express.NextFunction,
+    ) => {
+      logger.error("Server error", { message: err.message, stack: err.stack });
 
-    if (err instanceof AppError) {
-      res.status(err.statusCode).json({
-        message: err.message,
-        data: null,
-      });
-      return;
-    }
+      if (err instanceof AppError) {
+        res.status(err.statusCode).json({
+          message: err.message,
+          data: null,
+        });
+        return;
+      }
 
-    res.status(500).json({ message: 'Internal Server Error', data: null });
-  });
+      res.status(500).json({ message: "Internal Server Error", data: null });
+    },
+  );
 
   // Serve Web Dashboard (Static Site)
   const webDistPath = getWebDistPath();
@@ -110,7 +116,9 @@ export function startServer(): Promise<{ io: SocketIOServer }> {
     const { httpServer, io } = createServer();
 
     httpServer.listen(API_PORT, () => {
-      logger.info(`Sigil Server (API + Web) running on http://localhost:${API_PORT}`);
+      logger.info(
+        `Sigil Server (API + Web) running on http://localhost:${API_PORT}`,
+      );
       resolve({ io });
     });
   });

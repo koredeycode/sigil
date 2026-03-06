@@ -13,9 +13,10 @@ console.log(
 
 // Bridge messages from the webpage (MAIN world) to the background script (ISOLATED world)
 window.addEventListener("message", (event) => {
-  // Only accept messages from the same window
+  // Security: Only accept messages from the same window and correct origin
   if (
     event.source !== window ||
+    event.origin !== window.location.origin ||
     !event.data ||
     event.data.target !== "sigil-content"
   ) {

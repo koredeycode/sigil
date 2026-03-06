@@ -222,10 +222,13 @@ walletProviderRouter.post(
         return;
       }
 
+      // Security: Sanitize origin string to prevent log injection
+      const sanitizedOrigin = (origin || "unknown").replace(/[\r\n]/g, "");
+
       // Decode the base64 transaction string
       const txBuffer = Buffer.from(transactionMessage, "base64");
       logger.info(
-        `[Simulate] Received transaction buffer (${txBuffer.length} bytes) from origin: ${origin}`,
+        `[Simulate] Received transaction buffer (${txBuffer.length} bytes) from origin: ${sanitizedOrigin}`,
       );
       let decodedTx: Transaction | VersionedTransaction;
       let instructionsSummary = "";
@@ -372,6 +375,16 @@ walletProviderRouter.post(
           message: agentId
             ? `Agent "${agentId}" not found`
             : "No active agent found",
+          data: null,
+        });
+        return;
+      }
+
+      // Security: Verify agent exists and is accessible (all local agents are accessible)
+      // In a multi-user system, you'd check if the authenticated user owns this agent
+      if (!agent.pubkey) {
+        res.status(400).json({
+          message: "Agent has no wallet configured",
           data: null,
         });
         return;
