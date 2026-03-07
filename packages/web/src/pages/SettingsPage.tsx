@@ -25,6 +25,35 @@ export interface AIProvider {
   is_primary: number;
 }
 
+function VersionDisplay() {
+  const [version, setVersion] = useState<string>("...");
+
+  useEffect(() => {
+    const fetchVersion = async () => {
+      const token = localStorage.getItem("sigil_token");
+      if (!token) return;
+      try {
+        const response = await fetch("/api/status", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await response.json();
+        if (json.data?.version) {
+          setVersion(json.data.version);
+        }
+      } catch (e) {
+        console.error("Failed to fetch version:", e);
+      }
+    };
+    fetchVersion();
+  }, []);
+
+  return (
+    <span className="font-mono text-xs bg-secondary px-2 py-1 rounded-md text-muted-foreground font-medium">
+      v{version}
+    </span>
+  );
+}
+
 type SettingsTab =
   | "system"
   | "appearance"
@@ -795,9 +824,7 @@ export function SettingsPage() {
                       Currently installed build
                     </p>
                   </div>
-                  <span className="font-mono text-xs bg-secondary px-2 py-1 rounded-md text-muted-foreground font-medium">
-                    v0.2.2
-                  </span>
+                  <VersionDisplay />
                 </div>
                 <div className="p-4 flex items-center justify-between">
                   <div className="space-y-0.5">

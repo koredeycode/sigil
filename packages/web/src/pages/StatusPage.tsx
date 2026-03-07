@@ -1,4 +1,4 @@
-import { Activity, Cpu, Database, Globe, Layers, Server, ShieldCheck } from "lucide-react";
+import { Activity, Cpu, Database, Globe, Layers, RefreshCcw, Server, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 interface StatusData {
   status: string;
@@ -145,9 +145,20 @@ export function StatusPage() {
           <h1 className="text-3xl font-bold tracking-tight">System Status</h1>
           <p className="text-muted-foreground">Monitor your Sigil instance and resource health.</p>
         </div>
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${data.status === 'ok' ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'} text-sm font-medium`}>
-          <ShieldCheck className="w-4 h-4" />
-          {data.status === 'ok' ? 'All Systems Operational' : 'Systems Degraded'}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { setLoading(true); fetchStatus(); }}
+            disabled={loading}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all border border-border bg-background hover:bg-secondary text-muted-foreground hover:text-foreground disabled:opacity-50"
+            title="Refresh Status"
+          >
+            <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${data.status === 'ok' ? 'bg-green-500/10 border-green-500/20 text-green-500' : 'bg-red-500/10 border-red-500/20 text-red-500'} text-sm font-medium`}>
+            <ShieldCheck className="w-4 h-4" />
+            {data.status === 'ok' ? 'All Systems Operational' : 'Systems Degraded'}
+          </div>
         </div>
       </div>
 
