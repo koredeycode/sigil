@@ -10,6 +10,9 @@ const footerLinks = {
     { href: '/docs/getting-started/quick-start', label: 'Quick Start' },
     { href: '/docs/cli', label: 'CLI Reference' },
   ],
+  Integration: [
+    { href: '/docs/extension', label: 'Get Extension' },
+  ],
   Resources: [
     { href: '/blog', label: 'Blog' },
     { href: 'https://github.com/koredeycode/sigil', label: 'GitHub', external: true },
@@ -27,7 +30,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border">
       <div className="mx-auto max-w-6xl px-6 py-16">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-12">
           {/* Brand */}
           <div className="col-span-2 sm:col-span-1">
             <div className="flex items-center gap-2 mb-4">
