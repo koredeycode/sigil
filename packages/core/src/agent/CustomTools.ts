@@ -3,6 +3,12 @@ import { PublicKey } from "@solana/web3.js";
 import { z } from "zod";
 import { logger } from "../lib/Logger.js";
 import { formatExplorerLink } from "../lib/SolanaUtils.js";
+import { buildMockSwap } from "../wallet/MockSwap.js";
+import {
+  buildOrcaSwap,
+  DEVNET_TOKENS,
+  isValidDevnetSwapPair,
+} from "../wallet/OrcaSwap.js";
 import { requestAirdrop, signAndSubmit } from "../wallet/Signer.js";
 import {
   buildBurnTokens,
@@ -640,20 +646,20 @@ export function createCustomTools(
   });
 
   // ═══════════════════════════════════════════════════════════════════════
-  //  SWAP TOOL (Jupiter API)
+  //  SWAP TOOL (Orca Whirlpools)
   // ═══════════════════════════════════════════════════════════════════════
 
   const swapTokensTool = new DynamicStructuredTool({
     name: "swap_tokens",
     description:
-      'Swap tokens using the Jupiter aggregator on devnet. Input/output are token mint addresses. Use "So11111111111111111111111111111111111111112" for native SOL. Subject to guardrails.',
+      'Swap between SOL and devUSDC on devnet. Supports SOL->USDC and USDC->SOL. Use "SOL" or "So11111111111111111111111111111111111111112" for SOL, "USDC" or "3KBZiL2g8C7tiJ32hTv5v3KM7aK9htpqTw4cTXz1HvPt" for devUSDC. Note: Currently uses mock swaps as Orca pools are not available on devnet. Subject to guardrails.',
     schema: z.object({
       inputMint: z
         .string()
-        .describe(
-          "Input token mint address (base58). Use So11111111111111111111111111111111111111112 for SOL",
-        ),
-      outputMint: z.string().describe("Output token mint address (base58)"),
+        .describe('Input token: "SOL", "USDC", or full mint address'),
+      outputMint: z
+        .string()
+        .describe('Output token: "SOL", "USDC", or full mint address'),
       amount: z
         .number()
         .positive()
@@ -663,68 +669,119 @@ export function createCustomTools(
         .int()
         .min(1)
         .max(5000)
-        .default(50)
-        .describe("Slippage tolerance in basis points (default 50 = 0.5%)"),
+        .default(100)
+        .describe("Slippage tolerance in basis points (default 100 = 1%)"),
     }),
     func: async ({ inputMint, outputMint, amount, slippageBps }) => {
       try {
         logger.debug(
           `[Tool:swap_tokens] Swapping ${amount} ${inputMint} -> ${outputMint} for ${agentName}`,
         );
-        const keypair = await getKeypair(agentName);
 
-        // Determine decimals for the input token
-        let decimals = 9; // SOL default
-        if (inputMint !== "So11111111111111111111111111111111111111112") {
-          const mintInfo = await connection.getParsedAccountInfo(
-            new PublicKey(inputMint),
+        // Normalize token symbols to mint addresses
+        const inputMintNormalized =
+          inputMint.toUpperCase() === "SOL"
+            ? DEVNET_TOKENS.SOL
+            : inputMint.toUpperCase() === "USDC"
+              ? DEVNET_TOKENS.USDC
+              : inputMint;
+
+        const outputMintNormalized =
+          outputMint.toUpperCase() === "SOL"
+            ? DEVNET_TOKENS.SOL
+            : outputMint.toUpperCase() === "USDC"
+              ? DEVNET_TOKENS.USDC
+              : outputMint;
+
+        // Validate pair
+        if (!isValidDevnetSwapPair(inputMintNormalized, outputMintNormalized)) {
+          return (
+            `✘ Invalid pair. Only SOL ↔ devUSDC swaps are supported on devnet.\n` +
+            `Use: "SOL" or "${DEVNET_TOKENS.SOL}"\n` +
+            `Use: "USDC" or "${DEVNET_TOKENS.USDC}"`
           );
-          decimals = (mintInfo.value?.data as any)?.parsed?.info?.decimals ?? 9;
         }
-        const rawAmount = Math.round(amount * 10 ** decimals);
 
-        // 1. Get quote from Jupiter
-        const quoteUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${rawAmount}&slippageBps=${slippageBps}`;
-        const quoteRes = await fetch(quoteUrl);
-        if (!quoteRes.ok) {
-          return `✘ Jupiter quote failed: ${quoteRes.statusText}`;
+        const keypair = await getKeypair(agentName);
+        let quote;
+        let usedMockSwap = false;
+
+        // Try Orca first, fallback to mock swap if pool doesn't exist
+        try {
+          quote = await buildOrcaSwap(
+            connection,
+            keypair,
+            inputMintNormalized,
+            outputMintNormalized,
+            amount,
+            slippageBps,
+          );
+        } catch (orcaError) {
+          const errMsg =
+            orcaError instanceof Error ? orcaError.message : String(orcaError);
+
+          // If pool doesn't exist, use mock swap
+          if (errMsg.includes("No Orca whirlpool found")) {
+            logger.info(
+              `[Tool:swap_tokens] Orca pool not found, using mock swap for testing`,
+            );
+            quote = await buildMockSwap(
+              connection,
+              keypair,
+              inputMintNormalized,
+              outputMintNormalized,
+              amount,
+              slippageBps,
+            );
+            usedMockSwap = true;
+          } else {
+            // Re-throw other errors
+            throw orcaError;
+          }
         }
-        const quoteData = await quoteRes.json();
 
-        // 2. Get swap transaction
-        const swapRes = await fetch("https://quote-api.jup.ag/v6/swap", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            quoteResponse: quoteData,
-            userPublicKey: keypair.publicKey.toBase58(),
-            wrapAndUnwrapSol: true,
-          }),
-        });
-        if (!swapRes.ok) {
-          return `✘ Jupiter swap transaction failed: ${swapRes.statusText}`;
-        }
-        const swapData = await swapRes.json();
+        // Calculate output amount in UI units
+        const outputDecimals =
+          outputMintNormalized === DEVNET_TOKENS.USDC ? 6 : 9;
+        const estimatedOut =
+          Number(quote.estimatedAmountOut) / 10 ** outputDecimals;
 
-        // 3. Deserialize and sign via our guardrails pipeline
-        const { Transaction: TxClass } = await import("@solana/web3.js");
-        const txBuf = Buffer.from(swapData.swapTransaction, "base64");
-        const tx = TxClass.from(txBuf);
-
-        const result = await signAndSubmit(agentName, tx, agentId, "swap", {
-          token: inputMint,
-          amount,
-        });
+        // Submit through guardrails
+        const result = await signAndSubmit(
+          agentName,
+          quote.transaction,
+          agentId,
+          "swap",
+          {
+            token: inputMintNormalized,
+            amount,
+          },
+        );
 
         if (result.status === "confirmed") {
-          const outAmount =
-            quoteData.outAmount / 10 ** (quoteData.outputDecimals ?? 9);
           const link = formatExplorerLink("tx", result.signature!);
-          return `✔ Swapped ${amount} ${inputMint} → ${outAmount} ${outputMint}. Tx: ${link}`;
+          const inputSymbol =
+            inputMintNormalized === DEVNET_TOKENS.SOL ? "SOL" : "USDC";
+          const outputSymbol =
+            outputMintNormalized === DEVNET_TOKENS.SOL ? "SOL" : "USDC";
+
+          const swapType = usedMockSwap ? "Mock Swap" : "Orca";
+          const note = usedMockSwap
+            ? " (simulated - no actual token exchange)"
+            : "";
+
+          return `✔ Swapped ${amount} ${inputSymbol} → ${estimatedOut.toFixed(6)} ${outputSymbol} via ${swapType}${note}. Tx: ${link}`;
         }
+
         return `✘ Swap failed: ${result.error}`;
       } catch (error) {
-        return `Error: ${error instanceof Error ? error.message : String(error)}`;
+        const errMsg = error instanceof Error ? error.message : String(error);
+
+        if (errMsg.includes("Only SOL/devUSDC")) {
+          return `✘ ${errMsg}`;
+        }
+
+        return `✘ Swap error: ${errMsg}`;
       }
     },
   });

@@ -10,13 +10,13 @@ const footerLinks = {
     { href: '/docs/getting-started/quick-start', label: 'Quick Start' },
     { href: '/docs/cli', label: 'CLI Reference' },
   ],
-  Integration: [
-    { href: '/docs/extension', label: 'Get Extension' },
-  ],
   Resources: [
     { href: '/blog', label: 'Blog' },
     { href: 'https://github.com/koredeycode/sigil', label: 'GitHub', external: true },
     { href: 'https://github.com/koredeycode/sigil/issues', label: 'Issues', external: true },
+  ],
+  Integration: [
+    { href: '/docs/extension', label: 'Get Extension' },
   ],
 };
 

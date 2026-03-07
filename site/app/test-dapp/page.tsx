@@ -1,13 +1,13 @@
 "use client";
 import {
-    Authorized,
-    Connection,
-    Keypair,
-    Lockup,
-    PublicKey,
-    StakeProgram,
-    SystemProgram,
-    Transaction,
+  Authorized,
+  Connection,
+  Keypair,
+  Lockup,
+  PublicKey,
+  StakeProgram,
+  SystemProgram,
+  Transaction,
 } from "@solana/web3.js";
 import { useEffect, useState } from "react";
 
@@ -22,9 +22,6 @@ export default function TestDappPage() {
   const [amountLabel, setAmountLabel] = useState<string>("0.5");
   const [isValidAddress, setIsValidAddress] = useState(true);
   const [activeMode, setActiveMode] = useState<"transfer" | "stake">("transfer");
-  const [validators, setValidators] = useState<any[]>([]);
-  const [selectedValidator, setSelectedValidator] = useState<string>("");
-  const [isLoadingValidators, setIsLoadingValidators] = useState(false);
 
   useEffect(() => {
     if (!recipient) {
@@ -59,29 +56,26 @@ export default function TestDappPage() {
     };
   }, []);
 
-  // Fetch validators when switching to stake mode
-  useEffect(() => {
-    if (activeMode === "stake" && validators.length === 0) {
-      const fetchValidators = async () => {
-        setIsLoadingValidators(true);
-        try {
-          const res = await fetch("http://localhost:74445/api/wallet/provider/validators");
-          const data = await res.json();
-          if (data.data) {
-            setValidators(data.data);
-            if (data.data.length > 0) {
-              setSelectedValidator(data.data[0].voteAccount);
-            }
-          }
-        } catch (e) {
-          console.error("Failed to fetch validators:", e);
-        } finally {
-          setIsLoadingValidators(false);
-        }
-      };
-      fetchValidators();
-    }
-  }, [activeMode, validators.length]);
+  // Hardcoded validators for devnet
+  const HARDCODED_VALIDATORS = [
+    { rank: 1, name: "vgcDar2p...", voteAccount: "vgcDar2pryHvMgPkKaZfh8pQy4BJxv7SpwUG7zinWjG", nodeIdentity: "dv3qDFk1DTF36Z62bNvrCXe9sKATA6xvVy6A798xxAS", activatedStake: 38651482.02, commission: 95, lastVote: 446933147 },
+    { rank: 2, name: "5ZWgXcyq...", voteAccount: "5ZWgXcyqrrNpQHCme5SdC5hCeYb2o3fEJhF7Gok3bTVN", nodeIdentity: "dv1ZAGvdsz5hHLwWXsVnM94hWf1pjbKVau1QVkaMJ92", activatedStake: 38650268.74, commission: 95, lastVote: 446933147 },
+    { rank: 3, name: "i7NyKBMJ...", voteAccount: "i7NyKBMJCA9bLM2nsGyAGCKHECuR2L5eh4GqFciuwNT", nodeIdentity: "dv2eQHeP4RFrJZ6UeiZWoc3XTtmtZCUKxxCApCDcRNV", activatedStake: 38650137.99, commission: 95, lastVote: 446933147 },
+    { rank: 4, name: "23AoPQc3...", voteAccount: "23AoPQc3EPkfLWb14cKiWNahh1H9rtb3UBk8gWseohjF", nodeIdentity: "dv4ACNkpYPcE3aKmYDqZm9G5EB3J4MRoeE7WNDRBVJB", activatedStake: 38649979.32, commission: 95, lastVote: 446933147 },
+    { rank: 5, name: "2u83Dx5q...", voteAccount: "2u83Dx5qPV4QnujjJQv8v2SoqG1ixuAxPK5Jwhtkovd1", nodeIdentity: "BrX9Z85BbmXYMjvvuAWU8imwsAqutVQiDg9uNfTGkzrJ", activatedStake: 2000698.78, commission: 100, lastVote: 446933147 },
+    { rank: 6, name: "B6kMs74P...", voteAccount: "B6kMs74PL2invrEmeyZSXiH4Rim3VmHRDJBuUcsNAoGE", nodeIdentity: "JDHmpeiTjYbHkaShE29EdNLtuRRYR5zKuJUmBK5jee2G", activatedStake: 750004.99, commission: 100, lastVote: 446933147 },
+    { rank: 7, name: "2f9C9AU8...", voteAccount: "2f9C9AU8nFRKUub8NHToNiZzcwmYiNeipVuP8akKgRVv", nodeIdentity: "2UWuPRCUZHgDt4PdiarRx8YPBD5gUMaVA5EcPeg1sVzL", activatedStake: 750001.99, commission: 100, lastVote: 446933147 },
+    { rank: 8, name: "8KfPgKfe...", voteAccount: "8KfPgKfeTp1Pyw1utAoek5bTDqMCt6a3oWrYKn2bETZb", nodeIdentity: "3zvXem8vqvDYos6BKu66FV84tmDdQwgLxYSempy8tSrs", activatedStake: 517324.23, commission: 100, lastVote: 446933147 },
+    { rank: 9, name: "shfttEZq...", voteAccount: "shfttEZqZQTYtvAPkScZVh98BSVZYpUvpBQM5ks3LGq", nodeIdentity: "ShFtNd4pzXiC7T7mr7gg2hn33X5BSskQRBpErKPai98", activatedStake: 480025.87, commission: 100, lastVote: 446933147 },
+    { rank: 10, name: "FwR3PbjS...", voteAccount: "FwR3PbjS5iyqzLiLugrBqKSa5EKZ4vK9SKs7eQXtT59f", nodeIdentity: "FDQHfbqgSUk94XKFKWu6E8qidL7bwGEXDPzAoTVTXEDm", activatedStake: 199616.35, commission: 10, lastVote: 446933147 },
+    { rank: 11, name: "4QUZQ4c7...", voteAccount: "4QUZQ4c7bZuJ4o4L8tYAEGnePFV27SUFEVmC7BYfsXRp", nodeIdentity: "HMU77m6WSL9Xew9YvVCgz1hLuhzamz74eD9avi4XPdr", activatedStake: 133058.46, commission: 50, lastVote: 446933143 },
+    { rank: 12, name: "8p3V8vkJ...", voteAccount: "8p3V8vkJcs2GA22vAeVLTK4HyEZyy37hayJWwwZyyS4Z", nodeIdentity: "E7RDqAkZrZ8agpxEWhy9Eeu2T3qwbmHLtaSwQZDz5y84", activatedStake: 25103.46, commission: 5, lastVote: 446933147 },
+    { rank: 13, name: "ECuwzjAE...", voteAccount: "ECuwzjAEg7kPVBmmW7xa6Wz9xkK5pbN8cTn4SCdp5PPp", nodeIdentity: "CKMqpoZzrqeobgVMsS9Es8UpRUjdhT3tA7CTPoXC3u6i", activatedStake: 1092.81, commission: 100, lastVote: 446933147 }
+  ];
+
+  const [validators, setValidators] = useState<any[]>(HARDCODED_VALIDATORS);
+  const [selectedValidator, setSelectedValidator] = useState<string>(HARDCODED_VALIDATORS[0].voteAccount);
+  const [isLoadingValidators, setIsLoadingValidators] = useState(false);
 
   // Listen for account changes from the extension
   useEffect(() => {

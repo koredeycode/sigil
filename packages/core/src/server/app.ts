@@ -17,7 +17,9 @@ import { providersRouter } from "./routes/providers.js";
 import { statusRouter } from "./routes/status.js";
 import { transactionsRouter } from "./routes/transactions.js";
 import { walletRouter } from "./routes/wallet.js";
-import { walletProviderRouter } from "./routes/walletProvider.js";
+import {
+  walletProviderRouter
+} from "./routes/walletProvider.js";
 import { walletTokenRouter } from "./routes/walletToken.js";
 import { setupSocket } from "./socket.js";
 import { attachWebDashboard } from "./web.js";
@@ -52,10 +54,15 @@ export function createServer(): {
   // Request Logging Middleware
   app.use((req, res, next) => {
     const start = Date.now();
+    const { method, url, ip } = req;
+    
     res.on("finish", () => {
       const ms = Date.now() - start;
-      logger.info(
-        `[API Request] ${req.method} ${req.originalUrl} - ${res.statusCode} (${ms}ms)`,
+      const status = res.statusCode;
+      const logLevel = status >= 400 ? 'warn' : 'info';
+      
+      logger[logLevel](
+        `[API] ${method} ${url} - ${status} (${ms}ms) [IP: ${ip}]`
       );
     });
     next();
