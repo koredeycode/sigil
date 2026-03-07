@@ -8,9 +8,21 @@ import { AgentRow, getAllAgents, getDatabase } from "../../lib/Database.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const packageJsonPath = join(__dirname, "../../../package.json");
-const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
-const version = packageJson.version;
+
+// Robust version resolution across dev (src/) and prod (dist/src/)
+const isCompiled = __dirname.includes(`${join("dist", "src")}`);
+const packageJsonPath = isCompiled
+  ? join(__dirname, "../../../../package.json")
+  : join(__dirname, "../../../package.json");
+
+let version = "0.0.0";
+try {
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+  version = packageJson.version;
+} catch (e) {
+  // Fallback if package.json is missing or unreadable
+  console.error(`Warning: Could not read package.json at ${packageJsonPath}`);
+}
 
 export const statusRouter: Router = Router();
 

@@ -2,20 +2,21 @@ import { DynamicStructuredTool } from '@langchain/core/tools';
 import { PublicKey } from '@solana/web3.js';
 import { z } from 'zod';
 import { logger } from '../lib/Logger.js';
+import { formatExplorerLink } from '../lib/SolanaUtils.js';
 import { requestAirdrop, signAndSubmit } from '../wallet/Signer.js';
 import {
-  buildBurnTokens,
-  buildCloseEmptyAccounts,
-  buildCreateToken,
-  buildDeactivateStake,
-  buildMemoTransaction,
-  buildMintTokens,
-  buildStakeSol,
-  buildTransferSol,
-  buildTransferToken,
-  getConnection,
-  lamportsToSol,
-  solToLamports,
+    buildBurnTokens,
+    buildCloseEmptyAccounts,
+    buildCreateToken,
+    buildDeactivateStake,
+    buildMemoTransaction,
+    buildMintTokens,
+    buildStakeSol,
+    buildTransferSol,
+    buildTransferToken,
+    getConnection,
+    lamportsToSol,
+    solToLamports,
 } from '../wallet/TransactionBuilder.js';
 import { getKeypair } from '../wallet/Wallet.js';
 
@@ -32,7 +33,7 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
 
   const getBalanceTool = new DynamicStructuredTool({
       name: 'get_balance',
-      description: 'Check SOL balance and all SPL token holdings for this agent\'s wallet.',
+      description: 'Check SOL balance and all SPL token holdings for this agent\'s wallet. Call this once at the start of a task if you need to know what you own.',
       schema: z.object({}),
       func: async () => {
         try {
@@ -74,7 +75,8 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           const lamports = solToLamports(amount);
           const result = await requestAirdrop(agentName, agentId, lamports);
           if (result.status === 'confirmed') {
-            return `✔ Airdrop ${amount} SOL confirmed. Tx: ${result.signature}`;
+            const link = formatExplorerLink('tx', result.signature!);
+            return `✔ Airdrop ${amount} SOL confirmed. Tx: ${link}`;
           }
           return `✘ Airdrop failed: ${result.error}`;
         } catch (error) {
@@ -105,7 +107,8 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           });
 
           if (result.status === 'confirmed') {
-            return `✔ Sent ${amount} SOL to ${to}. Tx: ${result.signature}`;
+            const link = formatExplorerLink('tx', result.signature!);
+            return `✔ Sent ${amount} SOL to ${to}. Tx: ${link}`;
           }
           return `✘ Transfer failed: ${result.error}`;
         } catch (error) {
@@ -266,7 +269,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           }, [stakeKeypair]);
 
           if (result.status === 'confirmed') {
-            return `✔ Staked ${amount} SOL to validator ${validatorAddress}. Stake account: ${stakeKeypair.publicKey.toBase58()}. Tx: ${result.signature}`;
+            const txLink = formatExplorerLink('tx', result.signature!);
+            const accountLink = formatExplorerLink('address', stakeKeypair.publicKey.toBase58());
+            return `✔ Staked ${amount} SOL to validator ${validatorAddress}. Stake account: ${accountLink}. Tx: ${txLink}`;
           }
           return `✘ Stake failed: ${result.error}`;
         } catch (error) {
@@ -330,7 +335,9 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
 
           if (result.status === 'confirmed') {
             const metaStr = metadata ? ` Name: ${name}, Symbol: ${symbol}.` : '';
-            return `✔ Token created! Mint address: ${mintKeypair.publicKey.toBase58()}. Decimals: ${decimals}.${metaStr} Tx: ${result.signature}`;
+            const txLink = formatExplorerLink('tx', result.signature!);
+            const mintLink = formatExplorerLink('address', mintKeypair.publicKey.toBase58());
+            return `✔ Token created! Mint address: ${mintLink}. Decimals: ${decimals}.${metaStr} Tx: ${txLink}`;
           }
           return `✘ Token creation failed: ${result.error}`;
         } catch (error) {
@@ -365,7 +372,8 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           });
 
           if (result.status === 'confirmed') {
-            return `✔ Minted ${amount} tokens (${mintAddress}). Tx: ${result.signature}`;
+            const link = formatExplorerLink('tx', result.signature!);
+            return `✔ Minted ${amount} tokens (${mintAddress}). Tx: ${link}`;
           }
           return `✘ Mint failed: ${result.error}`;
         } catch (error) {
@@ -436,7 +444,8 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
           });
 
           if (result.status === 'confirmed') {
-            return `✔ Sent ${amount} tokens (${mintAddress}) to ${to}. Tx: ${result.signature}`;
+            const link = formatExplorerLink('tx', result.signature!);
+            return `✔ Sent ${amount} tokens (${mintAddress}) to ${to}. Tx: ${link}`;
           }
           return `✘ Transfer failed: ${result.error}`;
         } catch (error) {
@@ -544,7 +553,8 @@ export function createCustomTools(agentId: string, agentName: string): DynamicSt
 
           if (result.status === 'confirmed') {
             const outAmount = quoteData.outAmount / 10 ** (quoteData.outputDecimals ?? 9);
-            return `✔ Swapped ${amount} ${inputMint} → ${outAmount} ${outputMint}. Tx: ${result.signature}`;
+            const link = formatExplorerLink('tx', result.signature!);
+            return `✔ Swapped ${amount} ${inputMint} → ${outAmount} ${outputMint}. Tx: ${link}`;
           }
           return `✘ Swap failed: ${result.error}`;
         } catch (error) {

@@ -1,6 +1,6 @@
 {
   "name": "sigil-wallet",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "module",
   "description": "The Local-First Autonomous Agentic Wallet for Solana",
   "author": "Yusuf Akorede <koredey4u@gmail.com>",
@@ -37,6 +37,7 @@
     "node": ">=18.0.0"
   },
   "overrides": {
+    "formdata-node": "^5.0.0",
     "rpc-websockets": "^9.0.4",
     "@solana/web3.js": "^1.98.0"
   },

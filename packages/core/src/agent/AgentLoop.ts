@@ -133,6 +133,21 @@ export async function invokeSolanaAgent(
         ]
       }
       );
+
+      // Context Optimization: Limit the number of messages stored in the checkpoint/state
+      // LangGraph's MemorySaver keeps the entire history in the state for the thread_id.
+      // If the history gets too long, we manually trim the state.
+      const MAX_STATE_MESSAGES = 20;
+      if (result.messages.length > MAX_STATE_MESSAGES) {
+        logger.info(`[AgentLoop:${agentName}] Trimming history from ${result.messages.length} to ${MAX_STATE_MESSAGES} messages.`);
+        const trimmedMessages = result.messages.slice(-MAX_STATE_MESSAGES);
+        
+        // Update the state with trimmed messages
+        await graph.updateState(
+          { configurable: { thread_id: agentId } },
+          { messages: trimmedMessages }
+        );
+      }
     } finally {
       // clearTimeout(timeoutId);
     }
