@@ -1,32 +1,32 @@
 import { clsx } from "clsx";
 import {
-  Activity,
-  Bot,
-  Brain,
-  Clock,
-  ExternalLink,
-  LogOut,
-  MessageSquare,
-  Monitor,
-  Moon,
-  Settings,
-  Sun,
-  Terminal,
+    Activity,
+    Bot,
+    Brain,
+    Clock,
+    ExternalLink,
+    LogOut,
+    MessageSquare,
+    Monitor,
+    Moon,
+    Settings,
+    Sun,
+    Terminal,
 } from "lucide-react";
 import { useState } from "react";
 import {
-  Group,
-  Panel,
-  Separator,
-  useDefaultLayout,
+    Group,
+    Panel,
+    Separator,
+    useDefaultLayout,
 } from "react-resizable-panels";
 import {
-  Link,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
-  useSearchParams,
+    Link,
+    Route,
+    Routes,
+    useLocation,
+    useNavigate,
+    useSearchParams,
 } from "react-router-dom";
 import { twMerge } from "tailwind-merge";
 import { ChatBox } from "./components/ChatBox";
@@ -42,6 +42,7 @@ import { AgentManager } from "./pages/AgentManager";
 import { CronsPage } from "./pages/CronsPage";
 import { LogsPage } from "./pages/LogsPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { StatusPage } from "./pages/StatusPage";
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
@@ -342,6 +343,18 @@ const Dashboard = () => {
                 Logs
               </Link>
               <Link
+                to="/status"
+                className={cn(
+                  "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  location.pathname === "/status"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                )}
+              >
+                <Activity className="w-4 h-4" />
+                Status
+              </Link>
+              <Link
                 to="/crons"
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
@@ -414,6 +427,7 @@ const Dashboard = () => {
           />
           <Route path="/crons" element={<CronsPage agents={agents} />} />
           <Route path="/logs" element={<LogsPage agents={agents} />} />
+          <Route path="/status" element={<StatusPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </main>

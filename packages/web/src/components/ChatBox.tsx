@@ -1,4 +1,4 @@
-import { Check, ChevronDown, ChevronUp, Copy, Send, Terminal } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Copy, Send, Wrench, Terminal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -86,7 +86,10 @@ export function ChatBox({ activeAgent }: ChatBoxProps) {
                     <div className="p-2 pt-0 max-h-60 overflow-y-auto space-y-2 border-t border-border/50 font-mono">
                         {parsedTools.map((t, i) => (
                             <div key={i} className="flex flex-col gap-1">
-                                <span className="text-primary font-semibold">{t.tool}</span>
+                                <div className="flex items-center gap-2">
+                                    <Wrench className="w-3 h-3 text-primary" />
+                                    <span className="text-primary font-semibold">{t.tool}</span>
+                                </div>
                                 <span className="text-muted-foreground whitespace-pre-wrap break-all">{t.result}</span>
                             </div>
                         ))}

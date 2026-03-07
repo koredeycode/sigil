@@ -14,6 +14,9 @@ process.on("warning", (warning) => {
 
 import { Command } from "commander";
 
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { registerAgentCommand } from "./commands/agent.js";
 import { registerAuthCommand } from "./commands/auth.js";
 import { registerChatCommand } from "./commands/chat.js";
@@ -30,7 +33,12 @@ import { registerStopCommand } from "./commands/stop.js";
 import { registerTuiCommand } from "./commands/tui.js";
 import { registerTxCommand } from "./commands/tx.js";
 
-const version = "0.1.0";
+// Read version from package.json
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJsonPath = join(__dirname, "../../package.json");
+const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+const version = packageJson.version;
 
 const program = new Command();
 

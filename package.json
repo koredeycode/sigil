@@ -14,5 +14,11 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "rpc-websockets": "^9.0.4",
+      "@solana/web3.js": "^1.98.0"
+    }
   }
 }

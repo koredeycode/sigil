@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { Bot, ExternalLink, MessageSquare } from 'lucide-react';
+import { Activity, Bot, ExternalLink, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Agent } from '../hooks/useAgents';
 
@@ -47,6 +47,13 @@ export function AgentSidebar({ agents, activeAgentId, onSelectAgent }: AgentSide
                             title="Open Chat"
                         >
                             <MessageSquare className="w-3 h-3" />
+                        </Link>
+                        <Link 
+                            to="/status"
+                            className="p-1 rounded-sm hover:bg-background/20 text-muted-foreground hover:text-foreground transition-colors"
+                            title="System Status"
+                        >
+                            <Activity className="w-3 h-3" />
                         </Link>
                         <Link 
                             to={`/agents/${agent.id}`}
