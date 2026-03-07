@@ -1,6 +1,6 @@
 {
   "name": "sigil-wallet",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "type": "module",
   "description": "The Local-First Autonomous Agentic Wallet for Solana",
   "author": "Yusuf Akorede <koredey4u@gmail.com>",

@@ -136,7 +136,7 @@ export function getWebDistPath(): string {
   // Check for bundled web assets first (npm package)
   if (isCompiled) {
     // In compiled package: dist/src/lib -> ../../bundled/web
-    const bundledPath = path.resolve(currentDirname, "../../bundled/web");
+    const bundledPath = path.resolve(currentDirname, "../../../bundled/web");
     if (fs.existsSync(bundledPath)) {
       return bundledPath;
     }

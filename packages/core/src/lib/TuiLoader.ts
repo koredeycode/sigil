@@ -19,7 +19,7 @@ function getTuiModulePath(): string {
 
   if (isCompiled) {
     // Check for bundled TUI in npm package: dist/src/lib -> ../../bundled/tui
-    const bundledPath = path.resolve(__dirname, "../../bundled/tui/index.js");
+    const bundledPath = path.resolve(__dirname, "../../../bundled/tui/index.js");
     if (fs.existsSync(bundledPath)) {
       return bundledPath;
     }

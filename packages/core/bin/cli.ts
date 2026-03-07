@@ -15,7 +15,7 @@ process.on("warning", (warning) => {
 import { Command } from "commander";
 
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import path, { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { registerAgentCommand } from "./commands/agent.js";
 import { registerAuthCommand } from "./commands/auth.js";
@@ -36,7 +36,13 @@ import { registerTxCommand } from "./commands/tx.js";
 // Read version from package.json
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const packageJsonPath = join(__dirname, "../../package.json");
+
+// Robust version resolution across dev (bin/) and prod (dist/bin/)
+const isCompiled = __dirname.includes(`dist${path.sep}bin`);
+const packageJsonPath = isCompiled
+  ? join(__dirname, "../../package.json")
+  : join(__dirname, "../package.json");
+
 const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
 const version = packageJson.version;
 

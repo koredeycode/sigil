@@ -50,6 +50,18 @@ copyRecursive(
   path.join(BUNDLED_TUI_DIR, "package.json"),
 );
 
+// Fix package.json paths (remove "dist/" prefix since files are copied to root)
+const tuiPkgPath = path.join(BUNDLED_TUI_DIR, "package.json");
+const tuiPkg = JSON.parse(fs.readFileSync(tuiPkgPath, "utf-8"));
+if (tuiPkg.main) tuiPkg.main = tuiPkg.main.replace(/^dist\//, "");
+if (tuiPkg.types) tuiPkg.types = tuiPkg.types.replace(/^dist\//, "");
+if (tuiPkg.exports) {
+  tuiPkg.exports = JSON.parse(
+    JSON.stringify(tuiPkg.exports).replace(/"\.\/dist\//g, '"./'),
+  );
+}
+fs.writeFileSync(tuiPkgPath, JSON.stringify(tuiPkg, null, 2));
+
 // Step 5: Copy Web dist
 console.log("📦 Copying Web dist...");
 copyRecursive(path.join(WEB_PACKAGE, "dist"), BUNDLED_WEB_DIR);
@@ -64,7 +76,7 @@ console.log(`   - TUI: ${BUNDLED_TUI_DIR}`);
 console.log(`   - Web: ${BUNDLED_WEB_DIR}`);
 console.log("\nNext steps:");
 console.log("  1. npm publish");
-console.log('  2. npm install -g sigil-wallet');
+console.log("  2. npm install -g sigil-wallet");
 
 function copyRecursive(src: string, dest: string) {
   if (!fs.existsSync(src)) {

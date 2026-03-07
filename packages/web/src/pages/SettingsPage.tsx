@@ -796,7 +796,7 @@ export function SettingsPage() {
                     </p>
                   </div>
                   <span className="font-mono text-xs bg-secondary px-2 py-1 rounded-md text-muted-foreground font-medium">
-                    v0.1.0
+                    v0.2.2
                   </span>
                 </div>
                 <div className="p-4 flex items-center justify-between">
