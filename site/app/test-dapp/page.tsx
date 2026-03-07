@@ -1,9 +1,13 @@
 "use client";
 import {
-  Connection,
-  PublicKey,
-  SystemProgram,
-  Transaction,
+    Authorized,
+    Connection,
+    Keypair,
+    Lockup,
+    PublicKey,
+    StakeProgram,
+    SystemProgram,
+    Transaction,
 } from "@solana/web3.js";
 import { useEffect, useState } from "react";
 
@@ -17,6 +21,10 @@ export default function TestDappPage() {
   const [recipient, setRecipient] = useState<string>("");
   const [amountLabel, setAmountLabel] = useState<string>("0.5");
   const [isValidAddress, setIsValidAddress] = useState(true);
+  const [activeMode, setActiveMode] = useState<"transfer" | "stake">("transfer");
+  const [validators, setValidators] = useState<any[]>([]);
+  const [selectedValidator, setSelectedValidator] = useState<string>("");
+  const [isLoadingValidators, setIsLoadingValidators] = useState(false);
 
   useEffect(() => {
     if (!recipient) {
@@ -50,6 +58,30 @@ export default function TestDappPage() {
       window.removeEventListener("sigil#initialized", checkProvider);
     };
   }, []);
+
+  // Fetch validators when switching to stake mode
+  useEffect(() => {
+    if (activeMode === "stake" && validators.length === 0) {
+      const fetchValidators = async () => {
+        setIsLoadingValidators(true);
+        try {
+          const res = await fetch("http://localhost:74445/api/wallet/provider/validators");
+          const data = await res.json();
+          if (data.data) {
+            setValidators(data.data);
+            if (data.data.length > 0) {
+              setSelectedValidator(data.data[0].voteAccount);
+            }
+          }
+        } catch (e) {
+          console.error("Failed to fetch validators:", e);
+        } finally {
+          setIsLoadingValidators(false);
+        }
+      };
+      fetchValidators();
+    }
+  }, [activeMode, validators.length]);
 
   // Listen for account changes from the extension
   useEffect(() => {
@@ -183,6 +215,63 @@ export default function TestDappPage() {
     }
   };
 
+  const executeStake = async () => {
+    if (!provider || !pubkey || !selectedValidator) return;
+
+    setIsSimulating(true);
+    setTxResult(null);
+
+    try {
+      const connection = new Connection(
+        "https://api.devnet.solana.com",
+        "confirmed",
+      );
+      const { blockhash } = await connection.getLatestBlockhash();
+
+      const stakeKeypair = Keypair.generate();
+      const lamports = parseFloat(amountLabel || "0.5") * 1e9;
+      const walletPubkey = new PublicKey(pubkey);
+      const validatorPubkey = new PublicKey(selectedValidator);
+
+      const tx = new Transaction().add(
+        StakeProgram.createAccount({
+          fromPubkey: walletPubkey,
+          stakePubkey: stakeKeypair.publicKey,
+          authorized: new Authorized(walletPubkey, walletPubkey),
+          lamports,
+          lockup: new Lockup(0, 0, walletPubkey),
+        }),
+        StakeProgram.delegate({
+          stakePubkey: stakeKeypair.publicKey,
+          authorizedPubkey: walletPubkey,
+          votePubkey: validatorPubkey,
+        }),
+      );
+
+      tx.recentBlockhash = blockhash;
+      tx.feePayer = walletPubkey;
+
+      // Partial sign with the new stake account's keypair
+      tx.partialSign(stakeKeypair);
+
+      console.log("[Test dApp] Requesting signature from provider...");
+      const signedTx = await provider.signTransaction(tx);
+
+      const rawTx = signedTx.serialize();
+      const signature = await connection.sendRawTransaction(rawTx, {
+        skipPreflight: false,
+      });
+
+      console.log("[Test dApp] Stake transaction sent:", signature);
+      setTxResult({ status: "success", signature });
+    } catch (error: any) {
+      console.error("[Test dApp] Staking failed:", error);
+      setTxResult({ status: "rejected", error: error.message });
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
   return (
     <div className="container py-24 flex min-h-screen flex-col items-center gap-12 max-w-4xl mx-auto">
       <div className="text-center space-y-4">
@@ -233,54 +322,124 @@ export default function TestDappPage() {
             </div>
 
             <div className="space-y-4 pt-4 border-t border-border">
-              <div>
-                <h3 className="text-lg font-semibold">Test Transaction</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Trigger a raw SOL transfer. The Sigil Agent will intercept and
-                  analyze it.
-                </p>
-
-                <div className="space-y-3 mb-6">
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Destination Address
-                    </label>
-                    <input
-                      type="text"
-                      value={recipient}
-                      onChange={(e) => setRecipient(e.target.value)}
-                      placeholder="e.g. 5xV..."
-                      className={`w-full mt-1 px-3 py-2 bg-background border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 ${!isValidAddress ? "border-red-500/50 focus:ring-red-500/50" : "border-border focus:ring-primary/50"}`}
-                    />
-                    {!isValidAddress && (
-                      <p className="text-xs text-red-500 mt-1 font-medium">
-                        Invalid Solana address format.
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Amount (SOL)
-                    </label>
-                    <input
-                      type="number"
-                      value={amountLabel}
-                      onChange={(e) => setAmountLabel(e.target.value)}
-                      step="0.01"
-                      min="0"
-                      className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </div>
-                </div>
+              <div className="flex p-1 bg-secondary/30 rounded-lg mb-6">
+                <button
+                  onClick={() => setActiveMode("transfer")}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${activeMode === "transfer" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Send SOL
+                </button>
+                <button
+                  onClick={() => setActiveMode("stake")}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${activeMode === "stake" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                >
+                  Stake SOL
+                </button>
               </div>
 
-              <button
-                onClick={simulateTransaction}
-                disabled={isSimulating || !isValidAddress}
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
-              >
-                {isSimulating ? "Waiting for Agent..." : "Trigger Transaction"}
-              </button>
+              {activeMode === "transfer" ? (
+                <div>
+                  <h3 className="text-lg font-semibold">Test Transaction</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Trigger a raw SOL transfer. The Sigil Agent will intercept and
+                    analyze it.
+                  </p>
+
+                  <div className="space-y-3 mb-6">
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Destination Address
+                      </label>
+                      <input
+                        type="text"
+                        value={recipient}
+                        onChange={(e) => setRecipient(e.target.value)}
+                        placeholder="e.g. 5xV..."
+                        className={`w-full mt-1 px-3 py-2 bg-background border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 ${!isValidAddress ? "border-red-500/50 focus:ring-red-500/50" : "border-border focus:ring-primary/50"}`}
+                      />
+                      {!isValidAddress && (
+                        <p className="text-xs text-red-500 mt-1 font-medium">
+                          Invalid Solana address format.
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Amount (SOL)
+                      </label>
+                      <input
+                        type="number"
+                        value={amountLabel}
+                        onChange={(e) => setAmountLabel(e.target.value)}
+                        step="0.01"
+                        min="0"
+                        className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={simulateTransaction}
+                    disabled={isSimulating || !isValidAddress}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {isSimulating ? "Waiting for Agent..." : "Trigger Transaction"}
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <h3 className="text-lg font-semibold">Native Staking</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Delegate SOL to a validator. This requires a multi-signer transaction.
+                  </p>
+
+                  <div className="space-y-3 mb-6">
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Select Validator
+                      </label>
+                      {isLoadingValidators ? (
+                        <div className="w-full mt-1 px-3 py-2 bg-secondary/50 rounded-lg text-sm animate-pulse">
+                          Loading validators...
+                        </div>
+                      ) : (
+                        <select
+                          value={selectedValidator}
+                          onChange={(e) => setSelectedValidator(e.target.value)}
+                          className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        >
+                          {validators.map((v) => (
+                            <option key={v.voteAccount} value={v.voteAccount}>
+                              {v.name} ({v.voteAccount.slice(0, 4)}...{v.voteAccount.slice(-4)}) - {v.commission}%
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        Amount to Stake (SOL)
+                      </label>
+                      <input
+                        type="number"
+                        value={amountLabel}
+                        onChange={(e) => setAmountLabel(e.target.value)}
+                        step="0.1"
+                        min="0.1"
+                        className="w-full mt-1 px-3 py-2 bg-background border border-border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={executeStake}
+                    disabled={isSimulating || !selectedValidator}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {isSimulating ? "Waiting for Agent..." : "Stake SOL"}
+                  </button>
+                </div>
+              )}
 
               {txResult && (
                 <div

@@ -23,8 +23,8 @@ import {
 import {
   invalidateAgentGraph,
   invokeSolanaAgent,
-  setAgentManager,
 } from "./AgentLoop.js";
+import { setAgentManager } from "./context.js";
 import { cronScheduler } from "./CronScheduler.js";
 import { getPrimaryModel } from "./LLMChain.js";
 import { clearAgentKit } from "./ToolRegistry.js";

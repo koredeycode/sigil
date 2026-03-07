@@ -9,7 +9,7 @@ import {
     toggleCronJob,
     updateCronJob
 } from '../lib/Database.js';
-import { agentManager } from './AgentManager.js';
+// agentManager will be imported dynamically to break circular dependency
 import { cronScheduler } from './CronScheduler.js';
 
 /**
@@ -30,6 +30,7 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
       }),
       func: async ({ action, name, loopInterval, prompt }) => {
         try {
+          const { agentManager } = await import('./AgentManager.js');
           switch (action) {
             case 'create':
               await agentManager.create(name, loopInterval || 60000, undefined, prompt);
@@ -57,6 +58,7 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
       schema: z.object({}),
       func: async () => {
         try {
+          const { agentManager } = await import('./AgentManager.js');
           const agents = agentManager.list();
           return JSON.stringify(agents.map(a => ({ 
             id: a.id, 
@@ -79,6 +81,7 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
       }),
       func: async ({ nameOrId }) => {
         try {
+          const { agentManager } = await import('./AgentManager.js');
           const agent = agentManager.get(nameOrId);
           if (!agent) return `Agent "${nameOrId}" not found.`;
           const crons = getCronJobsForAgent(agent.id);
@@ -108,6 +111,7 @@ export function createOrchestratorTools(): DynamicStructuredTool[] {
       }),
       func: async ({ nameOrId, limit }) => {
         try {
+          const { agentManager } = await import('./AgentManager.js');
           const agent = agentManager.get(nameOrId);
           if (!agent) return `Agent "${nameOrId}" not found.`;
           const logs = getAgentLogs(agent.id, limit || 20);

@@ -1,12 +1,3 @@
-import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { MemorySaver } from '@langchain/langgraph';
-import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { CONSTANTS } from '../lib/Constants.js';
-import { getAgent, getAgentChats, insertLog } from '../lib/Database.js';
-import { logger } from '../lib/Logger.js';
-import { LRUCache } from '../lib/LRUCache.js';
-import { buildSystemPrompt, getPrimaryModel } from './LLMChain.js';
-import { createTools } from './ToolRegistry.js';
 import type { IAgentManager } from './types.js';
 
 let agentManager: IAgentManager | null = null;
@@ -14,6 +5,17 @@ let agentManager: IAgentManager | null = null;
 export function setAgentManager(manager: IAgentManager): void {
   agentManager = manager;
 }
+
+import { AIMessage, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { MemorySaver } from '@langchain/langgraph';
+import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { CONSTANTS } from '../lib/Constants.js';
+import { getAgent, getAgentChats, insertLog } from '../lib/Database.js';
+import { logger } from '../lib/Logger.js';
+import { LRUCache } from '../lib/LRUCache.js';
+import { getAgentManager } from './context.js';
+import { buildSystemPrompt, getPrimaryModel } from './LLMChain.js';
+import { createTools } from './ToolRegistry.js';
 
 // In-memory checkpointer — provides state within agent tool-call loops.
 // Cross-session chat persistence is handled by our existing SQLite database.
@@ -180,6 +182,7 @@ export async function invokeSolanaAgent(
     insertLog(agentId, isCron ? 'cron_invoke' : 'agent_invoke', response, message);
 
     // Emit events
+    const agentManager = getAgentManager();
     if (toolResults.length > 0 && agentManager) {
       for (const tr of toolResults) {
         agentManager.emit('agent:action', {

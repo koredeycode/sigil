@@ -1,8 +1,8 @@
 import {
-  Connection,
-  PublicKey,
-  Transaction,
-  VersionedTransaction,
+    Connection,
+    PublicKey,
+    Transaction,
+    VersionedTransaction,
 } from "@solana/web3.js";
 import { Router } from "express";
 import { agentManager } from "../../agent/AgentManager.js";
@@ -11,8 +11,8 @@ import { logger } from "../../lib/Logger.js";
 import { getKeypair } from "../../wallet/Wallet.js";
 import { validateBody } from "../middleware/validate.js";
 import {
-  signTransactionSchema,
-  simulateTransactionSchema,
+    signTransactionSchema,
+    simulateTransactionSchema,
 } from "../schemas.js";
 
 export const walletProviderRouter: Router = Router();
@@ -160,7 +160,38 @@ walletProviderRouter.get("/transactions", async (req, res) => {
   }
 });
 
+// GET /api/wallet/provider/validators
+walletProviderRouter.get("/validators", async (req, res) => {
+  try {
+    const connection = getConnection();
+    const voteAccounts = await connection.getVoteAccounts();
+
+    // Sort by activated stake (highest first) and take top 20
+    const sorted = voteAccounts.current
+      .sort((a, b) => b.activatedStake - a.activatedStake)
+      .slice(0, 20);
+
+    const validators = sorted.map((v, i) => ({
+      rank: i + 1,
+      name: v.votePubkey.slice(0, 8) + "...", // Placeholder name logic
+      voteAccount: v.votePubkey,
+      nodeIdentity: v.nodePubkey,
+      activatedStake: v.activatedStake / 1e9,
+      commission: v.commission,
+      lastVote: v.lastVote,
+    }));
+
+    res.json({ message: "Success", data: validators });
+  } catch (error) {
+    res.status(500).json({
+      message: error instanceof Error ? error.message : String(error),
+      data: null,
+    });
+  }
+});
+
 const SYSTEM_PROGRAM_ID = "11111111111111111111111111111111";
+const STAKE_PROGRAM_ID = "Stake11111111111111111111111111111111111111";
 
 /**
  * Decode known program instruction data into human-readable text.
@@ -196,6 +227,27 @@ function decodeInstructionData(
     };
     return `System Program: ${ixNames[ixType] || `Unknown(${ixType})`}`;
   }
+
+  if (programId === STAKE_PROGRAM_ID && data.length >= 4) {
+    const ixType = data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24);
+    const ixNames: Record<number, string> = {
+      0: "Initialize",
+      1: "Authorize",
+      2: "DelegateStake",
+      3: "Withdraw",
+      4: "Deactivate",
+    };
+
+    let detail = "";
+    if (ixType === 2) {
+      detail = ` (Delegate stake account ${accounts[0] || "?"} to validator ${accounts[1] || "?"})`;
+    } else if (ixType === 4) {
+      detail = ` (Deactivate stake account ${accounts[0] || "?"})`;
+    }
+
+    return `Stake Program: ${ixNames[ixType] || `Unknown(${ixType})`}${detail}`;
+  }
+
   // Unknown program — return raw hex
   return `Data (hex): ${Buffer.from(data).toString("hex")}`;
 }
