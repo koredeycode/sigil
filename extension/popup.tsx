@@ -724,7 +724,16 @@ export default function IndexPopup() {
             }}>
             sigil start
           </code>{" "}
-          in your terminal.
+          in your terminal. Alternatively, run{" "}
+          <code
+            style={{
+              backgroundColor: colors.btnBg,
+              padding: "2px 4px",
+              borderRadius: "4px"
+            }}>
+            sigil auth token
+          </code>{" "}
+          to display it.
         </p>
       </div>
     )

@@ -84,6 +84,13 @@ const Login = ({ onLogin }: { onLogin: (token: string) => void }) => {
               </code>{" "}
               to open this page automatically
             </li>
+            <li>
+              Run{" "}
+              <code className="px-1.5 py-0.5 bg-background border border-border rounded font-mono text-xs text-foreground">
+                sigil auth token
+              </code>{" "}
+              to view the current session token
+            </li>
           </ol>
           <div className="pt-3 mt-3 border-t border-border">
             <p className="text-xs text-muted-foreground">

@@ -21,7 +21,14 @@ export function registerDashboardCommand(program: Command) {
       const s = clack.spinner();
       s.start('Opening Sigil Wallet Dashboard...');
       const url = `http://localhost:7445/#token=${token}`;
-      await open(url);
-      s.stop('Dashboard opened.');
+      try {
+        await open(url);
+        s.stop('Dashboard opened.');
+      } catch (err) {
+        s.stop('Failed to open browser automatically.');
+      }
+
+      clack.log.info('If the dashboard didn\'t open, you can access it manually:');
+      clack.note(url, 'Dashboard URL');
     });
 }

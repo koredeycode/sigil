@@ -92,6 +92,11 @@ export function registerStartCommand(program: Command) {
         clack.log.step(
           `Cron Jobs: ${cronInfo.cronJobs} active, ${cronInfo.autonomousCycles} autonomous cycles`,
         );
+
+        clack.log.info("");
+        clack.log.success("Sigil Wallet is ready!");
+        clack.log.step(`• Dashboard: http://localhost:7445/#token=${token}`);
+        clack.log.info("Keep this window open to maintain the connection.");
       } else {
         // Spawn background daemon
         clack.log.info("Sigil Wallet — Starting background process...");
@@ -114,7 +119,14 @@ export function registerStartCommand(program: Command) {
           clack.log.step(`Log file: ${getLogFile()}`);
           clack.log.info("");
           clack.log.info("Next steps:");
-          clack.log.step(`• Run \`sigil dashboard\` to open the web UI`);
+          const { getAuthToken } = await import(new URL('../../src/lib/Config.js', import.meta.url).href);
+          const token = getAuthToken();
+          if (token) {
+            clack.log.step(`• Open Dashboard: http://localhost:7445/#token=${token}`);
+          } else {
+            clack.log.step(`• Run \`sigil dashboard\` to open the web UI`);
+          }
+          clack.log.step(`• Run \`sigil auth token\` to view your session token`);
           clack.log.step(`• Run \`sigil status\` to check daemon health`);
           clack.log.step(`• Run \`sigil stop\` to stop the daemon`);
         } catch (error) {

@@ -25,6 +25,12 @@ export function registerStatusCommand(program: Command) {
         clack.log.step(`API Server: http://localhost:7445`);
         clack.log.step(`Log file: ${getLogFile()}`);
 
+        const { getAuthToken } = await import(new URL('../../src/lib/Config.js', import.meta.url).href);
+        const token = getAuthToken();
+        if (token) {
+           clack.log.step(`Dashboard: http://localhost:7445/#token=${token}`);
+        }
+
         // Show last few lines of log if available
         const logFile = getLogFile();
         if (fs.existsSync(logFile)) {
@@ -32,6 +38,9 @@ export function registerStatusCommand(program: Command) {
           const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
           clack.log.step(`Log size: ${sizeMB} MB`);
         }
+        
+        clack.log.info("");
+        clack.log.info("💡 Run `sigil auth token` to get your session token for the extension.");
       } catch (e: any) {
         if (e.code === "ESRCH") {
           clack.log.warn(`✗ Sigil Wallet is NOT running (stale PID ${pid}).`);
