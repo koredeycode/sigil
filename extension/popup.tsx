@@ -1,6 +1,7 @@
 import iconBase64 from "data-base64:~assets/icon.png"
 import { ArrowUpRight, ExternalLink } from "lucide-react"
 import { useEffect, useState } from "react"
+import "./style.css"
 
 import { config } from "./core/config"
 
@@ -198,14 +199,15 @@ export default function IndexPopup() {
 
   // Theme colors
   const colors = {
-    bg: theme === "dark" ? "#09090b" : "#fafafa",
-    text: theme === "dark" ? "#fafafa" : "#09090b",
-    textMuted: theme === "dark" ? "#a1a1aa" : "#71717a",
-    cardBg: theme === "dark" ? "#18181b" : "#ffffff",
-    border: theme === "dark" ? "#27272a" : "#e4e4e7",
+    bg: theme === "dark" ? "#0a0a0a" : "#ffffff",
+    text: theme === "dark" ? "#fafafa" : "#0a0a0a",
+    textMuted: theme === "dark" ? "#a3a3a3" : "#737373",
+    cardBg: theme === "dark" ? "#171717" : "#ffffff",
+    border: theme === "dark" ? "#262626" : "#e5e5e5",
     hover:
-      theme === "dark" ? "rgba(39, 39, 42, 0.4)" : "rgba(244, 244, 245, 0.8)",
-    btnBg: theme === "dark" ? "rgba(39, 39, 42, 0.5)" : "#f4f4f5"
+      theme === "dark" ? "rgba(38, 38, 38, 0.4)" : "rgba(245, 245, 245, 0.8)",
+    btnBg: theme === "dark" ? "rgba(38, 38, 38, 0.5)" : "#f5f5f5",
+    primary: "#16a34a"
   }
 
   useEffect(() => {
@@ -592,7 +594,7 @@ export default function IndexPopup() {
           boxSizing: "border-box",
           width: "400px",
           minHeight: "600px",
-          fontFamily: "sans-serif",
+          fontFamily: "\"Outfit\", sans-serif",
           backgroundColor: colors.bg,
           color: colors.text,
           display: "flex",
@@ -662,7 +664,7 @@ export default function IndexPopup() {
               backgroundColor: colors.cardBg,
               color: colors.text,
               outline: "none",
-              fontFamily: "monospace",
+              fontFamily: "\"JetBrains Mono\", monospace",
               boxSizing: "border-box",
               transition: "border-color 0.2s"
             }}
@@ -736,7 +738,7 @@ export default function IndexPopup() {
           boxSizing: "border-box",
           width: "100%",
           height: "100vh",
-          fontFamily: "sans-serif",
+          fontFamily: "\"Outfit\", sans-serif",
           backgroundColor: colors.bg,
           color: colors.text,
           display: "flex",
@@ -914,7 +916,7 @@ export default function IndexPopup() {
                       <code
                         style={{
                           color: colors.text,
-                          fontFamily: "monospace",
+                          fontFamily: "\"JetBrains Mono\", monospace",
                           fontSize: "10px"
                         }}>
                         {agents
@@ -1279,7 +1281,7 @@ export default function IndexPopup() {
           style={{
             fontSize: "11px",
             color: colors.textMuted,
-            fontFamily: "monospace"
+            fontFamily: "\"JetBrains Mono\", monospace"
           }}>
           {mainPubkey
             ? `${mainPubkey.slice(0, 4)}...${mainPubkey.slice(-4)}`
@@ -1322,7 +1324,7 @@ export default function IndexPopup() {
           width: "400px",
           minHeight: "600px",
           boxSizing: "border-box",
-          fontFamily: "sans-serif",
+          fontFamily: "\"Outfit\", sans-serif",
           backgroundColor: colors.bg,
           color: colors.text,
           padding: "0",
@@ -1797,7 +1799,7 @@ export default function IndexPopup() {
                                 style={{
                                   fontSize: "12px",
                                   fontWeight: "600",
-                                  fontFamily: "monospace",
+                                  fontFamily: "\"JetBrains Mono\", monospace",
                                   color: colors.textMuted,
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
@@ -1896,7 +1898,7 @@ export default function IndexPopup() {
           width: "100%",
           height: "100vh",
           boxSizing: "border-box",
-          fontFamily: "sans-serif",
+          fontFamily: "\"Outfit\", sans-serif",
           backgroundColor: colors.bg,
           color: colors.text,
           display: "flex",
@@ -1920,7 +1922,7 @@ export default function IndexPopup() {
               style={{
                 fontSize: "12px",
                 color: colors.textMuted,
-                fontFamily: "monospace",
+                fontFamily: "\"JetBrains Mono\", monospace",
                 marginTop: "4px",
                 display: "block"
               }}>
@@ -2026,7 +2028,7 @@ export default function IndexPopup() {
                   <code
                     style={{
                       color: colors.text,
-                      fontFamily: "monospace",
+                      fontFamily: "\"JetBrains Mono\", monospace",
                       fontSize: "10px"
                     }}>
                     {currentAgent.pubkey.slice(0, 8)}...
@@ -2160,7 +2162,7 @@ export default function IndexPopup() {
                       style={{
                         fontSize: "12px",
                         color: "#fca5a5",
-                        fontFamily: "monospace",
+                        fontFamily: "\"JetBrains Mono\", monospace",
                         wordBreak: "break-all",
                         whiteSpace: "pre-wrap"
                       }}>
@@ -2210,7 +2212,7 @@ export default function IndexPopup() {
                       <pre
                         style={{
                           fontSize: "10px",
-                          fontFamily: "monospace",
+                          fontFamily: "\"JetBrains Mono\", monospace",
                           color: colors.textMuted,
                           whiteSpace: "pre-wrap",
                           wordBreak: "break-all"

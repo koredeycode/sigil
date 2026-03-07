@@ -21,7 +21,7 @@ export function registerTxCommand(program: Command) {
 
         const selected = await clack.select({
           message: 'View transactions for which agent?',
-          options: agents.map(a => ({
+          options: agents.map((a: any) => ({
             value: a.name,
             label: a.name,
             hint: `${a.status}`,

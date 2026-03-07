@@ -54,7 +54,7 @@ export function registerProviderCommand(program: Command) {
 
           if (models && models.length > 0) {
             const modelOptions = [
-              ...models.map(m => ({ value: m.id, label: m.label })),
+              ...models.map((m: { id: string; label: string }) => ({ value: m.id, label: m.label })),
               { value: '__manual__', label: '✏️  Enter manually...' },
             ];
 
@@ -128,7 +128,7 @@ export function registerProviderCommand(program: Command) {
 
         const selected = await clack.select({
           message: 'Which provider should be primary?',
-          options: providers.map(p => ({
+          options: providers.map((p: any) => ({
             value: String(p.id),
             label: `${p.name} — ${p.model}`,
             hint: p.is_primary ? 'current primary' : undefined,
@@ -159,7 +159,7 @@ export function registerProviderCommand(program: Command) {
 
         const selected = await clack.select({
           message: 'Which provider to remove?',
-          options: providers.map(p => ({
+          options: providers.map((p: any) => ({
             value: String(p.id),
             label: `${p.name} — ${p.model}`,
             hint: p.is_primary ? '⭐ primary' : undefined,

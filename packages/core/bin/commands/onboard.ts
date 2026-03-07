@@ -145,9 +145,9 @@ export function registerOnboardCommand(program: Command) {
 
           if (models && models.length > 0) {
             const modelOptions = [
-              ...models.map((m) => ({ value: m.id, label: m.label })),
+              ...models.map((m: { id: string; label: string }) => ({ value: m.id, label: m.label })),
               { value: "__manual__", label: "✏️  Enter manually..." },
-            ];
+              ];
 
             model = await clack.select({
               message: "Which model?",
