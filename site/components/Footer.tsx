@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const footerLinks = {
   Product: [
+    { href: '/demo', label: 'Watch Demo' },
     { href: '/docs', label: 'Documentation' },
     { href: '/docs/getting-started/quick-start', label: 'Quick Start' },
     { href: '/docs/cli', label: 'CLI Reference' },

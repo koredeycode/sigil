@@ -113,13 +113,6 @@ export function HomeClient() {
               className="flex flex-col sm:flex-row items-center gap-4 mb-6"
             >
               <CommandBox command="npm i -g sigil-wallet" className="w-72" />
-              <a
-                href="/docs"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-opacity"
-              >
-                Read the docs
-                <ArrowRight className="w-4 h-4" />
-              </a>
             </motion.div>
 
             <motion.div 
@@ -130,6 +123,23 @@ export function HomeClient() {
                 <b className="text-primary font-semibold">AI Agents:</b> Use the instruction set below to manage Sigil.
               </p>
               <CommandBox command="Read https://sigil-wallet.vercel.app/skill.md and use the instructions to set up Sigil." className="w-full" />
+              
+              <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
+                <a
+                  href="/demo"
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-border text-sm font-semibold hover:bg-secondary transition-colors"
+                >
+                  <ArrowRight className="w-4 h-4 text-primary" />
+                  Watch Demo
+                </a>
+                <a
+                  href="/docs"
+                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-opacity"
+                >
+                  Read the docs
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
             </motion.div>
           </div>
         </motion.div>

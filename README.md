@@ -19,6 +19,10 @@ sigil start
 
 For detailed usage, see the [full documentation](https://sigil-docs.vercel.app/docs) or run `sigil --help`.
 
+[▶️ Watch the Demo](https://youtu.be/UmhQZ-eeWbk)
+
+[![Watch the Demo](https://markdown-videos-api.jorgenkh.no/youtube/UmhQZ-eeWbk)](https://youtu.be/UmhQZ-eeWbk)
+
 ## Features
 
 - **Local-First Security:** Your private keys never touch the cloud. They are securely held in your OS Keychain and accessed securely via an isolated Wallet Layer.

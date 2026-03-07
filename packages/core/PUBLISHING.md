@@ -124,22 +124,57 @@ pnpm dev:web     # Run web UI with Vite dev server
 
 The code automatically detects development vs production mode and loads the appropriate modules.
 
-## Version Management
+## Version Management & Publishing Workflow
 
-Use semantic versioning:
+Sigil follows [Semantic Versioning (SemVer)](https://semver.org/). When you are ready to release changes, use the following commands to bump the version and publish:
 
+### 1. Patch Release (0.0.x)
+Use this for backwards-compatible bug fixes or minor documentation updates.
 ```bash
-# Patch release (bug fixes)
-npm version patch
+npm version patch  # Bumps 0.2.2 -> 0.2.3
 npm publish
+```
 
-# Minor release (new features)
-npm version minor
+### 2. Minor Release (0.x.0)
+Use this for adding new features that are backwards-compatible.
+```bash
+npm version minor  # Bumps 0.2.2 -> 0.3.0
 npm publish
+```
 
-# Major release (breaking changes)
-npm version major
+### 3. Major Release (x.0.0)
+Use this for breaking changes or significant architectural shifts.
+```bash
+npm version major  # Bumps 0.2.2 -> 1.0.0
 npm publish
+```
+
+> [!NOTE]
+> The `npm version` command automatically creates a git tag and updates `package.json`. Make sure you have a clean git state before running these.
+
+## Local & Offline Installation
+
+If you need to share or install Sigil without publishing it to the public npm registry (e.g., for internal testing or offline environments), you can use the tarball method.
+
+### 1. Generate the Tarball
+First, ensure the package is bundled and ready:
+```bash
+pnpm run bundle
+npm pack
+```
+This generates a file like `sigil-wallet-0.2.2.tgz` in your current directory.
+
+### 2. Manual/Offline Installation
+You can install this tarball directly on any machine with Node.js and npm installed:
+```bash
+# On the target machine
+npm install -g ./sigil-wallet-0.2.2.tgz
+```
+
+### 3. Verification
+Once installed, verify the installation as usual:
+```bash
+sigil --version
 ```
 
 ## Troubleshooting

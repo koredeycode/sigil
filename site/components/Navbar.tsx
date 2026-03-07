@@ -8,6 +8,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const links = [
+  { href: '/demo', label: 'Demo' },
   { href: '/blog', label: 'Blog' },
   { href: '/docs', label: 'Docs', external: true },
   { href: 'https://github.com/koredeycode/sigil', label: 'GitHub', external: true },
