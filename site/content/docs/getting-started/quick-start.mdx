@@ -5,65 +5,50 @@ description: Get your first Sigil Wallet agent running in under two minutes.
 
 This guide walks you through creating and running your first autonomous agent.
 
-## 1. Initialize Your Workspace
+## 1. Onboarding
 
 ```bash
-sigil init
+sigil onboard
 ```
 
-The wizard will prompt you to:
-- Choose an LLM provider (e.g., OpenAI, Anthropic, Ollama)
-- Enter your API key
-- Select a default model
+The guided wizard will walk you through:
+- **LLM Setup**: Choose a provider (OpenAI, Anthropic, etc.) and enter your API key.
+- **Main Agent**: Initialize your primary Sigil Wallet.
+- **Backend**: Launch the background daemon automatically.
 
-Once complete, Sigil Wallet creates a local SQLite database at `~/.sigil/sigil.db` and generates a session token for API authentication.
+## 2. Authenticate
 
-## 2. Create an Agent
+To use the Browser Extension or Web Dashboard, you'll need your session token:
 
 ```bash
-sigil agent create --name "alpha"
+sigil auth token
 ```
 
-This generates:
-- A new **Ed25519 keypair** stored securely in your OS Keychain
-- An isolated entry in the SQLite database for this agent's data
-- A Solana Devnet wallet address
+Copy the token and paste it into the "Authenticate" screen of your chosen interface.
 
-## 3. Start the Agent
+## 3. Create a Sub-Agent (Optional)
+
+If you want an agent with a specialized personality or distinct wallet:
 
 ```bash
-sigil agent start "alpha"
+sigil agent create "trader-bot"
+sigil agent start-agent "trader-bot"
 ```
-
-The agent begins its reasoning loop:
-
-1. **Fetch** — Reads SOL balance, SPL token holdings, and recent transactions
-2. **Evaluate** — Passes context to the LLM
-3. **Validate** — Proposed actions are checked against Guardrails
-4. **Execute** — Approved transactions are signed and submitted to Devnet
-5. **Log** — Reasoning traces are saved to the local database
 
 ## 4. Monitor Activity
 
-View real-time daemon logs:
+View real-time logs in your terminal:
 
 ```bash
 sigil logs --follow
 ```
 
-Or launch the interactive terminal dashboard:
+Or launch the visual dashboards:
 
 ```bash
-sigil tui
+sigil dashboard   # Open Web UI
+sigil tui         # Open Terminal UI
 ```
-
-Or start the web dashboard:
-
-```bash
-sigil start
-```
-
-Then open `http://localhost:7445` in your browser.
 
 ## Next Steps
 

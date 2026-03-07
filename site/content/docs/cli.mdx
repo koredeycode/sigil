@@ -9,59 +9,70 @@ The Sigil Wallet CLI is the primary management interface for agents, providers, 
 
 | Command | Description |
 |---|---|
-| `sigil init` | Start the step-by-step onboarding wizard |
-| `sigil onboard` | Alias for init, runs the setup flow |
-| `sigil start` | Boot the API server, Web Dashboard, and all active agent loops |
-| `sigil stop` | Halt all running agent intervals gracefully |
-| `sigil status` | Show server and agent status |
-| `sigil kill` | Emergency halt — stop all signing, wipe keys from memory globally |
-| `sigil kill [agent]` | Kill a specific agent by ID |
+| `sigil onboard` | Launch the guided setup wizard (Recommended for first-time setup) |
+| `sigil init` | Alias for onboard |
+| `sigil start` | Boot the API server and resume all active agent loops (Daemonized by default) |
+| `sigil stop` | Halt the background daemon and all running intervals |
+| `sigil status` | Show daemon health, API URL, and session token info |
+| `sigil kill` | Emergency halt — wipe keys from memory and stop all signing |
 | `sigil health` | Check database validity and connection health |
 
 ## Agent Management
 
+### Main Agent
+The primary agent is named `sigil`. It is the system's root agent.
+
 | Command | Description |
 |---|---|
-| `sigil agent create --name <name>` | Create a new agent with an isolated wallet |
-| `sigil agent start <name>` | Launch an agent's reasoning loop |
-| `sigil agent pause <name>` | Temporarily stop an agent (key stays in memory) |
-| `sigil agent destroy <name>` | Delete an agent and all associated data |
-| `sigil agent list` | Show all agents and their current status |
-| `sigil agent info <name>` | Show detailed agent info (address, directives, activity, token holdings) |
+| `sigil agent init` | Initialize the main "sigil" agent (generate or import wallet) |
+| `sigil agent start` | Launch the main agent's loop |
+| `sigil agent pause` | Pause the main agent |
+| `sigil agent info` | Show main agent details (address, balance, status) |
+| `sigil agent reset` | Destroy and re-initialize the main agent |
+
+### Sub-Agents
+You can create multiple sub-agents for specialized tasks.
+
+| Command | Description |
+|---|---|
+| `sigil agent create <name>` | Create a new sub-agent with its own isolated wallet |
+| `sigil agent list` | List all agents (main and sub-agents) |
+| `sigil agent get <name>` | Show detailed info for a specific agent |
+| `sigil agent start-agent <name>` | Start a specific sub-agent loop |
+| `sigil agent pause-agent <name>` | Pause a specific sub-agent |
+| `sigil agent destroy <name>` | Permanently delete an agent and its data |
 
 ## Logs & Transactions
 
 | Command | Description |
 |---|---|
-| `sigil chat <agent> "<message>"` | Send a message to a specific agent's context window |
-| `sigil logs` | View daemon process logs (stdout/stderr) |
-| `sigil logs --follow` | Stream daemon logs in real-time |
-| `sigil logs --lines <count>` | Show last N lines of daemon logs (default: 50) |
-| `sigil tx list <agent>` | View transaction history and swap records |
+| `sigil chat <agent> "<message>"` | Send a message to an agent's context window |
+| `sigil logs` | View daemon process logs |
+| `sigil tx list <agent>` | View transaction history for an agent |
 
 ## Providers (LLM)
 
 | Command | Description |
 |---|---|
-| `sigil provider add <name>` | Configure a new LLM provider (OpenAI, Anthropic, Ollama, etc) |
-| `sigil provider set-primary <name>` | Switch the active provider |
+| `sigil provider add <name>` | Configure a new LLM provider |
+| `sigil provider set-primary <name>` | Switch the active primary provider |
 | `sigil provider list` | View all configured providers |
-| `sigil provider remove <name>` | Remove a provider |
-| `sigil provider models <name> --api-key <key>` | List available models |
+| `sigil provider remove <name>` | Remove a provider configuration |
 
 ## Configuration & Auth
 
 | Command | Description |
 |---|---|
-| `sigil config set --loop-interval <seconds>` | Adjust global loop timing |
-| `sigil auth rotate` | Regenerate the API session token (Requires restart) |
+| `sigil auth token` | **[New]** Show the current session token for UI/Extension authentication |
+| `sigil auth rotate` | Regenerate the API session token |
+| `sigil config set --loop-interval <sec>` | Adjust global loop timing |
 
 ## UI Launchers
 
 | Command | Description |
 |---|---|
-| `sigil tui` | Launch the interactive terminal dashboard (Ink-based) |
-| `sigil dashboard` | Start the Web API and UI server headlessly |
+| `sigil dashboard` | Open the Web UI in your default browser |
+| `sigil tui` | Launch the interactive terminal dashboard |
 
 ## Examples
 

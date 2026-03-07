@@ -1,0 +1,57 @@
+---
+title: Onboarding Guide
+description: Understanding the Sigil Wallet setup and agent initialization flow.
+---
+
+Sigil Wallet is designed to be "headless-first" but visual-friendly. The onboarding process sets up the foundation for your autonomous agents.
+
+## The Onboarding Wizard
+
+The recommended way to start is by running:
+
+```bash
+sigil onboard
+```
+
+This command acts as a "one-stop-shop" for your initial setup.
+
+### Phase 1: LLM Provider Configuration
+Sigil requires an LLM to "think." During onboarding, you will:
+1. Select a provider (OpenAI, Anthropic, etc.) or a **Custom** endpoint (Ollama/LM Studio).
+2. Provide your API key (stored securely, never sent to our servers).
+3. Select a model (e.g., `gpt-4o` or `claude-3-5-sonnet`).
+
+### Phase 2: The Main Agent ("sigil")
+Sigil uses a **Main Agent** strategy. This is the root identity of your local Sigil instance.
+- The wizard will ask to initialize this agent.
+- It generates a new Solana Devnet wallet address.
+- Behind the scenes, the private key is stored in your **System Keychain** (via `keytar`).
+
+### Phase 3: Daemon Initialization
+Once setup is complete, the wizard spawns the **Sigil Daemon**. This background process:
+- Keeps the agent loops running.
+- Hosts the local API server on `localhost:7445`.
+- Manages the WebSocket connections for the TUI and Web Dashboard.
+
+## Authentication & Tokens
+
+Sigil uses a local session token to secure the API. 
+- The token is generated automatically on the first run.
+- You can retrieve it anytime with `sigil auth token`.
+- This token is required by the **Browser Extension** and **Web Dashboard**.
+
+## Main Agent vs. Sub-Agents
+
+| Feature | Main Agent (`sigil`) | Sub-Agents (Custom Names) |
+|---|---|---|
+| **Role** | Primary system identity | Specialized roles (e.g., "Meme Hunter") |
+| **Creation** | `sigil onboard` or `sigil agent init` | `sigil agent create <name>` |
+| **Management** | `sigil agent start/pause` | `sigil agent start-agent/pause-agent` |
+| **Visibility** | Always appears first in dashboards | Isolated contexts |
+
+## Manual Setup (Advanced)
+
+If you prefer to set things up individually:
+1. `sigil provider add openai`
+2. `sigil agent init`
+3. `sigil start`
