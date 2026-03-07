@@ -6,7 +6,7 @@ export function registerTuiCommand(program: Command) {
     .command("tui")
     .description("Launch the Terminal User Interface")
     .action(async () => {
-      const { getAuthToken } = await import("../../src/lib/Config.js");
+      const { getAuthToken } = await import(new URL('../../src/lib/Config.js', import.meta.url).href);
       const token = getAuthToken();
 
       if (!token) {
@@ -17,7 +17,7 @@ export function registerTuiCommand(program: Command) {
       const API_PORT = 7445;
       // Clear screen before starting TUI
       console.clear();
-      const { startTui } = await import("../../src/lib/TuiLoader.js");
+      const { startTui } = await import(new URL('../../src/lib/TuiLoader.js', import.meta.url).href);
       const app = await startTui(API_PORT, token);
       await app.waitUntilExit();
     });

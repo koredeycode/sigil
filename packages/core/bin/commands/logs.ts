@@ -1,6 +1,5 @@
 import * as clack from "@clack/prompts";
 import type { Command } from "commander";
-import { spawn } from "node:child_process";
 import fs from "node:fs";
 
 export function registerLogsCommand(program: Command) {
@@ -10,8 +9,9 @@ export function registerLogsCommand(program: Command) {
     .option("-n, --lines <count>", "Number of lines to show", "50")
     .description("View daemon process logs (stdout/stderr)")
     .action(async (opts: { follow?: boolean; lines: string }) => {
-      const { getLogFile, getRunningPid } =
-        await import("../../src/lib/Daemon.js");
+      const { getLogFile, getRunningPid } = await import(
+        new URL("../../src/lib/Daemon.js", import.meta.url).href
+      );
 
       const logFile = getLogFile();
 
@@ -31,28 +31,38 @@ export function registerLogsCommand(program: Command) {
 
       clack.log.info(`Log file: ${logFile}\n`);
 
+      const { Tail, tailFile } = await import(
+        new URL("../../src/lib/LogUtils.js", import.meta.url).href
+      );
+
       if (opts.follow) {
         // Stream logs in real-time
         clack.log.info("Following logs... (Press Ctrl+C to stop)\n");
-        const tail = spawn("tail", ["-f", "-n", opts.lines, logFile], {
-          stdio: "inherit",
-        });
+        const tail = tailFile(
+          logFile,
+          { lines: parseInt(opts.lines, 10), follow: true },
+          (data: string) => {
+            process.stdout.write(data);
+          },
+        );
 
         process.on("SIGINT", () => {
-          tail.kill();
+          if (tail) tail.kill();
           process.exit(0);
         });
       } else {
         // Show last N lines
-        const tail = spawn("tail", ["-n", opts.lines, logFile], {
-          stdio: "inherit",
-        });
+        tailFile(
+          logFile,
+          { lines: parseInt(opts.lines, 10), follow: false },
+          (data: string) => {
+            process.stdout.write(data);
+          },
+        );
 
-        tail.on("close", () => {
-          clack.log.info(
-            `\n\nShowing last ${opts.lines} lines. Use --follow to stream logs.`,
-          );
-        });
+        clack.log.info(
+          `\n\nShowing last ${opts.lines} lines. Use --follow to stream logs.`,
+        );
       }
     });
 }

@@ -8,7 +8,7 @@ export function registerStartCommand(program: Command) {
     .option("--fg", "Run in the foreground instead of daemonizing")
     .action(async (options) => {
       const { getRunningPid, removePid, spawnDaemon, writePid } =
-        await import("../../src/lib/Daemon.js");
+        await import(new URL('../../src/lib/Daemon.js', import.meta.url).href);
 
       const existingPid = getRunningPid();
       if (existingPid) {
@@ -30,9 +30,9 @@ export function registerStartCommand(program: Command) {
         writePid(process.pid);
 
         const { agentManager } =
-          await import("../../src/agent/AgentManager.js");
+          await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
         const { cronScheduler } =
-          await import("../../src/agent/CronScheduler.js");
+          await import(new URL('../../src/agent/CronScheduler.js', import.meta.url).href);
 
         // Clean up on exit
         const cleanup = () => {
@@ -44,10 +44,10 @@ export function registerStartCommand(program: Command) {
         process.on("SIGINT", cleanup);
         process.on("SIGTERM", cleanup);
 
-        const { createSessionToken } = await import("../../src/lib/Auth.js");
-        const { getAuthToken } = await import("../../src/lib/Config.js");
-        const { getDatabase } = await import("../../src/lib/Database.js");
-        const { startServer } = await import("../../src/server/app.js");
+        const { createSessionToken } = await import(new URL('../../src/lib/Auth.js', import.meta.url).href);
+        const { getAuthToken } = await import(new URL('../../src/lib/Config.js', import.meta.url).href);
+        const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
+        const { startServer } = await import(new URL('../../src/server/app.js', import.meta.url).href);
 
         getDatabase();
         let token = getAuthToken();
@@ -84,7 +84,7 @@ export function registerStartCommand(program: Command) {
         s.stop("All systems operational.");
 
         // Register auto-start on boot (cross-platform, best-effort)
-        const { enableAutoStart } = await import("../../src/lib/Startup.js");
+        const { enableAutoStart } = await import(new URL('../../src/lib/Startup.js', import.meta.url).href);
         enableAutoStart();
 
         clack.log.step(`Session Token: ${token}`);
@@ -104,10 +104,10 @@ export function registerStartCommand(program: Command) {
           s.stop(`✓ Daemon started successfully (PID ${pid})`);
 
           // Register auto-start on boot (cross-platform, best-effort)
-          const { enableAutoStart } = await import("../../src/lib/Startup.js");
+          const { enableAutoStart } = await import(new URL('../../src/lib/Startup.js', import.meta.url).href);
           enableAutoStart();
 
-          const { getLogFile } = await import("../../src/lib/Daemon.js");
+          const { getLogFile } = await import(new URL('../../src/lib/Daemon.js', import.meta.url).href);
 
           clack.log.success("Sigil Wallet is now running in the background!");
           clack.log.step(`API Server: http://localhost:7445`);
@@ -123,7 +123,7 @@ export function registerStartCommand(program: Command) {
             `Error: ${error instanceof Error ? error.message : String(error)}`,
           );
 
-          const { getLogFile } = await import("../../src/lib/Daemon.js");
+          const { getLogFile } = await import(new URL('../../src/lib/Daemon.js', import.meta.url).href);
           clack.log.info(`Check ${getLogFile()} for details.`);
           clack.log.info("");
           clack.log.warn(

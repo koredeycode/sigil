@@ -8,7 +8,7 @@ export function registerStatusCommand(program: Command) {
     .description("Check if the Sigil Wallet background daemon is running")
     .action(async () => {
       const { getRunningPid, getLogFile, removePid } =
-        await import("../../src/lib/Daemon.js");
+        await import(new URL('../../src/lib/Daemon.js', import.meta.url).href);
 
       const pid = getRunningPid();
 

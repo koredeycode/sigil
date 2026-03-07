@@ -15,8 +15,8 @@ export function registerAgentCommand(program: Command) {
     )
     .description('Initialize the main "sigil" agent (NOT for sub-agents)')
     .action(async (opts?: { key?: string }) => {
-      const { agentManager } = await import("../../src/agent/AgentManager.js");
-      const { getDatabase } = await import("../../src/lib/Database.js");
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
 
       getDatabase();
 
@@ -66,8 +66,8 @@ export function registerAgentCommand(program: Command) {
     .command("info")
     .description("Show the main agent details")
     .action(async () => {
-      const { agentManager } = await import("../../src/agent/AgentManager.js");
-      const { getDatabase } = await import("../../src/lib/Database.js");
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
 
       getDatabase();
       const a = agentManager.getMainAgent();
@@ -88,8 +88,8 @@ export function registerAgentCommand(program: Command) {
     .command("start")
     .description("Start the main agent")
     .action(async () => {
-      const { agentManager } = await import("../../src/agent/AgentManager.js");
-      const { getDatabase } = await import("../../src/lib/Database.js");
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
 
       getDatabase();
       const a = agentManager.getMainAgent();
@@ -106,8 +106,8 @@ export function registerAgentCommand(program: Command) {
     .command("pause")
     .description("Pause the main agent")
     .action(async () => {
-      const { agentManager } = await import("../../src/agent/AgentManager.js");
-      const { getDatabase } = await import("../../src/lib/Database.js");
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
 
       getDatabase();
       const a = agentManager.getMainAgent();
@@ -124,8 +124,8 @@ export function registerAgentCommand(program: Command) {
     .command("reset")
     .description("Destroy the main agent and optionally reinitialize")
     .action(async () => {
-      const { agentManager } = await import("../../src/agent/AgentManager.js");
-      const { getDatabase } = await import("../../src/lib/Database.js");
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
 
       getDatabase();
       const a = agentManager.getMainAgent();
@@ -178,8 +178,8 @@ export function registerAgentCommand(program: Command) {
         opts: { interval?: string; prompt?: string; key?: string },
       ) => {
         const { agentManager } =
-          await import("../../src/agent/AgentManager.js");
-        const { getDatabase } = await import("../../src/lib/Database.js");
+          await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+        const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
 
         getDatabase();
 
@@ -234,8 +234,8 @@ export function registerAgentCommand(program: Command) {
     .command("list")
     .description("List all agents (main and sub-agents)")
     .action(async () => {
-      const { agentManager } = await import("../../src/agent/AgentManager.js");
-      const { getDatabase } = await import("../../src/lib/Database.js");
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
 
       getDatabase();
       const agents = agentManager.list();
@@ -265,8 +265,8 @@ export function registerAgentCommand(program: Command) {
     .command("get <nameOrId>")
     .description("Show detailed information for a specific agent")
     .action(async (nameOrId: string) => {
-      const { agentManager } = await import("../../src/agent/AgentManager.js");
-      const { getDatabase } = await import("../../src/lib/Database.js");
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
 
       getDatabase();
       const a = agentManager.get(nameOrId);
@@ -294,8 +294,8 @@ export function registerAgentCommand(program: Command) {
     .command("start-agent <nameOrId>")
     .description("Start a specific agent by name or ID")
     .action(async (nameOrId: string) => {
-      const { agentManager } = await import("../../src/agent/AgentManager.js");
-      const { getDatabase } = await import("../../src/lib/Database.js");
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
 
       getDatabase();
       const a = agentManager.get(nameOrId);
@@ -313,8 +313,8 @@ export function registerAgentCommand(program: Command) {
     .command("pause-agent <nameOrId>")
     .description("Pause a specific agent by name or ID")
     .action(async (nameOrId: string) => {
-      const { agentManager } = await import("../../src/agent/AgentManager.js");
-      const { getDatabase } = await import("../../src/lib/Database.js");
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
 
       getDatabase();
       const a = agentManager.get(nameOrId);
@@ -332,8 +332,8 @@ export function registerAgentCommand(program: Command) {
     .command("destroy <nameOrId>")
     .description("Permanently destroy an agent and its wallet")
     .action(async (nameOrId: string) => {
-      const { agentManager } = await import("../../src/agent/AgentManager.js");
-      const { getDatabase } = await import("../../src/lib/Database.js");
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
 
       getDatabase();
       const a = agentManager.get(nameOrId);

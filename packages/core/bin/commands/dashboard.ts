@@ -7,8 +7,8 @@ export function registerDashboardCommand(program: Command) {
     .command('dashboard')
     .description('Open the Sigil Wallet UI dashboard in your default browser')
     .action(async () => {
-      const { getAuthToken } = await import('../../src/lib/Config.js');
-      const { getDatabase } = await import('../../src/lib/Database.js');
+      const { getAuthToken } = await import(new URL('../../src/lib/Config.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
       
       getDatabase();
       const token = getAuthToken();

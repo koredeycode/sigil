@@ -10,8 +10,8 @@ export function registerProviderCommand(program: Command) {
     .option('-m, --model <model>', 'Model name')
     .description('Add an LLM provider')
     .action(async (name?: string, opts?: { key?: string; model?: string }) => {
-      const { getDatabase, addProvider } = await import('../../src/lib/Database.js');
-      const { encryptApiKey } = await import('../../src/lib/Auth.js');
+      const { getDatabase, addProvider } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
+      const { encryptApiKey } = await import(new URL('../../src/lib/Auth.js', import.meta.url).href);
       
       getDatabase();
 
@@ -41,7 +41,7 @@ export function registerProviderCommand(program: Command) {
 
         if (!opts?.model) {
           // Try to fetch models dynamically
-          const { fetchModelsForProvider } = await import('../../src/lib/ModelFetcher.js');
+          const { fetchModelsForProvider } = await import(new URL('../../src/lib/ModelFetcher.js', import.meta.url).href);
           
           const s = clack.spinner();
           s.start(`Fetching available models from ${name}...`);
@@ -95,7 +95,7 @@ export function registerProviderCommand(program: Command) {
     .command('list')
     .description('List all configured providers')
     .action(async () => {
-      const { getDatabase, getAllProviders } = await import('../../src/lib/Database.js');
+      const { getDatabase, getAllProviders } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
       
       getDatabase();
       const providers = getAllProviders();
@@ -115,7 +115,7 @@ export function registerProviderCommand(program: Command) {
     .command('set-primary [id]')
     .description('Switch the active provider')
     .action(async (id?: string) => {
-      const { getDatabase, getAllProviders, setPrimaryProvider } = await import('../../src/lib/Database.js');
+      const { getDatabase, getAllProviders, setPrimaryProvider } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
       
       getDatabase();
 
@@ -146,7 +146,7 @@ export function registerProviderCommand(program: Command) {
     .command('remove [id]')
     .description('Remove a provider')
     .action(async (id?: string) => {
-      const { getDatabase, getAllProviders, removeProvider } = await import('../../src/lib/Database.js');
+      const { getDatabase, getAllProviders, removeProvider } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
       
       getDatabase();
 
@@ -187,7 +187,7 @@ export function registerProviderCommand(program: Command) {
     .option('-u, --url <url>', 'Base URL for custom/local providers')
     .description('List available models for a provider')
     .action(async (name?: string, opts?: { key?: string; url?: string }) => {
-      const { getDatabase } = await import('../../src/lib/Database.js');
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
       
       getDatabase();
 
@@ -216,7 +216,7 @@ export function registerProviderCommand(program: Command) {
         opts = { ...opts, key: String(key) };
       }
 
-      const { fetchModelsForProvider } = await import('../../src/lib/ModelFetcher.js');
+      const { fetchModelsForProvider } = await import(new URL('../../src/lib/ModelFetcher.js', import.meta.url).href);
       
       const s = clack.spinner();
       s.start(`Fetching models from ${name}...`);

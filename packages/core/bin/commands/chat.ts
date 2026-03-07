@@ -6,8 +6,8 @@ export function registerChatCommand(program: Command) {
     .command('chat [message]')
     .description('Chat with the main Sigil Wallet agent')
     .action(async (message?: string) => {
-      const { agentManager } = await import('../../src/agent/AgentManager.js');
-      const { getDatabase, insertChat } = await import('../../src/lib/Database.js');
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { getDatabase, insertChat } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
       
       getDatabase();
 

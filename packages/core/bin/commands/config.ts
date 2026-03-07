@@ -11,7 +11,7 @@ export function registerConfigCommand(program: Command) {
     .command('list')
     .description('Show all configuration values')
     .action(async () => {
-      const { getDatabase, getConfig } = await import('../../src/lib/Database.js');
+      const { getDatabase, getConfig } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
       getDatabase(); // ensure DB is initialized
 
       const keys = [
@@ -40,7 +40,7 @@ export function registerConfigCommand(program: Command) {
     .command('get <key>')
     .description('Get a configuration value')
     .action(async (key: string) => {
-      const { getDatabase, getConfig } = await import('../../src/lib/Database.js');
+      const { getDatabase, getConfig } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
       getDatabase();
 
       const value = getConfig(key);
@@ -56,7 +56,7 @@ export function registerConfigCommand(program: Command) {
     .command('set <key> <value>')
     .description('Set a configuration value')
     .action(async (key: string, value: string) => {
-      const { getDatabase, setConfig } = await import('../../src/lib/Database.js');
+      const { getDatabase, setConfig } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
       getDatabase();
 
       setConfig(key, value);

@@ -6,9 +6,9 @@ export function registerKillCommand(program: Command) {
     .command('kill [agent]')
     .description('Activate kill switch — stops all agents or a specific one')
     .action(async (_agent?: string) => {
-      const { agentManager } = await import('../../src/agent/AgentManager.js');
-      const { setKillSwitch } = await import('../../src/lib/Config.js');
-      const { getDatabase } = await import('../../src/lib/Database.js');
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { setKillSwitch } = await import(new URL('../../src/lib/Config.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
       
       getDatabase();
 

@@ -8,8 +8,8 @@ export function registerAuthCommand(program: Command) {
     .command('rotate')
     .description('Rotate the session token')
     .action(async () => {
-      const { createSessionToken } = await import('../../src/lib/Auth.js');
-      const { getDatabase } = await import('../../src/lib/Database.js');
+      const { createSessionToken } = await import(new URL('../../src/lib/Auth.js', import.meta.url).href);
+      const { getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
       
       getDatabase();
       const token = createSessionToken();

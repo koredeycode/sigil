@@ -120,7 +120,7 @@ export function registerOnboardCommand(program: Command) {
           s2.start(`Fetching available models from ${String(providerName)}...`);
 
           const { fetchModelsForProvider } =
-            await import("../../src/lib/ModelFetcher.js");
+            await import(new URL('../../src/lib/ModelFetcher.js', import.meta.url).href);
           const { models, error } = await fetchModelsForProvider(
             String(providerName),
             apiKey ? String(apiKey) : null,
@@ -172,12 +172,12 @@ export function registerOnboardCommand(program: Command) {
         }
       }
 
-      const { agentManager } = await import("../../src/agent/AgentManager.js");
-      const { encryptApiKey } = await import("../../src/lib/Auth.js");
-      const { getAuthToken } = await import("../../src/lib/Config.js");
-      const { spawnDaemon } = await import("../../src/lib/Daemon.js");
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { encryptApiKey } = await import(new URL('../../src/lib/Auth.js', import.meta.url).href);
+      const { getAuthToken } = await import(new URL('../../src/lib/Config.js', import.meta.url).href);
+      const { spawnDaemon } = await import(new URL('../../src/lib/Daemon.js', import.meta.url).href);
       const { addProvider, getDatabase } =
-        await import("../../src/lib/Database.js");
+        await import(new URL('../../src/lib/Database.js', import.meta.url).href);
 
       // Initialize DB
       getDatabase();
@@ -276,7 +276,7 @@ export function registerOnboardCommand(program: Command) {
         } else {
           clack.log.info("Launching Terminal Interface...");
           console.clear();
-          const { startTui } = await import("../../src/lib/TuiLoader.js");
+          const { startTui } = await import(new URL('../../src/lib/TuiLoader.js', import.meta.url).href);
           const app = await startTui(7445, token);
           await app.waitUntilExit();
           clack.outro(

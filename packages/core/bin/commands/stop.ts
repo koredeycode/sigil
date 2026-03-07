@@ -7,7 +7,7 @@ export function registerStopCommand(program: Command) {
     .description("Stop the background Sigil Wallet daemon")
     .action(async () => {
       const { getRunningPid, removePid } =
-        await import("../../src/lib/Daemon.js");
+        await import(new URL('../../src/lib/Daemon.js', import.meta.url).href);
 
       const pid = getRunningPid();
       if (!pid) {
@@ -60,7 +60,7 @@ export function registerStopCommand(program: Command) {
 
       // Remove auto-start on boot (cross-platform, best-effort)
       try {
-        const { disableAutoStart } = await import("../../src/lib/Startup.js");
+        const { disableAutoStart } = await import(new URL('../../src/lib/Startup.js', import.meta.url).href);
         disableAutoStart();
       } catch {
         // Ignore errors from startup script

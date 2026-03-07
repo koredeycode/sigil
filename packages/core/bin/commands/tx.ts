@@ -7,8 +7,8 @@ export function registerTxCommand(program: Command) {
     .option('-n, --limit <count>', 'Number of transactions', '20')
     .description('View an agent\'s transactions')
     .action(async (agent?: string, opts?: { limit: string }) => {
-      const { agentManager } = await import('../../src/agent/AgentManager.js');
-      const { getAgentTransactions, getDatabase } = await import('../../src/lib/Database.js');
+      const { agentManager } = await import(new URL('../../src/agent/AgentManager.js', import.meta.url).href);
+      const { getAgentTransactions, getDatabase } = await import(new URL('../../src/lib/Database.js', import.meta.url).href);
       
       getDatabase();
 
