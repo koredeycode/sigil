@@ -104,8 +104,7 @@ export function HomeClient() {
               variants={itemVariants}
               className="text-lg sm:text-xl text-muted-foreground max-w-2xl mb-10 leading-relaxed"
             >
-              Spawn independent AI agents on Solana. They monitor, trade, and rebalance
-              your portfolio while you sleep — with keys that never leave your machine.
+              Spawn independent AI agents on Solana. They monitor, manage your wallet while you sleep — with keys that never leave your machine.
             </motion.p>
 
             <motion.div 
@@ -222,7 +221,7 @@ export function HomeClient() {
               Ready to get started?
             </h2>
             <p className="text-lg text-muted-foreground mb-10 max-w-lg mx-auto">
-              Install Sigil and deploy your first autonomous agent in under two minutes.
+              Install Sigil and set up your first autonomous agent in under two minutes.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <CommandBox command="npm i -g sigil-wallet" className="max-w-sm w-full" />
