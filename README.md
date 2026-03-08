@@ -19,9 +19,9 @@ sigil start
 
 For detailed usage, see the [full documentation](https://sigil-docs.vercel.app/docs) or run `sigil --help`.
 
-[▶️ Watch the Demo](https://youtu.be/UmhQZ-eeWbk)
+[▶️ Watch the Demo](https://youtu.be/PFZNtC4M3-A)
 
-[![Watch the Demo](https://markdown-videos-api.jorgenkh.no/youtube/UmhQZ-eeWbk)](https://youtu.be/UmhQZ-eeWbk)
+[![Watch the Demo](https://markdown-videos-api.jorgenkh.no/youtube/PFZNtC4M3-A)](https://youtu.be/PFZNtC4M3-A)
 
 ## Features
 

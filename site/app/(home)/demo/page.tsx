@@ -23,7 +23,7 @@ export default function DemoPage() {
 
         <div className="relative aspect-video rounded-2xl overflow-hidden border border-border shadow-2xl bg-card mb-16">
           <iframe
-            src="https://www.youtube.com/embed/UmhQZ-eeWbk?autoplay=1"
+            src="https://www.youtube.com/embed/PFZNtC4M3-A?autoplay=1"
             title="Sigil Wallet Demo"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
