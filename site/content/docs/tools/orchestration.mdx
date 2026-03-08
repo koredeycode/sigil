@@ -1,0 +1,34 @@
+---
+title: Orchestration Tools
+description: Manage sub-agents and schedule recurring tasks programmatically.
+---
+
+The **Master Agent** (or root agent) has access to a specialized set of **Orchestrator Tools**. These tools allow the Master Agent to programmatically manage the lifecycle of sub-agents and schedule recurring tasks.
+
+## Agent Management
+
+| Tool | Category | Description |
+|---|---|---|
+| `manage_agent` | Management | Create, start, pause, or destroy sub-agents |
+| `list_agents` | Discovery | Get a list of all instantiated agents and statuses |
+| `get_agent_info` | Discovery | Get detailed metadata and cron counts for an agent |
+| `get_agent_logs` | Monitoring | Fetch the most recent reasoning traces for an agent |
+
+## Cron Scheduling
+
+| Tool | Category | Description |
+|---|---|---|
+| `schedule_cron_job` | Scheduling | Schedule a recurring prompt to be sent to an agent |
+| `list_cron_jobs` | Scheduling | View all scheduled tasks for a specific agent |
+| `update_cron_job` | Scheduling | Modify the schedule or task prompt of an existing job |
+| `toggle_cron_job` | Scheduling | Activate or deactivate a scheduled task |
+| `cancel_cron_job` | Scheduling | Permanently delete a scheduled task |
+
+## Autonomous Scaling
+
+With these tools, a Master Agent can act as a **manager**:
+
+1. **Reasoning**: "I need to monitor 10 different meme tokens but I'm currently at capacity."
+2. **Action**: Master Agent calls `manage_agent` (create) to spin up a new "Scout" sub-agent.
+3. **Delegation**: Master Agent calls `schedule_cron_job` to give the Scout a recurring task.
+4. **Supervision**: Master Agent periodically calls `get_agent_logs` to audit the Scout's performance.

@@ -30,7 +30,7 @@ Sigil is a **local-first autonomous AI agent platform** built exclusively for So
 
 - **Autonomous Wallet Management**: Programmatic wallet creation with OS-level key encryption
 - **Natural Language Control**: Chat-based interface for complex blockchain operations
-- **DeFi Integration**: Native support for Jupiter swaps, staking, and token management
+- **DeFi Integration**: Native support for Orca swaps (with Mock fallback), staking, and token management
 - **Tri-Head Interface**: CLI, Terminal UI (TUI), and Web Dashboard for different workflows
 - **Browser Extension**: Inject agents into web3 dApps as wallet providers
 - **LangGraph Brain**: Continuous reasoning loops with state persistence and tool orchestration
@@ -213,13 +213,13 @@ When a user requests "Swap 2 SOL for USDC," the system follows a multi-stage val
 2. **Guardrail Validation** - Before any wallet operations, the guardrails layer validates the intent by checking:
    - Per-trade limit (2 SOL ≤ 5 SOL configured limit)
    - Daily volume cap (current 3 SOL + proposed 2 SOL = 5 SOL ≤ 10 SOL daily cap)
-   - Slippage tolerance (0.5% ≤ 1% configured maximum)
+   - Slippage tolerance (1% ≤ 1% configured maximum)
 
    If all checks pass, the intent receives approval.
 
-3. **Transaction Construction** - The wallet layer creates a database record for the pending transaction, loads the agent's encrypted keypair from the OS keychain, fetches the latest blockhash from the Solana RPC endpoint, and constructs the transaction with proper signatures.
+3. **Transaction Construction** - The wallet layer creates a database record for the pending transaction, loads the agent's encrypted keypair from the OS keychain, fetches the latest blockhash from the Solana RPC endpoint, and constructs the transaction. Sigil use Orca Whirlpools finders or a `MockSwap` fallback if Devnet liquidity is insufficient.
 
-4. **On-Chain Execution** - The signed transaction is submitted to Solana via sendAndConfirmTransaction(), and the system waits for confirmation from the network.
+4. **On-Chain Execution** - The signed transaction is submitted to Solana via standard RPC calls, and the system waits for confirmation from the network.
 
 5. **State Update** - Once confirmed, the database records the transaction signature and status. The keypair secret material is immediately zeroed from memory, and the agent responds to the user with the swap results and transaction signature.
 
@@ -300,7 +300,7 @@ The project maintains a security audit checklist covering:
 | ------------------------------------------ | -------- | ---------- |
 | Hardware Security Module (HSM) integration | P0       | 📋 Planned |
 | Multi-signature governance for guardrails  | P0       | 📋 Planned |
-| Rate limiting per agent (tx/minute)        | P1       | 📋 Planned |
+| Rate limiting per agent (tx/minute)        | P1       | ✅ Done    |
 | Encrypted LLM API key storage              | P1       | 📋 Planned |
 | Audit logging to immutable storage         | P2       | 📋 Planned |
 | Mainnet support with insurance fund        | P2       | 📋 Planned |

@@ -35,7 +35,7 @@ graph TB
     end
 
     subgraph Execution ["Secure Execution"]
-        WALLET{"Wallet Layer<br/>(Encrypted Disk Storage)"}:::wallet
+        WALLET{"Wallet Layer<br/>(OS Keychain / Keytar)"}:::wallet
     end
 
     %% Connections
@@ -64,7 +64,7 @@ The Agent Layer (`/packages/core/src/agent`) is built primarily on **LangGraph**
 The Guardrails Layer (`/packages/core/src/lib/Guardrails.ts`) acts as the security middleware. When the Agent Layer issues an intent to execute a tool (like a token swap or transfer), the Guardrails Layer intercepts it. It evaluates the intent against limits, directives, and user constraints stored in the SQLite database. If the intent violates these constraints, execution fails and control is handed back to the Agent with the failure reason.
 
 ### 3. Wallet Layer
-The Wallet Layer (`/packages/core/src/wallet`) is the **only** layer with the authority and capability to access private keys (stored in `~/.sigil/keys/*.enc` encrypted with AES-256-GCM) and sign transactions via `@solana/web3.js`.
+The Wallet Layer (`/packages/core/src/wallet`) is the **only** layer with the authority and capability to access private keys (stored in the **OS Keychain** via `keytar`) and sign transactions via `@solana/web3.js`.
 
 ## Data and State
 - **Database**: `better-sqlite3` manages state locally on the user's machines. Tables include `agents`, `logs`, `config`, `providers`, `directives`, and `transactions`. The database is synchronous.

@@ -1,4 +1,4 @@
 {
   "title": "Tools",
-  "pages": ["wallet", "spl-token", "staking", "defi", "utilities"]
+  "pages": ["wallet", "spl-token", "staking", "defi", "utilities", "orchestration"]
 }

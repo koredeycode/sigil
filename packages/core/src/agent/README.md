@@ -15,12 +15,13 @@ Each agent runs on an isolated `setInterval` (configured via `sigil config set -
 
 ## Tool Registry
 
-The Agent layer does *not* know how to sign transactions. It simply possesses a registry of capabilities mapping to custom on-chain handlers. The agent possesses exactly **19 tools** restricted to **Devnet only**. Tool categories include:
+The Agent layer does *not* know how to sign transactions. It simply possesses a registry of capabilities mapping to custom on-chain handlers. The agent possesses exactly **18 built-in tools** and **9 orchestrator tools** restricted to **Devnet only**. Tool categories include:
 
 - **Wallet & Balance** (7 tools): `get_balance`, `request_airdrop`, `transfer_sol`, `get_transaction_history`, `get_token_accounts`, `get_portfolio_snapshot`, `get_account_info`
 - **SPL Tokens** (5 tools): `create_token`, `mint_tokens`, `burn_tokens`, `transfer_token`, `close_empty_token_accounts`
 - **Staking** (4 tools): `stake_sol`, `deactivate_stake`, `list_validators`, `get_stake_positions`
-- **DeFi** (2 tools): `swap_tokens`, `fetch_price`
+- **DeFi** (1 tool): `swap_tokens`
 - **Utilities** (1 tool): `send_memo`
+- **Orchestration** (9 tools): `manage_agent`, `list_agents`, `get_agent_info`, `get_agent_logs`, `schedule_cron_job`, `list_cron_jobs`, `update_cron_job`, `toggle_cron_job`, `cancel_cron_job`
 
 All tools run exclusively on **Solana Devnet**.

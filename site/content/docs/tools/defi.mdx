@@ -1,20 +1,22 @@
 ---
 title: DeFi Tools
-description: Token swaps and portfolio management using Jupiter aggregator on Solana Devnet.
+description: Token swaps and portfolio management using Orca and Mock Swaps on Solana Devnet.
 ---
 
-Sigil Wallet agents can execute token swaps and monitor portfolios on Solana Devnet using the Jupiter aggregator API.
+Sigil Wallet agents can execute token swaps and monitor portfolios on Solana Devnet. Because standard liquidity aggregators are often limited on Devnet, Sigil uses a tiered swap execution strategy.
 
-## Jupiter Integration
+## Swap Execution Strategy
 
-Sigil uses the **Jupiter Aggregator** for all token swap operations. Jupiter automatically finds the best rates across multiple DEXes on Solana.
+Sigil employs a **hybrid swap engine** to ensure agents can always test their logic, even when liquidity is sparse:
+
+1.  **Orca Whirlpools**: The engine first attempts to find a valid Orca Whirlpool for the requested pair on Devnet.
+2.  **Mock Swap (Fallback)**: If no Orca pool is found, the engine falls back to a **Mock Swap**. This generates a valid, signable transaction that simulates the exchange of tokens, allowing for end-to-end testing of agent reasoning without requiring real liquidity.
 
 ### Trading Tools
 
-| Tool          | Description                                                              |
-| ------------- | ------------------------------------------------------------------------ |
-| `swap_tokens` | Execute a token swap using Jupiter aggregator with configurable slippage |
-| `fetch_price` | Retrieve real-time USD price for SOL, USDC, BONK, or any token mint      |
+| Tool          | Description                                                                 |
+| ------------- | --------------------------------------------------------------------------- |
+| `swap_tokens` | Execute a token swap using Orca (with Mock fallback) on Solana Devnet       |
 
 ### Portfolio Tools
 
@@ -22,23 +24,29 @@ Sigil uses the **Jupiter Aggregator** for all token swap operations. Jupiter aut
 | ------------------------ | -------------------------------------------------------------------- |
 | `get_portfolio_snapshot` | Full breakdown of holdings with percentages of total portfolio value |
 
+## Supported Pairs (Devnet)
+
+Currently, swap operations are restricted to the following pairs to ensure stability:
+
+- **SOL ↔ devUSDC**
+- **Input Mint**: `So11111111111111111111111111111111111111112`
+- **Output Mint**: `3KBZiL2g8C7tiJ32hTv5v3KM7aK9htpqTw4cTXz1HvPt`
+
 ## Swap Parameters
 
 The `swap_tokens` tool accepts:
 
-- **inputMint** — Input token mint address (use `So11111111111111111111111111111111111111112` for native SOL)
-- **outputMint** — Output token mint address
+- **inputMint** — Input token mint address or symbol ("SOL", "USDC")
+- **outputMint** — Output token mint address or symbol ("SOL", "USDC")
 - **amount** — Amount of input token to swap (in UI units)
-- **slippageBps** — Slippage tolerance in basis points (default 50 = 0.5%, max 5000 = 50%)
+- **slippageBps** — Slippage tolerance in basis points (default 100 = 1%)
 
 ## Example Scenarios
 
 ```text
-"Swap 50% of my USDC to SOL if SOL drops below $20"
-"Swap 1 SOL to USDC with 1% slippage tolerance"
+"Swap 0.5 SOL to USDC"
+"Swap 10 USDC to SOL with 0.5% slippage"
 "Check portfolio allocation every 5 minutes"
-"Fetch the current USD price of BONK"
-"If BONK price is above $0.00003, swap half my position to USDC"
 ```
 
 ## Slippage Protection
@@ -46,26 +54,17 @@ The `swap_tokens` tool accepts:
 All swap operations are subject to **slippage guardrails**:
 
 - Default maximum slippage: **1%**
-- If market conditions would cause price deviation beyond the cap, the swap is **blocked**
+- If market conditions (or mock parameters) would cause price deviation beyond the cap, the swap is **blocked**
 - The agent logs the block reason and retries on the next loop cycle
 
-## Portfolio Assessment
+## Swap Execution Process
 
-The portfolio snapshot workflow empowers the agent to reason about asset distribution:
+Each swap follows this secure flow:
 
-1. `get_portfolio_snapshot` — Agent reads current holdings and percentages
-2. The agent analyzes the distribution within its LangGraph reasoning step
-3. If rebalancing is needed, it generates a `swap_tokens` intent
-4. The swap passes through guardrails before execution
-
-## Jupiter Quote Process
-
-Each swap follows this flow:
-
-1. **Quote** — Fetch best route from Jupiter API
-2. **Transaction** — Receive serialized swap transaction
-3. **Deserialize** — Convert to Solana transaction
-4. **Guardrails** — Validate against safety rules
-5. **Sign & Submit** — Execute if approved
+1.  **Quote Discovery**: Agent attempts to build an Orca swap transaction.
+2.  **Mock Fallback**: If Orca discovery fails, a `MockSwap` transaction is generated.
+3.  **Instruction Decoding**: The transaction is sent to the **Guardrails Layer**.
+4.  **Validation**: Guardrails evaluate the trade value and slippage against user-defined directives.
+5.  **Sign & Submit**: If approved, the agent retrieves the private key from the OS Keychain and broadcasts the transaction.
 
 See [Safety & Guardrails](/docs/guardrails) for configuration options.

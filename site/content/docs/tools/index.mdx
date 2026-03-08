@@ -3,7 +3,7 @@ title: Tools Overview
 description: Complete reference of all available tools for Sigil agents on Solana Devnet.
 ---
 
-Sigil agents have access to **19 built-in tools** for managing wallets, tokens, DeFi operations, staking, and on-chain utilities on Solana Devnet.
+Sigil agents have access to **18 built-in tools** for managing wallets, tokens, DeFi operations, staking, and on-chain utilities on Solana Devnet.
 
 ## Tool Categories
 
@@ -13,6 +13,7 @@ Sigil agents have access to **19 built-in tools** for managing wallets, tokens, 
   <Card title="Staking Tools" href="/docs/tools/staking" />
   <Card title="DeFi Tools" href="/docs/tools/defi" />
   <Card title="Utility Tools" href="/docs/tools/utilities" />
+  <Card title="Orchestration Tools" href="/docs/tools/orchestration" />
 </Cards>
 
 ## Quick Reference
@@ -48,18 +49,31 @@ Sigil agents have access to **19 built-in tools** for managing wallets, tokens, 
 | `list_validators`     | View active validators with stats  |
 | `get_stake_positions` | View all stake accounts and status |
 
-### DeFi (2 tools)
+### DeFi (1 tool)
 
-| Tool          | Description                               |
-| ------------- | ----------------------------------------- |
-| `swap_tokens` | Execute token swap via Jupiter aggregator |
-| `fetch_price` | Get real-time USD price for any token     |
+| Tool          | Description                                                                 |
+| ------------- | --------------------------------------------------------------------------- |
+| `swap_tokens` | Execute a token swap using Orca (with Mock fallback) on Solana Devnet       |
 
 ### Utilities (1 tool)
 
 | Tool        | Description                              |
 | ----------- | ---------------------------------------- |
 | `send_memo` | Write a message on-chain (max 566 bytes) |
+
+### Orchestration (9 tools)
+
+| Tool | Description |
+|---|---|
+| `manage_agent` | Create, start, pause, or destroy sub-agents |
+| `list_agents` | Get a list of all instantiated agents and statuses |
+| `get_agent_info` | Get detailed metadata and cron counts for an agent |
+| `get_agent_logs` | Fetch the most recent reasoning traces for an agent |
+| `schedule_cron_job` | Schedule a recurring prompt to be sent to an agent |
+| `list_cron_jobs` | View all scheduled tasks for a specific agent |
+| `update_cron_job` | Modify the schedule or task prompt of a job |
+| `toggle_cron_job` | Activate or deactivate a scheduled task |
+| `cancel_cron_job` | Permanently delete a scheduled task |
 
 ## Tool Architecture
 
@@ -74,7 +88,7 @@ graph LR
     D --> F[On-Chain Execution]
 ```
 
-Read-only tools (`get_balance`, `fetch_price`, etc.) bypass guardrails since they don't modify state.
+Read-only tools (`get_balance`, `get_account_info`, etc.) bypass guardrails since they don't modify state.
 
 ## Example Agent Behaviors
 
@@ -85,7 +99,7 @@ Read-only tools (`get_balance`, `fetch_price`, etc.) bypass guardrails since the
  swap excess to USDC to maintain 50/50 balance"
 ```
 
-Uses: `get_portfolio_snapshot`, `fetch_price`, `swap_tokens`
+Uses: `get_portfolio_snapshot`, `swap_tokens`
 
 ### Token Creator
 
@@ -132,4 +146,4 @@ All tools operate on **Solana Devnet**:
 - **Explorer**: `https://explorer.solana.com/?cluster=devnet`
 - **Commitment Level**: `confirmed`
 
-Price data from `fetch_price` comes from mainnet markets via Jupiter API, but all on-chain transactions execute on devnet.
+All on-chain transactions execute on devnet using standard liquidity pools (Orca) or safe mock fallbacks.
