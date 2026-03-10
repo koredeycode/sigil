@@ -67,5 +67,5 @@ The Guardrails Layer (`/packages/core/src/lib/Guardrails.ts`) acts as the securi
 The Wallet Layer (`/packages/core/src/wallet`) is the **only** layer with the authority and capability to access private keys (stored in the **OS Keychain** via `keytar`) and sign transactions via `@solana/web3.js`.
 
 ## Data and State
-- **Database**: `better-sqlite3` manages state locally on the user's machines. Tables include `agents`, `logs`, `config`, `providers`, `directives`, and `transactions`. The database is synchronous.
+- **Database**: `sqlite3` manages state locally on the user's machines. Tables include `agents`, `logs`, `config`, `chats`, `providers`, and `transactions`. The database is synchronous.
 - **Security**: Hard security halts (`sigil kill`) trigger memory purges to drop any unlocked `Keypair` instances immediately and broadcast a system-wide websocket event.

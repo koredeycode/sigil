@@ -294,20 +294,6 @@ The project maintains a security audit checklist covering:
 
 ---
 
-## Production Hardening Roadmap
-
-| Feature                                    | Priority | Status     |
-| ------------------------------------------ | -------- | ---------- |
-| Hardware Security Module (HSM) integration | P0       | 📋 Planned |
-| Multi-signature governance for guardrails  | P0       | 📋 Planned |
-| Rate limiting per agent (tx/minute)        | P1       | ✅ Done    |
-| Encrypted LLM API key storage              | P1       | 📋 Planned |
-| Audit logging to immutable storage         | P2       | 📋 Planned |
-| Mainnet support with insurance fund        | P2       | 📋 Planned |
-| Key rotation with asset migration          | P1       | 📋 Planned |
-| Memory protection (secure heap)            | P2       | 📋 Planned |
-
----
 
 ## References
 
